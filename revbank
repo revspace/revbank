@@ -1,0 +1,530 @@
+#!/usr/bin/perl -w
+use strict;
+no warnings 'exiting';  # We'll exit subs with 'next'
+use POSIX qw(strftime);
+use List::Util qw(sum);
+
+$SIG{INT} = 'IGNORE';
+
+# If you don't like the code, just rewrite it, but do keep all functionality
+# around, please.
+
+# The user interface is based on supermarkets: first all products are scanned,
+# and then the user pays. In our case, "paying" is done simply by entering
+# an account name. No authentication...
+
+# Although the text files are reloaded all the time, it's probably not a good
+# idea to edit them while someone else is using the bank script. They are,
+# however, human readable and editable.
+
+# Likewise, things might go wrong if you run multiple instances of revbank...
+
+sub logline {
+    open my $fh, ">>.revbank.log";
+    my $x = join "", @_;
+    $x =~ s/\n/POSIX::strftime("\n%Y%m%d%H%M%S ", localtime)/ge;
+    print {$fh} $x;
+    close $fh;
+}
+
+{
+    package Tee;
+    use base 'Tie::StdHandle';
+    sub PRINT {
+        shift;
+        local $| = 1;
+        print {*STDOUT} @_;
+        main::logline(@_);
+    }
+    sub PRINTF {
+        shift->PRINT(sprintf(shift, @_));
+    }
+}
+
+tie *TEE, 'Tee';
+select *TEE;
+
+print "\e[0m\n\n\nWelcome to the RevBank Shell";
+
+my $at = "ABORTING TRANSACTION.";
+
+sub prompt {
+    print "@_\e[1;4m";
+    my $input = readline *STDIN;
+
+    logline(defined($input) ? $input : "\e[1;5mX\e[0m");
+
+    print "\e[0m";
+    defined $input or return;
+    chomp $input;
+
+    # Clean up backspaces... TODO: fix terminal :)
+    $input =~ s/^\cH+//;
+    $input =~ s/.\cH// while $input =~ /.\cH/;
+    $input =~ s/^\cH+//;
+
+    if ($input =~ /^abort$/) {
+        print "$at\n";
+        next LINE;  # Whoa, scary out-of-scope jump! But it works :)
+    }
+    return $input
+}
+
+sub help {
+    print <<END;
+
+1. Enter products, amounts or commands
+2. Enter your name
+
+You can press <Enter> after each element to get a follow-up prompt, or separate
+individual elements with whitespace.
+
+Valid commands:
+    <productID>                 Look up product from database
+    <amount>                    Withdraw or enter price manually
+    <user>                      Pay with your account
+    deposit [<amount>]          [Create and] deposit into an account
+    give [<user>] [<amount>]    Transfer money to user's account
+    take [<users>] [<amount>]   Take money from users (equal parts)
+    list                        List accounts and balances
+    undo [<id>]                 Undo a certain transaction
+    help                        The stuff you're looking at right now :)
+    examples                    Show some usage examples
+    abort                       Abort the current transaction
+    edit                        Edit product list
+END
+    return ['noop'];
+}
+
+sub examples {
+    print <<END;
+Examples:
+    4029764001807 jdoe          John pays for one Club Mate.
+    5 jdoe                      John withdraws EUR 5.00.
+    .1 4029764001807 jdoe       John pays 10 cents and one Club Mate.
+    give 2.50 foo jdoe          John gives Foo EUR 2.50.
+    take 1 foo jdoe             Jonh takes EUR 1.00 from Foo.
+    take foo baz 15 jdoe        John takes 7.50 from Foo and 7.50 from Baz.
+    take foo baz jdoe 15 jdoe   Split the BBQ bill that John paid: 3 * 5.
+    deposit 5 jdoe              John deposits EUR 5.00 into his account.
+
+    4029764001807 give foo 0.25 .5 take baz 2 deposit 10 help 4029764001807 jdoe
+        John pays for a Club Mate, transfers 0.25 to Foo's account, donates
+        50 cents, steals 2.00 from Baz, deposits 10 euro, displays the
+        instructions, and pays for another Club Mate. John is elite, or drunk.
+
+    If you're unsure of the syntax, just type the command, press enter, and
+    read the instructions.
+END
+    return ['noop'];
+}
+
+sub now {
+    return strftime '%Y-%m-%d_%H:%M:%S', localtime;
+}
+
+sub parse_product {
+    my ($id) = @_;
+    my @products;
+    open my $fh, 'revbank.products' or die $!;
+    /\S/ && !/^\s*#/ and push @products, [split " ", $_, 3] while readline $fh;
+    close $fh;
+    chomp @$_ for @products;
+    for (@products) {
+        return [ 'product', -$_->[1], $_->[2] ] if $_->[0] eq $id;
+    }
+    return;
+}
+
+sub read_users {
+    my @users;
+    open my $fh, 'revbank.accounts' or die $!;
+    /\S/ and push @users, [split " "] while readline $fh;
+    close $fh;
+    return @users;
+}
+
+sub create_account {
+    my ($username) = @_;
+    open my $fh, '>>revbank.accounts' or die $!;
+    my $now = now();
+    print {$fh} "$username 0.00 $now\n" or die $!;
+    close $fh or die $!;
+}
+
+sub update_account {
+    my ($username, $delta) = @_;
+    open my $in,  'revbank.accounts' or die $!;
+    open my $out, ">.revbank.$$" or die $!;
+    my $old;
+    my $new;
+    while (defined (my $line = readline $in)) {
+        my @a = split " ", $line;
+        if (lc $a[0] eq lc $username) {
+            $old = $a[1];
+            $new = $old + $delta;
+            printf {$out} "%-16s %+9.2f %s",
+                $username, $new, now() or die $!;
+            print {$out} "\n" or die $!;
+        } else {
+            print {$out} $line or die $!;
+        }
+    }
+    close $out or die $!;
+    close $in;
+    rename ".revbank.$$", "revbank.accounts" or die $!;
+
+    my $sign = $delta >= 0 ? '+' : '-';
+    printf "Balance for %s: %+.2f %s %.2f = %+.2f %s\n",
+        $username, $old, $sign, abs($delta), $new,
+        ($new < -13.37 ? "\e[5;1m(!!)\e[0m" : "");
+}
+
+sub parse_user {
+    my ($id) = @_;
+    my @users = read_users;
+    for (@users) {
+        return [ 'user', 0, $id ] if lc $_->[0] eq lc $id;
+    }
+    return;
+}
+
+sub parse_amount {
+    my ($amount) = @_;
+    length $amount or return;
+    if ($amount =~ /^(-)?[0-9]*(?:[,.][0-9]{1,2})?$/) {
+        if ($1) {
+            print "For our sanity, no negative amounts, please :). $at\n";
+            next LINE;
+        }
+        $amount =~ s/,/./g;
+        if ($amount > 999) {
+            printf "Hm, EUR %.2f? Probably not. Unknown barcode? Enter price"
+                . " instead.\n\e[1;5m'%s' IGNORED!!\e[0m\n", $amount, $amount;
+            next ELEMENT;
+        }
+        return ['amount', 0 + $amount];
+    }
+    return;
+}
+
+sub parse_manual {
+    my ($amount) = @_;
+    my $p = parse_amount($amount) or return;
+    return ['payment', -$p->[1], "Withdrawal or unlisted product"];
+}
+
+sub parse_command {
+    my ($command, $line) = @_;
+    if ($command =~ /^(?:h|help|\?!?|wtf|omgwtfbbq)$/) {
+        return help();
+    } elsif ($command =~ /^(?:examples)$/) {
+        return examples();
+    } elsif ($command =~ /^(?:deposit)$/) {
+        return deposit($line);
+    } elsif ($command =~ /^(?:take|steal)$/) {
+        return take($line);
+    } elsif ($command =~ /^(?:give)$/) {
+        return give($line);
+    } elsif ($command =~ /^(?:undo)$/) {
+        return undo($line);
+    } elsif ($command =~ /^(?:ls|list)$/) {
+        return list();
+    } elsif ($command =~ /^(?:edit)$/) {
+        return edit();
+    }
+    return;
+}
+
+sub deposit {
+    my ($line) = @_;
+    my $p;
+    if (@$line and $p = parse_amount($line->[0])) {
+        shift @$line;
+        return [ 'deposit', +$p->[1], "Deposit" ];
+    } elsif (@$line) {
+        print "$line->[0]: Invalid amount. $at\n";
+        next LINE;
+    }
+    for (;;) {
+        my $input = prompt "Amount to deposit into your account: ";
+        if ($p = parse_amount($input)) {
+            my $amount = $p->[1];
+            return [ 'deposit', +$p->[1], "Deposit" ];
+        }
+        print "$input: Invalid amount. Type 'abort' to abort.\n";
+    }
+}
+
+sub give {
+    my ($line) = @_;
+    my $p;
+    my $user;
+    if (@$line and $p = parse_user($line->[0])) {
+        shift @$line;
+        $user = $p->[2];
+    } elsif (@$line) {
+        print "$line->[0]: Invalid user. $at\n";
+        next LINE;
+    }
+    if (not $user) {
+        for (;;) {
+            my $input = prompt "Benificiary: ";
+            if ($p = parse_user($input)) {
+                $user = $p->[2];
+                last;
+            }
+            print "$input: Invalid user. Type 'abort' to abort.\n";
+        }
+    }
+    my $amount;
+    if (@$line and $p = parse_amount($line->[0])) {
+        shift @$line;
+        $amount = $p->[1];
+    } elsif (@$line) {
+        print "$line->[0]: Invalid amount. $at\n";
+        next LINE;
+    }
+    if (not defined $amount) {
+        for (;;) {
+            my $input = prompt "Amount to give to $user: ";
+            if ($p = parse_amount($input)) {
+                $amount = $p->[1];
+                last;
+            }
+            print "$input: Invalid amount. Type 'abort' to abort.\n";
+        }
+    }
+    return [ 'transfer', -$amount, "Given to $user", [
+                [ $user, +$amount, "Received from %%%" ],
+    ] ];
+}
+
+sub take {
+    my ($line) = @_;
+    my $p;
+    my @users;
+    my $amount;
+    ELEMENT: while (@$line) {
+        if ($p = parse_user($line->[0])) {
+            shift @$line;
+            push @users, $p->[2];
+            next ELEMENT;
+        }
+        if ($p = parse_amount($line->[0])) {
+            shift @$line;
+            $amount = $p->[1];
+            last ELEMENT;
+        }
+        print "$line->[0]: Invalid user or amount. $at\n";
+        next LINE;
+    }
+    while (not @users or not defined $amount) {
+        PROMPT: for (;;) {
+            my $input = prompt
+                "User to take from, or total amount to finish: ";
+            if ($p = parse_user($input)) {
+                push @users, $p->[2];
+                next PROMPT;
+            }
+            if ($p = parse_amount($input)) {
+                $amount = $p->[1];
+                last PROMPT;
+            }
+            print "$input was not recognised as either an amount or a user.\n";
+        }
+    }
+    my $each = sprintf "%.2f", $amount / @users;
+    my $total = sprintf "%.2f", @users * $each;
+    if ($total != $amount) {
+        print "Adjusted total amount to $total because of rounding.\n";
+    }
+    my $x = @users > 1 ? 'each' : $users[0];
+    my $reason;
+    while (not $reason) {
+        $reason = prompt
+            "Why are you taking $each from $x? (e.g. 'bbq' or 'wok') ";
+    }
+    my $users = join "/", @users;
+    return [ 'transfer', +$total, "Taken from $users ($reason)", [
+        map [ $_, -$each, "Taken by %%% ($reason)" ], @users
+    ] ];
+}
+
+sub undo {
+    my ($line) = @_;
+    my $tid;
+    if (@$line and $line->[0] =~ /^[0-9]+$/) {
+        $tid = shift @$line;
+    }
+    until ($tid) {
+        $tid = prompt "Transaction ID to undo: ";
+    }
+    open my $in, ".revbank.undo" or die $!;
+    open my $out, ">.revbank.undo.$$" or die $!;
+    my $matches = 0;
+    while (defined(my $line = readline $in)) {
+        if ($line =~ /^$tid\s/) {
+            $matches++;
+            my (undef, $user, $delta) = split " ", $line;
+            update_account($user, $delta);
+        } else {
+            print {$out} $line;
+        }
+    }
+    close $in;
+    close $out or die $!;
+    if ($matches) {
+        rename ".revbank.undo.$$", ".revbank.undo" or die $!;
+        print "$matches account(s) affected by rollback.\n";
+    } else {
+        print "Transaction ID '$tid' not found in undo log.\n";
+    }
+    return ['noop'];
+}
+
+sub list {
+    system "sort -f revbank.accounts | grep -v ^# | more";
+    return ['noop'];
+}
+
+sub edit {
+    system "vim revbank.products";
+    return ['noop'];
+}
+
+sub number_of {
+    my ($type, @things) = @_;
+    my $counter = 0;
+    for (@things) {
+        $counter++ if $_->[0] eq $type;
+    }
+    return $counter;
+}
+
+sub transaction_sum {
+    return sum map $_->[1], @_;
+}
+
+sub todo2actions {
+    my ($user, @todo) = @_;
+    my %transactions;
+    for my $t (@todo) {
+        push @{ $transactions{$user} }, [ $t->[1], $t->[2] ];
+        for (@{ $t->[3] }) {
+            (my $desc = $_->[2]) =~ s/%%%/$user/g;
+            push @{ $transactions{$_->[0]} }, [ $_->[1], $desc ];
+        }
+    }
+    return %transactions;
+}
+
+sub summary {
+    my ($indent, $user, @todo) = @_;
+    $user ||= '-you-';
+    my %transactions = todo2actions($user, @todo);
+
+    my @users = sort keys %transactions;
+    for my $u (@users) {
+        my @tr = @{ $transactions{$u} };
+        for my $tr (@tr) {
+            printf(
+                "$indent %-16s %4s EUR %5.2f  # %s\n",
+                $u,
+                ($tr->[0] > 0 ? 'GAIN' : $tr->[0] < 0 ? 'LOSE' : ''),
+                abs($tr->[0]),
+                $tr->[1]
+            );
+        }
+        if (@tr > 1) {
+            my $sum = sum(map $_->[0], @tr);
+            printf(
+                "$indent %-16s %4s EUR %5.2f  TOTAL\n",
+                $u,
+                ($sum > 0 ? 'GAIN' : $sum < 0 ? 'LOSE' : ''),
+                abs($sum),
+            );
+        }
+    }
+}
+
+LINE: for (;;) {
+    my @todo = ();
+    print "\n";
+
+    my $user;
+    while (not $user) {
+        print "\n";
+        @todo = grep { $_->[0] ne 'noop' } @todo;
+        if (@todo) {
+            print "Preview:\n";
+            summary("    ", $user, @todo);
+            print "\nEnter username to pay or 'abort' to abort.\n"
+        }
+        my $line = prompt "Product ID, amount or command: ";
+        defined $line or exec $0;
+        my @line = split " ", $line;
+        ELEMENT: while (@line) {
+            my $element = shift @line;
+            my $p;
+
+            if ($p = parse_product($element)        ) { push @todo, $p; next; }
+            if ($p = parse_manual($element)         ) { push @todo, $p; next; }
+            if ($p = parse_command($element, \@line)) { push @todo, $p; next; }
+            if ($p = parse_user($element)) {
+                $user = $p->[2];
+                last;
+            }
+
+            my $deposit = grep { $_->[0] eq 'deposit' } @todo;
+            if ($deposit) {
+                print "Input '$element' not recognised.\n";
+                for (;;) {
+                    my $yesno = prompt "Add new account for user '$element'? ";
+                    if ($yesno =~ /^(?:y|yes)$/) {
+                        create_account($element);
+                        $user = $element;
+                        next ELEMENT;
+                    } elsif ($yesno =~ /^(?:n|no)$/) {
+                        last;
+                    }
+                    print "Please enter y, yes, n, or no.\n";
+                }
+            }
+            print "$element: No such product, user, or command. $at\n";
+            next LINE;
+        }
+        if (@line) {
+            print "Superfluous input (@line) after benificiary/remunerator "
+            . "($user). $at\n";
+            next LINE;
+        }
+    }
+    @todo = grep { $_->[0] ne 'noop' } @todo;
+    if (not @todo) {
+        print "Products/amounts/commands FIRST, username LAST. $at\n";
+        next LINE;
+    }
+
+    my $tid = time() - 1300000000;
+    print "/", "-" x 40, "\n";
+    print "| Final (transaction ID = $tid):\n";
+    summary("| ", $user, @todo);
+    print "\\", "-" x 40, "\n";
+
+    open my $ufh, '>>.revbank.undo' or die $!;
+    my %transactions = todo2actions($user, @todo);
+    for (sort keys %transactions) {
+        my $delta = sum map $_->[0], @{ $transactions{$_} };
+        print {$ufh} join " ", $tid, $_, -$delta, now(), "\n" or die $!;
+        my ($old, $new) = update_account($_, $delta);
+    }
+    close $ufh;
+
+    my $deposit = sum map $_->[1], grep { $_->[0] eq 'deposit' } @todo;
+    if ($deposit) {
+        printf "Don't forget to add EUR %.2f to the cash box!\n", $deposit;
+    }
+
+    sleep 1;  # Ensure new timestamp/id for new transaction
+}
