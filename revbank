@@ -124,8 +124,8 @@ sub now {
 }
 
 sub git_commit {
-    system qw(git commit -q revbank.accounts .revbank.undo),
-        -m => "Transaction by $user";
+    my ($message) = @_;
+    system qw(git commit -q revbank.accounts .revbank.undo), -m => $message;
     system qw(git push -q bar.git);
 }
 
@@ -147,7 +147,7 @@ sub read_users {
     open my $fh, 'revbank.accounts' or die $!;
     /\S/ and push @users, [split " "] while readline $fh;
     close $fh;
-    return map { lc($_->[0]) => $_ } @users;
+    return { map { lc($_->[0]) => $_ } @users };
 }
 
 sub create_account {
@@ -188,8 +188,8 @@ sub update_account {
 
 sub parse_user {
     my ($id) = @_;
-    my %users = read_users;
-    return [ 'user', 0, $users{lc $id}->[0] ] if exists $users{lc $id};
+    my $users = read_users;
+    return [ 'user', 0, $users->{lc $id}->[0] ] if exists $users->{lc $id};
 }
 
 sub parse_amount {
@@ -383,7 +383,7 @@ sub undo {
     } else {
         print "Transaction ID '$tid' not found in undo log.\n";
     }
-    git_commit();
+    git_commit("Transaction $tid undone.");
     return ['noop'];
 }
 
@@ -506,7 +506,7 @@ LINE: for (;;) {
     }
     @todo = grep { $_->[0] ne 'noop' } @todo;
     if (not @todo) {
-        printf "Balance for %s is %+.2f\n", $user, { read_users() }->{$user};
+        printf "Balance for %s is %+.2f\n", $user, read_users->{lc $user}->[1];
         print "NB: Products/amounts/commands FIRST, username LAST. $at\n";
         next LINE;
     }
@@ -526,7 +526,7 @@ LINE: for (;;) {
     }
     close $ufh;
 
-    git_commit();
+    git_commit("Transaction $tid by $user.");
 
     my $deposit = sum map $_->[1], grep { $_->[0] eq 'deposit' } @todo;
     if ($deposit) {
