@@ -526,6 +526,7 @@ LINE: for (;;) {
         my ($old, $new) = update_account($_, $delta);
     }
     close $ufh;
+
     git_commit();
 
     my $deposit = sum map $_->[1], grep { $_->[0] eq 'deposit' } @todo;
