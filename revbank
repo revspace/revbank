@@ -80,18 +80,18 @@ You can press <Enter> after each element to get a follow-up prompt, or separate
 individual elements with whitespace.
 
 Valid commands:
-    <productID>                 Look up product from database
-    <amount>                    Withdraw or enter price manually
-    <user>                      Pay with your account
-    deposit [<amount>]          [Create and] deposit into an account
-    give [<user>] [<amount>]    Transfer money to user's account
-    take [<users>] [<amount>]   Take money from users (equal parts)
-    list                        List accounts and balances
-    undo [<id>]                 Undo a certain transaction
-    help                        The stuff you're looking at right now :)
-    examples                    Show some usage examples
-    abort                       Abort the current transaction
-    edit                        Edit product list
+    <productID>                     Look up product from database
+    <amount>                        Withdraw or enter price manually
+    <account>                       [Pay with your account and] show balance
+    deposit [<amount>]              [Create and] deposit into an account
+    give [<account>] [<amount>]     Transfer money to user's account
+    take [<accounts>] [<amount>]    Take money from users (equal parts)
+    list                            List accounts and balances
+    undo [<id>]                     Undo a certain transaction
+    help                            The stuff you're looking at right now :)
+    examples                        Show some usage examples
+    abort                           Abort the current transaction
+    edit                            Edit product list
 END
     return ['noop'];
 }
