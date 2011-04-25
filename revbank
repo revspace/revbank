@@ -123,6 +123,11 @@ sub now {
     return strftime '%Y-%m-%d_%H:%M:%S', localtime;
 }
 
+sub git_commit {
+    system qw(git commit -q revbank.accounts .revbank.undo),
+        -m => "Transaction by $user";
+}
+
 sub parse_product {
     my ($id) = @_;
     my @products;
@@ -380,6 +385,7 @@ sub undo {
     } else {
         print "Transaction ID '$tid' not found in undo log.\n";
     }
+    git_commit();
     return ['noop'];
 }
 
@@ -520,6 +526,7 @@ LINE: for (;;) {
         my ($old, $new) = update_account($_, $delta);
     }
     close $ufh;
+    git_commit();
 
     my $deposit = sum map $_->[1], grep { $_->[0] eq 'deposit' } @todo;
     if ($deposit) {
