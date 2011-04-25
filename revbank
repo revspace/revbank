@@ -147,7 +147,7 @@ sub read_users {
     open my $fh, 'revbank.accounts' or die $!;
     /\S/ and push @users, [split " "] while readline $fh;
     close $fh;
-    return @users;
+    return map { lc($_->[0]) => $_ } @users;
 }
 
 sub create_account {
@@ -188,11 +188,8 @@ sub update_account {
 
 sub parse_user {
     my ($id) = @_;
-    my @users = read_users;
-    for (@users) {
-        return [ 'user', 0, $id ] if lc $_->[0] eq lc $id;
-    }
-    return;
+    my %users = read_users;
+    return [ 'user', 0, $users{lc $id}->[0] ] if exists $users{lc $id};
 }
 
 sub parse_amount {
@@ -509,7 +506,8 @@ LINE: for (;;) {
     }
     @todo = grep { $_->[0] ne 'noop' } @todo;
     if (not @todo) {
-        print "Products/amounts/commands FIRST, username LAST. $at\n";
+        printf "Balance for %s is %+.2f\n", $user, { read_users() }->{$user};
+        print "NB: Products/amounts/commands FIRST, username LAST. $at\n";
         next LINE;
     }
 
