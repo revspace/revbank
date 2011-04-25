@@ -126,6 +126,7 @@ sub now {
 sub git_commit {
     system qw(git commit -q revbank.accounts .revbank.undo),
         -m => "Transaction by $user";
+    system qw(git push -q bar.git);
 }
 
 sub parse_product {
