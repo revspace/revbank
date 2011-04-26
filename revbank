@@ -125,12 +125,8 @@ sub now {
 
 sub git_commit {
     my ($message) = @_;
-    open my $pipe, '-|', 
-        qw(git commit -q revbank.accounts .revbank.undo), -m => $message
-        or die $!;
-    1 while readline $pipe;  # /dev/null, maar dan anders
-    close $pipe;
-    system qw(git push -q bar.git);
+    system qw(git commit -q revbank.accounts .revbank.undo), -m => $message;
+    system "git push -q bar.git 2>&1 | grep -v 'Unpacking objects' >&2"
 }
 
 sub parse_product {
