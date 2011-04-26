@@ -125,7 +125,11 @@ sub now {
 
 sub git_commit {
     my ($message) = @_;
-    system qw(git commit -q revbank.accounts .revbank.undo), -m => $message;
+    open my $pipe, '-|', 
+        qw(git commit -q revbank.accounts .revbank.undo), -m => $message
+        or die $!;
+    1 while readline $pipe;  # /dev/null, maar dan anders
+    close $pipe;
     system qw(git push -q bar.git);
 }
 
