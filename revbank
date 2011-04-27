@@ -463,7 +463,7 @@ LINE: for (;;) {
         if (@todo) {
             print "Preview:\n";
             summary("    ", $user, @todo);
-            print "\nEnter username to pay or 'abort' to abort.\n"
+            print "\nEnter username to pay/finish or 'abort' to abort.\n"
         }
         my $line = prompt "Product ID, amount or command: ";
         defined $line or exec $0;
