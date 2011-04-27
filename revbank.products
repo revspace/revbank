@@ -1,3 +1,7 @@
+# After updating this file, please do run:
+#     git commit revbank.products -m products
+#     git push
+
 # Free stuff
 649241869825    0.00    Free disgusting stuff (LS)
 
