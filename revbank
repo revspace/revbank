@@ -181,7 +181,7 @@ sub update_account {
     rename ".revbank.$$", "revbank.accounts" or die $!;
 
     my $sign = $delta >= 0 ? '+' : '-';
-    printf "Balance for %s: %+.2f %s %.2f = %+.2f %s\n",
+    printf "New balance for %s: %+.2f %s %.2f = \e[1m%+.2f\e[0m %s\n",
         $username, $old, $sign, abs($delta), $new,
         ($new < -13.37 ? "\e[5;1m(!!)\e[0m" : "");
 }
@@ -506,7 +506,8 @@ LINE: for (;;) {
     }
     @todo = grep { $_->[0] ne 'noop' } @todo;
     if (not @todo) {
-        printf "Balance for %s is %+.2f\n", $user, read_users->{lc $user}->[1];
+        printf "Balance for %s is \e[1m%+.2f\e[0m\n",
+            $user, read_users->{lc $user}->[1];
         print "NB: Products/amounts/commands FIRST, username LAST. $at\n";
         next LINE;
     }
