@@ -87,6 +87,7 @@ Valid commands:
     give [<account>] [<amount>]     Transfer money to user's account
     take [<accounts>] [<amount>]    Take money from users (equal parts)
     list                            List accounts and balances
+    shame                           Display Hall of Shame (negative balances)
     undo [<id>]                     Undo a certain transaction
     help                            The stuff you're looking at right now :)
     examples                        Show some usage examples
@@ -232,6 +233,8 @@ sub parse_command {
         return undo($line);
     } elsif ($command =~ /^(?:ls|list)$/) {
         return list();
+    } elsif ($command =~ /^(?:shame)$/) {
+        return shame();
     } elsif ($command =~ /^(?:edit)$/) {
         return edit();
     }
@@ -388,6 +391,11 @@ sub undo {
 
 sub list {
     system "sort -f revbank.accounts | grep -v ^# | more";
+    return ['noop'];
+}
+
+sub shame {
+    system "sort -f revbank.accounts | grep -v ^# | grep -- ' -' | more";
     return ['noop'];
 }
 
