@@ -3,6 +3,8 @@ use strict;
 no warnings 'exiting';  # We'll exit subs with 'next'
 use POSIX qw(strftime);
 use List::Util qw(sum);
+require Term::ReadLine::Gnu;
+use Term::ReadLine;
 
 $SIG{INT} = 'IGNORE';
 
@@ -47,10 +49,26 @@ select *TEE;
 print "\e[0m\n\n\nWelcome to the RevBank Shell";
 
 my $at = "ABORTING TRANSACTION.";
+my $readline = Term::ReadLine->new($0);
+$readline->ornaments(0);
+
+# For tab completion
+my @commands = qw/
+    help wtf omgwtfbbq examples deposit take steal give undo
+    list ls edit restart
+/;
 
 sub prompt {
-    print "@_\e[1;4m";
-    my $input = readline *STDIN;
+    my ($prompt, $completions) = @_;
+    $completions ||= [];
+
+    my @matches;
+    $readline->Attribs->{completion_entry_function} = sub {
+        my ($word, $state) = @_;
+        @matches = grep /^\Q$word\E/i, @$completions if $state == 0;
+        return shift @matches;
+    };
+    my $input = $readline->readline($prompt. "\e[1;4m");
 
     logline(defined($input) ? $input : "\e[1;5mX\e[0m");
 
@@ -93,6 +111,7 @@ Valid commands:
     examples                        Show some usage examples
     abort                           Abort the current transaction
     edit                            Edit product list
+    restart                         Attempt to restart the revbank shell
 END
     return ['noop'];
 }
@@ -148,6 +167,10 @@ sub read_users {
     /\S/ and push @users, [split " "] while readline $fh;
     close $fh;
     return { map { lc($_->[0]) => $_ } @users };
+}
+
+sub users {
+    map $_->[0], values %{ read_users() }
 }
 
 sub create_account {
@@ -237,6 +260,9 @@ sub parse_command {
         return shame();
     } elsif ($command =~ /^(?:edit)$/) {
         return edit();
+    } elsif ($command =~ /^(?:restart)$/) {
+        exec $0;
+        die "exec() failed. You'll have to restart revbank yourself :P\n";
     }
     return;
 }
@@ -274,7 +300,7 @@ sub give {
     }
     if (not $user) {
         for (;;) {
-            my $input = prompt "Benificiary: ";
+            my $input = prompt "Benificiary: ", [ users() ];
             if ($p = parse_user($input)) {
                 $user = $p->[2];
                 last;
@@ -326,8 +352,10 @@ sub take {
     }
     while (not @users or not defined $amount) {
         PROMPT: for (;;) {
-            my $input = prompt
-                "User to take from, or total amount to finish: ";
+            my $input = prompt(
+                "User to take from, or total amount to finish: ",
+                [ users() ]
+            );
             if ($p = parse_user($input)) {
                 push @users, $p->[2];
                 next PROMPT;
@@ -472,7 +500,10 @@ LINE: for (;;) {
             summary("    ", $user, @todo);
             print "\nEnter username to pay/finish or 'abort' to abort.\n"
         }
-        my $line = prompt "Product ID, amount or command: ";
+        my $line = prompt(
+            "Product ID, amount or command: ",
+            [ @commands, users() ]
+        );
         defined $line or exec $0;
         my @line = split " ", $line;
         ELEMENT: while (@line) {
