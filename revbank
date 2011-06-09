@@ -78,12 +78,10 @@ sub prompt {
     print "\e[0m";
     defined $input or return;
 
-    # Clean up backspaces... TODO: fix terminal :)
-    $input =~ s/^\cH+//;
-    $input =~ s/.\cH// while $input =~ /.\cH/;
-    $input =~ s/^\cH+//;
+    $input =~ s/^\s+//;  # trim leading whitespace
+    $input =~ s/\s+$//;  # trim trailing whitespace
 
-    if ($input =~ /^\s*abort\s*$/i) {
+    if ($input =~ /^abort$/i) {
         print "$at\n";
         next LINE;  # Whoa, scary out-of-scope jump! But it works :)
     }
@@ -355,7 +353,8 @@ sub take {
     while (not @users or not defined $amount) {
         PROMPT: for (;;) {
             my $input = prompt(
-                "User to take from, or total amount to finish: ",
+                "User to take from"
+                . (@users ? ", or total amount to finish: " : ": "),
                 [ users() ]
             );
             if ($p = parse_user($input)) {
