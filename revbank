@@ -21,7 +21,7 @@ $SIG{INT} = 'IGNORE';
 
 # Likewise, things might go wrong if you run multiple instances of revbank...
 
-sub logline {
+sub printlog {
     open my $fh, ">>.revbank.log";
     my $x = join "", @_;
     $x =~ s/\n/POSIX::strftime("\n%Y%m%d%H%M%S ", localtime)/ge;
@@ -36,7 +36,7 @@ sub logline {
         shift;
         local $| = 1;
         print {*STDOUT} @_;
-        main::logline(@_);
+        main::printlog(@_);
     }
     sub PRINTF {
         shift->PRINT(sprintf(shift, @_));
@@ -70,9 +70,9 @@ sub prompt {
     };
     my $input = $readline->readline($prompt);
 
-    logline($prompt);
-    logline(defined($input) ? $input : "\e[1;5mX\e[0m");
-    logline("\n");
+    printlog($prompt);
+    printlog(defined($input) ? $input : "\e[1;5mX\e[0m");
+    printlog("\n");
 
     print "\e[0m";
     defined $input or return;
