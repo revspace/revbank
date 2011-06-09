@@ -50,7 +50,7 @@ print "\e[0m\n\n\nWelcome to the RevBank Shell";
 
 my $at = "ABORTING TRANSACTION.";
 my $readline = Term::ReadLine->new($0);
-$readline->ornaments(0);
+$readline->ornaments('me,md,,');
 
 # For tab completion
 my @commands = qw/
@@ -68,13 +68,14 @@ sub prompt {
         @matches = grep /^\Q$word\E/i, @$completions if $state == 0;
         return shift @matches;
     };
-    my $input = $readline->readline($prompt. "\e[1;4m");
+    my $input = $readline->readline($prompt);
 
+    logline($prompt);
     logline(defined($input) ? $input : "\e[1;5mX\e[0m");
+    logline("\n");
 
     print "\e[0m";
     defined $input or return;
-    chomp $input;
 
     # Clean up backspaces... TODO: fix terminal :)
     $input =~ s/^\cH+//;
