@@ -48,7 +48,7 @@ select *TEE;
 
 print "\e[0m\n\n\nWelcome to the RevBank Shell";
 
-my $at = "ABORTING TRANSACTION.";
+my $at = "\e[1;4mABORTING TRANSACTION.\e[0m";
 my $readline = Term::ReadLine->new($0);
 $readline->ornaments('me,md,,');
 
