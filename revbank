@@ -61,6 +61,7 @@ my @commands = qw/
 sub prompt {
     my ($prompt, $completions) = @_;
     $completions ||= [];
+    push @$completions, 'abort';
 
     my @matches;
     $readline->Attribs->{completion_entry_function} = sub {
@@ -82,7 +83,7 @@ sub prompt {
     $input =~ s/.\cH// while $input =~ /.\cH/;
     $input =~ s/^\cH+//;
 
-    if ($input =~ /^abort$/) {
+    if ($input =~ /^\s*abort\s*$/i) {
         print "$at\n";
         next LINE;  # Whoa, scary out-of-scope jump! But it works :)
     }
@@ -243,25 +244,25 @@ sub parse_manual {
 
 sub parse_command {
     my ($command, $line) = @_;
-    if ($command =~ /^(?:h|help|\?!?|wtf|omgwtfbbq)$/) {
+    if ($command =~ /^(?:h|help|\?!?|wtf|omgwtfbbq)$/i) {
         return help();
-    } elsif ($command =~ /^(?:examples)$/) {
+    } elsif ($command =~ /^(?:examples)$/i) {
         return examples();
-    } elsif ($command =~ /^(?:deposit)$/) {
+    } elsif ($command =~ /^(?:deposit)$/i) {
         return deposit($line);
-    } elsif ($command =~ /^(?:take|steal)$/) {
+    } elsif ($command =~ /^(?:take|steal)$/i) {
         return take($line);
-    } elsif ($command =~ /^(?:give)$/) {
+    } elsif ($command =~ /^(?:give)$/i) {
         return give($line);
-    } elsif ($command =~ /^(?:undo)$/) {
+    } elsif ($command =~ /^(?:undo)$/i) {
         return undo($line);
-    } elsif ($command =~ /^(?:ls|list)$/) {
+    } elsif ($command =~ /^(?:ls|list)$/i) {
         return list();
-    } elsif ($command =~ /^(?:shame)$/) {
+    } elsif ($command =~ /^(?:shame)$/i) {
         return shame();
-    } elsif ($command =~ /^(?:edit)$/) {
+    } elsif ($command =~ /^(?:edit)$/i) {
         return edit();
-    } elsif ($command =~ /^(?:restart)$/) {
+    } elsif ($command =~ /^(?:restart)$/i) {
         exec $0;
         die "exec() failed. You'll have to restart revbank yourself :P\n";
     }
