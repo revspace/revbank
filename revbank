@@ -524,7 +524,10 @@ LINE: for (;;) {
             if ($deposit) {
                 print "Input '$element' not recognised.\n";
                 for (;;) {
-                    my $yesno = prompt "Add new account for user '$element'? ";
+                    my $yesno = prompt(
+                        "Add new account for user '$element'? ",
+                        [ qw/yes no/ ]  # tab completion ;)
+                    );
                     if ($yesno =~ /^(?:y|yes)$/) {
                         create_account($element);
                         $user = $element;
