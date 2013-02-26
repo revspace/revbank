@@ -5,7 +5,8 @@ HELP "<amount>" => "Withdraw or enter price manually";
 sub command {
     my ($self, $cart, $command) = @_;
 
-    my $amount = parse_amount($command) or return NEXT;
+    my $amount = parse_amount($command);
+    defined $amount or return NEXT;
 
     $cart->add(undef, -$amount, "Withdrawal or unlisted product");
 
