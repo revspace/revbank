@@ -1,3 +1,5 @@
+#!perl
+
 HELP "<productID>" => "Look up products from database";
 HELP "edit" => "Edit product list";
 

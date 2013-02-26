@@ -1,3 +1,5 @@
+#!perl
+
 HELP "<account>" => "[Pay with your account and] show balance";
 HELP "list" => "List accounts and balances";
 HELP "shame" => "Display Hall of Shame (negative balances)";

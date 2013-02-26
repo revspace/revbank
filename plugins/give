@@ -1,3 +1,5 @@
+#!perl
+
 HELP "give [<account> [<amount>]]" => "Transfer money to user's account";
 
 sub command :Tab(give) {

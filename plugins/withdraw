@@ -1,3 +1,5 @@
+#!perl
+
 HELP "<amount>" => "Withdraw or enter price manually";
 
 sub command {

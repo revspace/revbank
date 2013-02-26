@@ -1,3 +1,5 @@
+#!perl
+
 HELP "restart" => "Attempt to restart the RevBank shell";
 
 sub command :Tab(restart) {

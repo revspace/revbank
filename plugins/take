@@ -1,3 +1,5 @@
+#!perl
+
 HELP "take [<accounts> [<amount>]]" => "Take money from users (equal parts)";
 
 sub command :Tab(take,steal) {

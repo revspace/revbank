@@ -1,3 +1,5 @@
+#!perl
+
 HELP "undo [<id>]" => "Undo a certain transaction";
 
 my $filename = ".revbank.undo";

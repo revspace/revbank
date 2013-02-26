@@ -1,3 +1,5 @@
+#!perl
+
 HELP "help" => "The stuff you're looking at right now :)";
 
 use List::Util qw(max);

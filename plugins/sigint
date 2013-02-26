@@ -1,3 +1,5 @@
+#!perl
+
 sub command { NEXT }
 
 $SIG{INT} = 'IGNORE';

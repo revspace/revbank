@@ -1,3 +1,5 @@
+#!perl
+
 sub command { NEXT }
 
 my $filename = ".revbank.log";
