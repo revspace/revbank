@@ -1,8 +1,4 @@
-# After updating this file, please do run:
-#     git commit revbank.products -m products
-#     git push
-
-### THIS IS THE EXAMPLE FILE; DON'T ADD PRODUCTS ###
+### THIS IS THE EXAMPLE FILE; DON'T ADD PRODUCTS, BUT MAKE A NEW FILE ###
 
 
 # Empty lines and lines beginning with # are ignored.
