@@ -16,7 +16,7 @@ sub benedinges :Tab(USERS) {
     $self->{user} = parse_user($input)
         or return REJECT, "$input: No such user.";
 
-    return "Amount to give to $input", \&amount;
+    return "Amount to give to $self->{user}", \&amount;
 }
 
 sub amount {
