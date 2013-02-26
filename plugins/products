@@ -9,7 +9,7 @@ sub command :Tab(edit) {
     my ($self, $cart, $command) = @_;
 
     if ($command eq 'edit') {
-        system $ENV{EDITOR}, $filename;
+        system $ENV{EDITOR} || 'vi', $filename;
         return ACCEPT;
     }
 
