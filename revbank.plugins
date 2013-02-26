@@ -9,6 +9,7 @@ help
 undo
 give
 take
+#nyan      # fun, but not compatible with dumb terminals
 
 # Then, plugins that apply heuristics
 
