@@ -38,7 +38,7 @@ sub list {
 }
 
 sub shame {
-    system "sort -f revbank.accounts | grep -v ^# | grep -- ' .-' | more";
+    system "sort -k2 -n revbank.accounts | grep -v ^# | grep -- ' -' | perl -pe's/( -[\\d.]+)/\\e[31;1m\$1\\e[0m/' | more";
     return ACCEPT;
 }
 
