@@ -1,0 +1,35 @@
+#!perl
+
+HELP "market" => "Edit market list";
+
+my $filename = 'revbank.market';
+
+sub command :Tab(market) {
+    my ($self, $cart, $command) = @_;
+
+    if ($command eq 'market') {
+        system $ENV{EDITOR} || 'vi', $filename;
+        return ACCEPT;
+    }
+
+    my @products;
+
+    open my $fh, '<', $filename or die $!;
+    /\S/ && !/^\s*#/ and push @products, [split " ", $_, 5] while readline $fh;
+    chomp @$_ for @products;
+
+    for my $fields (@products) {
+        my ($username, $id, $seller, $space, $description) = @$fields;
+
+        next if $command ne $id;
+        next if $space  < 0;
+        next if $seller < 0;
+
+        $cart->add(undef, -($seller + $space), $description);
+        $cart->add($username, 0+$seller, "\$you bought $description")
+            if 0+$seller;
+        return ACCEPT;
+    }
+
+    return NEXT;
+}
