@@ -23,6 +23,7 @@ sub hook_plugin_fail {
 
 sub hook_cart_changed {
     my ($class, $cart) = @_;
+    $cart->size or return;
     $cart->display("    ");
     say "Enter username to pay/finish or 'abort' to abort.\n";
 }
