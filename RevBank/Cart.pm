@@ -4,7 +4,7 @@ use Carp ();
 use List::Util ();
 use RevBank::Global;
 
-# Some code is written with the assumption that the card will only grow or
+# Some code is written with the assumption that the cart will only grow or
 # be emptied. Changing existing stuff or removing items is probably not a
 # good idea, and may lead to inconsistency.
 
