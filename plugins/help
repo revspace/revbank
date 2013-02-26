@@ -1,0 +1,25 @@
+HELP "help" => "The stuff you're looking at right now :)";
+
+use List::Util qw(max);
+
+sub command :Tab(help,wtf,omgwtfbbq) {
+    my ($self, $cart, $command) = @_;
+
+    return NEXT if $command !~ /^(?:help|wtf|omgwtfbbq)$/;
+
+    say <<END;
+
+1. Enter products, amounts or commands
+2. Enter your name
+
+You can press <Enter> after each element to get a follow-up prompt, or separate
+individual elements with whitespace.
+
+Valid commands:
+END
+
+    my $width = max(map length, keys %::HELP);
+    say sprintf "  %-${width}s  %s", $_, $::HELP{$_} for sort keys %::HELP;
+
+    return ACCEPT;
+}

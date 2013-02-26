@@ -1,0 +1,28 @@
+HELP "<productID>" => "Look up products from database";
+HELP "edit" => "Edit product list";
+
+my $filename = 'revbank.products';
+
+sub command :Tab(edit) {
+    my ($self, $cart, $command) = @_;
+
+    if ($command eq 'edit') {
+        system $ENV{EDITOR}, $filename;
+        return ACCEPT;
+    }
+
+    my @products;
+
+    open my $fh, '<', $filename or die $!;
+    /\S/ && !/^\s*#/ and push @products, [split " ", $_, 3] while readline $fh;
+    chomp @$_ for @products;
+
+    for my $fields (@products) {
+        next if $command ne $fields->[0];
+
+        $cart->add(undef, - $fields->[1], $fields->[2]);
+        return ACCEPT;
+    }
+
+    return NEXT;
+}

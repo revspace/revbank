@@ -1,0 +1,48 @@
+HELP "<account>" => "[Pay with your account and] show balance";
+HELP "list" => "List accounts and balances";
+HELP "shame" => "Display Hall of Shame (negative balances)";
+
+sub command :Tab(list,ls,shame,USERS) {
+    my ($self, $cart, $command) = @_;
+
+    return $self->list  if $command eq 'list';
+    return $self->list  if $command eq 'ls';
+    return $self->shame if $command eq 'shame';
+
+    my $user = parse_user($command)
+        or return NEXT;
+
+    return $self->balance($user) if not $cart->size;
+
+    $cart->checkout($user);
+
+    return ACCEPT;
+}
+
+sub hook_checkout {
+    my ($class, $cart, $user, $transaction_id) = @_;
+
+    my $line = "-" x 40;
+
+    say "/$line";
+    say "| Final (transaction ID = $transaction_id):";
+    $cart->display("| ");
+    say "\\$line";
+}
+
+sub list {
+    system "sort -f revbank.accounts | grep -v ^# | more";
+    return ACCEPT;
+}
+
+sub shame {
+    system "sort -f revbank.accounts | grep -v ^# | grep -- ' .-' | more";
+    return ACCEPT;
+}
+
+sub balance {
+    my ($self, $u) = @_;
+    printf "Balance for $u is \e[1m%+.2f\e[0m\n", RevBank::Users::balance($u);
+    say "NB: Products/amounts/commands FIRST, username LAST.";
+    return ABORT;
+}

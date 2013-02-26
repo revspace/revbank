@@ -1,0 +1,46 @@
+HELP "undo [<id>]" => "Undo a certain transaction";
+
+my $filename = ".revbank.undo";
+
+sub command :Tab(undo) {
+    my ($self, $cart, $command) = @_;
+
+    $command eq 'undo' or return NEXT;
+
+    $cart->size and return ABORT, "Undo is not available mid-transaction.";
+
+    return "Transaction ID", \&undo;
+}
+
+sub undo {
+    my ($self, $cart, $tid) = @_;
+
+    open my $in,  '<', $filename or die "$filename: $!";
+    open my $out, '>', "$filename.$$" or die "$filename.$$: $!";
+    while (defined(my $line = readline $in)) {
+        if ($line =~ /^$tid\s/) {
+            my (undef, $user, $delta) = split " ", $line;
+            $cart->add($user, $delta, "Undo $tid");
+        } else {
+            print {$out} $line;
+        }
+    }
+    close $in;
+    close $out or die $!;
+    if ($cart->size) {
+        rename "$filename.$$", $filename or die $!;
+        $cart->checkout();
+    } else {
+        return ABORT, "Transaction ID '$tid' not found in undo log.";
+    }
+
+    return ACCEPT;
+}
+
+sub hook_user_balance {
+    my ($class, $username, $old, $delta, $new, $transaction_id) = @_;
+
+    open my $fh, '>>', $filename or die "$filename: $!";
+    print {$fh} join " ", $transaction_id, $username, -$delta, now(), "\n";
+    close $fh or die "$filename: $!";
+}

@@ -1,0 +1,25 @@
+HELP "restart" => "Attempt to restart the RevBank shell";
+
+sub command :Tab(restart) {
+    my ($self, $cart, $command) = @_;
+
+    return NEXT if $command ne 'restart';
+
+    no warnings;
+    call_hooks("restart_exec");
+    exec $0;
+    call_hooks("restart_survived");
+
+    return ABORT, "exec() failed. You'll have to restart revbank yourself :P";
+}
+
+sub hook_input {
+    my ($self, $cart, $input, $split_input) = @_;
+
+    return if defined $input;
+
+    no warnings;
+    call_hooks("restart_restart");
+    exec $0;
+    call_hooks("restart_survived");
+}

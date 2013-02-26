@@ -1,79 +1,38 @@
 #!/usr/bin/perl -w
+
 use strict;
-no warnings 'exiting';  # We'll exit subs with 'next'
-use POSIX qw(strftime);
-use List::Util qw(sum);
-require Term::ReadLine::Gnu;
+use attributes;
 use Term::ReadLine;
+use List::Util ();
+use RevBank::Plugins;
+use RevBank::Global;
+use RevBank::Messages;
+use RevBank::Cart;
+require Term::ReadLine::Gnu;  # The other one sucks.
 
-$SIG{INT} = 'IGNORE';
+our $VERSION = "2.0";
+our %HELP = (
+    "abort" => "Abort the current transaction",
+);
 
-# If you don't like the code, just rewrite it, but do keep all functionality
-# around, please.
+$| = 1;
 
-# The user interface is based on supermarkets: first all products are scanned,
-# and then the user pays. In our case, "paying" is done simply by entering
-# an account name. No authentication...
-
-# Although the text files are reloaded all the time, it's probably not a good
-# idea to edit them while someone else is using the bank script. They are,
-# however, human readable and editable.
-
-# Likewise, things might go wrong if you run multiple instances of revbank...
-
-sub printlog {
-    open my $fh, ">>.revbank.log";
-    my $x = join "", @_;
-    $x =~ s/\n/POSIX::strftime("\n%Y%m%d%H%M%S ", localtime)/ge;
-    print {$fh} $x;
-    close $fh;
-}
-
-{
-    package Tee;
-    use base 'Tie::StdHandle';
-    sub PRINT {
-        shift;
-        local $| = 1;
-        print {*STDOUT} @_;
-        main::printlog(@_);
-    }
-    sub PRINTF {
-        shift->PRINT(sprintf(shift, @_));
-    }
-}
-
-tie *TEE, 'Tee';
-select *TEE;
-
-print "\e[0m\n\n\nWelcome to the RevBank Shell";
-
-my $at = "\e[1;4mABORTING TRANSACTION.\e[0m";
 my $readline = Term::ReadLine->new($0);
 $readline->ornaments('me,md,,');
 
-# For tab completion
-my @commands = qw/
-    help wtf omgwtfbbq examples deposit take steal give undo
-    list ls edit restart
-/;
-
 sub prompt {
-    my ($prompt, $completions) = @_;
-    $completions ||= [];
-    push @$completions, 'abort';
+    my ($prompt, @completions) = @_;
+
+    $prompt =~ s/$/: /;
+    $prompt =~ s/\?: $/? /;
 
     my @matches;
     $readline->Attribs->{completion_entry_function} = sub {
         my ($word, $state) = @_;
-        @matches = grep /^\Q$word\E/i, @$completions if $state == 0;
+        @matches = grep /^\Q$word\E/i, @completions if $state == 0;
         return shift @matches;
     };
     my $input = $readline->readline($prompt);
-
-    printlog($prompt);
-    printlog(defined($input) ? $input : "\e[1;5mX\e[0m");
-    printlog("\n");
 
     print "\e[0m";
     defined $input or return;
@@ -81,500 +40,138 @@ sub prompt {
     $input =~ s/^\s+//;  # trim leading whitespace
     $input =~ s/\s+$//;  # trim trailing whitespace
 
-    if ($input =~ /^abort$/i) {
-        print "$at\n";
-        next LINE;  # Whoa, scary out-of-scope jump! But it works :)
+    return $input;
+}
+
+RevBank::Plugins->load;
+
+call_hooks("startup");
+
+my $cart = RevBank::Cart->new;
+my $old_cart_size = 0;
+
+my @words;
+
+OUTER: for (;;) {
+    print "\n" if not @words;
+
+    if (not @words and $cart->size != $old_cart_size) {
+        call_hooks("cart_changed", $cart);
+        $old_cart_size = $cart->size;
     }
-    return $input
-}
 
-sub help {
-    print <<END;
+    my $split_input = 1;
+    my $prompt = "Product ID, amount or command";
+    my @plugins = RevBank::Plugins->new;
+    my $method = "command";
 
-1. Enter products, amounts or commands
-2. Enter your name
-
-You can press <Enter> after each element to get a follow-up prompt, or separate
-individual elements with whitespace.
-
-Valid commands:
-    <productID>                     Look up product from database
-    <amount>                        Withdraw or enter price manually
-    <account>                       [Pay with your account and] show balance
-    deposit [<amount>]              [Create and] deposit into an account
-    give [<account>] [<amount>]     Transfer money to user's account
-    take [<accounts>] [<amount>]    Take money from users (equal parts)
-    list                            List accounts and balances
-    shame                           Display Hall of Shame (negative balances)
-    undo [<id>]                     Undo a certain transaction
-    help                            The stuff you're looking at right now :)
-    examples                        Show some usage examples
-    abort                           Abort the current transaction
-    edit                            Edit product list
-    restart                         Attempt to restart the revbank shell
-END
-    return ['noop'];
-}
-
-sub examples {
-    print <<END;
-Examples:
-    4029764001807 jdoe          John pays for one Club Mate.
-    5 jdoe                      John withdraws EUR 5.00.
-    .1 4029764001807 jdoe       John pays 10 cents and one Club Mate.
-    give 2.50 foo jdoe          John gives Foo EUR 2.50.
-    take 1 foo jdoe             Jonh takes EUR 1.00 from Foo.
-    take foo baz 15 jdoe        John takes 7.50 from Foo and 7.50 from Baz.
-    take foo baz jdoe 15 jdoe   Split the BBQ bill that John paid: 3 * 5.
-    deposit 5 jdoe              John deposits EUR 5.00 into his account.
-
-    4029764001807 give foo 0.25 .5 take baz 2 deposit 10 help 4029764001807 jdoe
-        John pays for a Club Mate, transfers 0.25 to Foo's account, donates
-        50 cents, steals 2.00 from Baz, deposits 10 euro, displays the
-        instructions, and pays for another Club Mate. John is elite, or drunk.
-
-    If you're unsure of the syntax, just type the command, press enter, and
-    read the instructions.
-END
-    return ['noop'];
-}
-
-sub now {
-    return strftime '%Y-%m-%d_%H:%M:%S', localtime;
-}
-
-sub git_commit {
-    my ($message) = @_;
-    system qw(git commit -q revbank.accounts .revbank.undo), -m => $message;
-}
-
-sub parse_product {
-    my ($id) = @_;
-    my @products;
-    open my $fh, 'revbank.products' or die $!;
-    /\S/ && !/^\s*#/ and push @products, [split " ", $_, 3] while readline $fh;
-    close $fh;
-    chomp @$_ for @products;
-    for (@products) {
-        return [ 'product', -$_->[1], $_->[2] ] if $_->[0] eq $id;
+    sub abort {
+        print @_, " " if @_;
+        @words = ();
+        call_hooks "abort", $cart;
+        $cart->empty;
+        { no warnings; redo OUTER; }
     }
-    return;
-}
 
-sub read_users {
-    my @users;
-    open my $fh, 'revbank.accounts' or die $!;
-    /\S/ and push @users, [split " "] while readline $fh;
-    close $fh;
-    return { map { lc($_->[0]) => $_ } @users };
-}
+    PROMPT: {
+        if (not @words) {
+            call_hooks "prompt", $cart, $prompt;
 
-sub users {
-    map $_->[0], values %{ read_users() }
-}
-
-sub create_account {
-    my ($username) = @_;
-    open my $fh, '>>revbank.accounts' or die $!;
-    my $now = now();
-    print {$fh} "$username 0.00 $now\n" or die $!;
-    close $fh or die $!;
-}
-
-sub update_account {
-    my ($username, $delta) = @_;
-    open my $in,  'revbank.accounts' or die $!;
-    open my $out, ">.revbank.$$" or die $!;
-    my $old;
-    my $new;
-    while (defined (my $line = readline $in)) {
-        my @a = split " ", $line;
-        if (lc $a[0] eq lc $username) {
-            $old = $a[1];
-            $new = $old + $delta;
-            printf {$out} "%-16s %+9.2f %s",
-                $username, $new, now() or die $!;
-            print {$out} "\n" or die $!;
-        } else {
-            print {$out} $line or die $!;
-        }
-    }
-    close $out or die $!;
-    close $in;
-    rename ".revbank.$$", "revbank.accounts" or die $!;
-
-    my $sign = $delta >= 0 ? '+' : '-';
-    printf "New balance for %s: %+.2f %s %.2f = \e[1m%+.2f\e[0m %s\n",
-        $username, $old, $sign, abs($delta), $new,
-        ($new < -13.37 ? "\e[5;1m(!!)\e[0m" : "");
-}
-
-sub parse_user {
-    my ($id) = @_;
-    my $users = read_users;
-    return [ 'user', 0, $users->{lc $id}->[0] ] if exists $users->{lc $id};
-}
-
-sub parse_amount {
-    my ($amount) = @_;
-    length $amount or return;
-    if ($amount =~ /^(-)?[0-9]*(?:[,.][0-9]{1,2})?$/) {
-        if ($1) {
-            print "For our sanity, no negative amounts, please :). $at\n";
-            next LINE;
-        }
-        $amount =~ s/,/./g;
-        if ($amount > 999) {
-            printf "Hm, EUR %.2f? Probably not. Unknown barcode? Enter price"
-                . " instead.\n\e[1;5m'%s' IGNORED!!\e[0m\n", $amount, $amount;
-            next ELEMENT;
-        }
-        return ['amount', 0 + $amount];
-    }
-    return;
-}
-
-sub parse_manual {
-    my ($amount) = @_;
-    my $p = parse_amount($amount) or return;
-    return ['payment', -$p->[1], "Withdrawal or unlisted product"];
-}
-
-sub parse_command {
-    my ($command, $line) = @_;
-    if ($command =~ /^(?:h|help|\?!?|wtf|omgwtfbbq)$/i) {
-        return help();
-    } elsif ($command =~ /^(?:examples)$/i) {
-        return examples();
-    } elsif ($command =~ /^(?:deposit)$/i) {
-        return deposit($line);
-    } elsif ($command =~ /^(?:take|steal)$/i) {
-        return take($line);
-    } elsif ($command =~ /^(?:give)$/i) {
-        return give($line);
-    } elsif ($command =~ /^(?:undo)$/i) {
-        return undo($line);
-    } elsif ($command =~ /^(?:ls|list)$/i) {
-        return list();
-    } elsif ($command =~ /^(?:shame)$/i) {
-        return shame();
-    } elsif ($command =~ /^(?:edit)$/i) {
-        return edit();
-    } elsif ($command =~ /^(?:restart)$/i) {
-        exec $0;
-        die "exec() failed. You'll have to restart revbank yourself :P\n";
-    }
-    return;
-}
-
-sub deposit {
-    my ($line) = @_;
-    my $p;
-    if (@$line and $p = parse_amount($line->[0])) {
-        shift @$line;
-        return [ 'deposit', +$p->[1], "Deposit" ];
-    } elsif (@$line) {
-        print "$line->[0]: Invalid amount. $at\n";
-        next LINE;
-    }
-    for (;;) {
-        my $input = prompt "Amount to deposit into your account: ";
-        if ($p = parse_amount($input)) {
-            my $amount = $p->[1];
-            return [ 'deposit', +$p->[1], "Deposit" ];
-        }
-        print "$input: Invalid amount. Type 'abort' to abort.\n";
-    }
-}
-
-sub give {
-    my ($line) = @_;
-    my $p;
-    my $user;
-    if (@$line and $p = parse_user($line->[0])) {
-        shift @$line;
-        $user = $p->[2];
-    } elsif (@$line) {
-        print "$line->[0]: Invalid user. $at\n";
-        next LINE;
-    }
-    if (not $user) {
-        for (;;) {
-            my $input = prompt "Benificiary: ", [ users() ];
-            if ($p = parse_user($input)) {
-                $user = $p->[2];
-                last;
+            my %completions = qw(abort 1);
+            for (@plugins) {
+                my $attr = attributes::get(
+                    ref $method ? $method : $_->can($method)
+                ) or next;
+                my ($tab) = $attr =~ /Tab \( (.*?) \)/x;
+                $completions{$_}++ for split /\s*,\s*/, $tab;
             }
-            print "$input: Invalid user. Type 'abort' to abort.\n";
-        }
-    }
-    my $amount;
-    if (@$line and $p = parse_amount($line->[0])) {
-        shift @$line;
-        $amount = $p->[1];
-    } elsif (@$line) {
-        print "$line->[0]: Invalid amount. $at\n";
-        next LINE;
-    }
-    if (not defined $amount) {
-        for (;;) {
-            my $input = prompt "Amount to give to $user: ";
-            if ($p = parse_amount($input)) {
-                $amount = $p->[1];
-                last;
+            if (delete $completions{USERS}) {
+                $completions{$_}++ for RevBank::Users::names;
             }
-            print "$input: Invalid amount. Type 'abort' to abort.\n";
-        }
-    }
-    return [ 'transfer', -$amount, "Given to $user", [
-                [ $user, +$amount, "Received from %%%" ],
-    ] ];
-}
-
-sub take {
-    my ($line) = @_;
-    my $p;
-    my @users;
-    my $amount;
-    ELEMENT: while (@$line) {
-        if ($p = parse_user($line->[0])) {
-            shift @$line;
-            push @users, $p->[2];
-            next ELEMENT;
-        }
-        if ($p = parse_amount($line->[0])) {
-            shift @$line;
-            $amount = $p->[1];
-            last ELEMENT;
-        }
-        print "$line->[0]: Invalid user or amount. $at\n";
-        next LINE;
-    }
-    while (not @users or not defined $amount) {
-        PROMPT: for (;;) {
-            my $input = prompt(
-                "User to take from"
-                . (@users ? ", or total amount to finish: " : ": "),
-                [ users() ]
-            );
-            if ($p = parse_user($input)) {
-                push @users, $p->[2];
-                next PROMPT;
-            }
-            if ($p = parse_amount($input)) {
-                $amount = $p->[1];
-                last PROMPT;
-            }
-            print "$input was not recognised as either an amount or a user.\n";
-        }
-    }
-    my $each = sprintf "%.2f", $amount / @users;
-    my $total = sprintf "%.2f", @users * $each;
-    if ($total != $amount) {
-        print "Adjusted total amount to $total because of rounding.\n";
-    }
-    my $x = @users > 1 ? 'each' : $users[0];
-    my $reason;
-    while (not $reason) {
-        $reason = prompt
-            "Why are you taking $each from $x? (e.g. 'bbq' or 'wok') ";
-    }
-    my $users = join "/", @users;
-    return [ 'transfer', +$total, "Taken from $users ($reason)", [
-        map [ $_, -$each, "Taken by %%% ($reason)" ], @users
-    ] ];
-}
-
-sub undo {
-    my ($line) = @_;
-    my $tid;
-    if (@$line and $line->[0] =~ /^[0-9]+$/) {
-        $tid = shift @$line;
-    }
-    until ($tid) {
-        $tid = prompt "Transaction ID to undo: ";
-    }
-    open my $in, ".revbank.undo" or die $!;
-    open my $out, ">.revbank.undo.$$" or die $!;
-    my $matches = 0;
-    while (defined(my $line = readline $in)) {
-        if ($line =~ /^$tid\s/) {
-            $matches++;
-            my (undef, $user, $delta) = split " ", $line;
-            update_account($user, $delta);
-        } else {
-            print {$out} $line;
-        }
-    }
-    close $in;
-    close $out or die $!;
-    if ($matches) {
-        rename ".revbank.undo.$$", ".revbank.undo" or die $!;
-        print "$matches account(s) affected by rollback.\n";
-    } else {
-        print "Transaction ID '$tid' not found in undo log.\n";
-    }
-    git_commit("Transaction $tid undone.");
-    return ['noop'];
-}
-
-sub list {
-    system "sort -f revbank.accounts | grep -v ^# | more";
-    return ['noop'];
-}
-
-sub shame {
-    system "sort -f revbank.accounts | grep -v ^# | grep -- ' -' | more";
-    return ['noop'];
-}
-
-sub edit {
-    system "vim revbank.products";
-    return ['noop'];
-}
-
-sub number_of {
-    my ($type, @things) = @_;
-    my $counter = 0;
-    for (@things) {
-        $counter++ if $_->[0] eq $type;
-    }
-    return $counter;
-}
-
-sub transaction_sum {
-    return sum map $_->[1], @_;
-}
-
-sub todo2actions {
-    my ($user, @todo) = @_;
-    my %transactions;
-    for my $t (@todo) {
-        push @{ $transactions{$user} }, [ $t->[1], $t->[2] ];
-        for (@{ $t->[3] }) {
-            (my $desc = $_->[2]) =~ s/%%%/$user/g;
-            push @{ $transactions{$_->[0]} }, [ $_->[1], $desc ];
-        }
-    }
-    return %transactions;
-}
-
-sub summary {
-    my ($indent, $user, @todo) = @_;
-    $user ||= '-you-';
-    my %transactions = todo2actions($user, @todo);
-
-    my @users = sort keys %transactions;
-    for my $u (@users) {
-        my @tr = @{ $transactions{$u} };
-        for my $tr (@tr) {
-            printf(
-                "$indent %-16s %4s EUR %5.2f  # %s\n",
-                $u,
-                ($tr->[0] > 0 ? 'GAIN' : $tr->[0] < 0 ? 'LOSE' : ''),
-                abs($tr->[0]),
-                $tr->[1]
-            );
-        }
-        if (@tr > 1) {
-            my $sum = sum(map $_->[0], @tr);
-            printf(
-                "$indent %-16s %4s EUR %5.2f  TOTAL\n",
-                $u,
-                ($sum > 0 ? 'GAIN' : $sum < 0 ? 'LOSE' : ''),
-                abs($sum),
-            );
-        }
-    }
-}
-
-LINE: for (;;) {
-    my @todo = ();
-    print "\n";
-
-    my $user;
-    while (not $user) {
-        print "\n";
-        @todo = grep { $_->[0] ne 'noop' } @todo;
-        if (@todo) {
-            print "Preview:\n";
-            summary("    ", $user, @todo);
-            print "\nEnter username to pay/finish or 'abort' to abort.\n"
-        }
-        my $line = prompt(
-            "Product ID, amount or command: ",
-            [ @commands, users() ]
-        );
-        defined $line or exec $0;
-        my @line = split " ", $line;
-        ELEMENT: while (@line) {
-            my $element = shift @line;
-            my $p;
-
-            if ($p = parse_product($element)        ) { push @todo, $p; next; }
-            if ($p = parse_manual($element)         ) { push @todo, $p; next; }
-            if ($p = parse_command($element, \@line)) { push @todo, $p; next; }
-            if ($p = parse_user($element)) {
-                $user = $p->[2];
-                last;
+            if (delete $completions{NOABORT}) {
+                delete $completions{abort};
             }
 
-            my $deposit = grep { $_->[0] eq 'deposit' } @todo;
-            if ($deposit) {
-                print "Input '$element' not recognised.\n";
-                for (;;) {
-                    my $yesno = prompt(
-                        "Add new account for user '$element'? ",
-                        [ qw/yes no/ ]  # tab completion ;)
-                    );
-                    if ($yesno =~ /^(?:y|yes)$/) {
-                        create_account($element);
-                        $user = $element;
-                        next ELEMENT;
-                    } elsif ($yesno =~ /^(?:n|no)$/) {
-                        last;
-                    }
-                    print "Please enter y, yes, n, or no.\n";
+            my $input = prompt $prompt, keys %completions;
+
+            call_hooks "input", $cart, $input, $split_input;
+
+            length $input or redo PROMPT;
+
+            @words = ($split_input ? split(" ", $input) : $input);
+            $split_input = 0;  # Only split 'outer' input.
+        }
+
+        WORD: for (;;) {
+            redo PROMPT if not @words;
+            abort if grep $_ eq 'abort', @words;
+
+            my $word = shift @words;
+
+            PLUGIN: for my $plugin (@plugins) {
+                my ($rv, @rvargs) = eval { $plugin->$method($cart, $word) };
+                if ($@) {
+                    call_hooks "plugin_fail", $plugin->id, $@;
+                    abort;
                 }
+                if (not defined $rv) {
+                    call_hooks "plugin_fail", $plugin->id, "No return code";
+                    abort;
+                }
+                if (not ref $rv) {
+                    $prompt = $rv;
+                    @plugins = $plugin;
+                    ($method) = @rvargs;
+                    call_hooks "plugin_fail", $plugin->id, "No method supplied"
+                        if not ref $method;
+                    next WORD;
+                }
+                if ($rv == ABORT) {
+                    abort(@rvargs);
+                }
+                if ($rv == REJECT) {
+                    my ($reason) = @rvargs;
+                    call_hooks "reject", $plugin->id, $reason, @words ? 1 : 0;
+                    abort if @words;
+                    redo PROMPT;
+                }
+                if ($rv == ACCEPT) {
+                    next OUTER;
+                }
+                if ($rv == NEXT) {
+                    next PLUGIN if $method eq 'command';
+                    call_hooks "plugin_fail", $plugin->id, "Only 'command' "
+                        . "should ever return NEXT.";
+                    abort;
+                }
+                call_hooks "plugin_fail", $plugin->id, "Invalid return value";
+                abort;
             }
-            print "$element: No such product, user, or command. $at\n";
-            next LINE;
-        }
-        if (@line) {
-            print "Superfluous input (@line) after benificiary/remunerator "
-            . "($user). $at\n";
-            next LINE;
+            call_hooks "invalid_input", $cart, $word;
+            abort if @words;
+            redo OUTER;
         }
     }
-    @todo = grep { $_->[0] ne 'noop' } @todo;
-    if (not @todo) {
-        printf "Balance for %s is \e[1m%+.2f\e[0m\n",
-            $user, read_users->{lc $user}->[1];
-        print "NB: Products/amounts/commands FIRST, username LAST. $at\n";
-        next LINE;
-    }
-
-    my $tid = time() - 1300000000;
-    print "/", "-" x 40, "\n";
-    print "| Final (transaction ID = $tid):\n";
-    summary("| ", $user, @todo);
-    print "\\", "-" x 40, "\n";
-
-    open my $ufh, '>>.revbank.undo' or die $!;
-    my %transactions = todo2actions($user, @todo);
-    for (sort keys %transactions) {
-        my $delta = sum map $_->[0], @{ $transactions{$_} };
-        print {$ufh} join " ", $tid, $_, -$delta, now(), "\n" or die $!;
-        my ($old, $new) = update_account($_, $delta);
-    }
-    close $ufh;
-
-    git_commit("Transaction $tid by $user.");
-
-    my $deposit = sum map $_->[1], grep { $_->[0] eq 'deposit' } @todo;
-    if ($deposit) {
-        printf "Don't forget to add EUR %.2f to the cash box!\n", $deposit;
-    }
-
-    sleep 1;  # Ensure new timestamp/id for new transaction
 }
+
+=head1 NAME
+
+revbank - Banking for hackerspace visitors
+
+=head1 DESCRIPTION
+
+Maybe I'll write some documentation, but not now.
+
+=head1 PLUGINS
+
+Refer to L<RevBank::Plugins> for documentation about writing plugins.
+
+=head1 AUTHOR
+
+Juerd Waalboer <#####@juerd.nl>
+
+=head1 LICENSE
+
+Pick your favorite OSI license.
+
+

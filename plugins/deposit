@@ -1,0 +1,51 @@
+# This plugin must at the end in the plugins file.
+
+HELP "deposit [<amount>]" => "[Create and] deposit into an account";
+
+sub command :Tab(deposit) {
+    my ($self, $cart, $command) = @_;
+
+    if ($command eq 'deposit') {
+        return "Amount to deposit into your account", \&amount;
+    }
+
+    if ($cart->select_items(qr/^Deposit$/)) {
+        # No other plugin recognised the input, so it must be a new user.
+        $self->{new_user} = $command;
+        return "Add new account for user '$command'?", \&create;
+    }
+
+    return NEXT;
+}
+
+sub amount {
+    my ($self, $cart, $amount) = @_;
+
+    $amount = parse_amount($amount)
+        or return REJECT, "Invalid amount";
+
+    $cart->add(undef, +$amount, "Deposit");
+
+    return ACCEPT;
+}
+
+sub create {
+    my ($self, $cart, $yesno) = @_;
+    my $user = $self->{new_user};
+
+    if ($yesno eq "y" or $yesno eq "yes") {
+        RevBank::Users::create( $user );
+        $cart->checkout( $user );
+        return ACCEPT;
+    }
+    return ABORT;
+}
+
+sub hook_checkout {
+    my ($class, $cart, $user, $transaction_id) = @_;
+    my $sum;
+    $sum += $_->{amount} for $cart->select_items(qr/^Deposit$/);
+
+    say sprintf "Don't forget to add EUR %.2f to the cash box!", $sum  if $sum;
+}
+

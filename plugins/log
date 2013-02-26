@@ -1,0 +1,51 @@
+sub command { NEXT }
+
+my $filename = ".revbank.log";
+
+sub _log {
+    open my $fh, '>>', $filename or warn "$filename: $!";
+    print $fh now(), " ", @_, "\n";
+    close $fh or warn "$filename: $!";
+}
+
+my %buffer;
+sub hook_abort {
+    _log("ABORT");
+}
+sub hook_prompt {
+    my ($class, $cart, $prompt) = @_;
+    $buffer{prompt} = $prompt;
+}
+sub hook_input {
+    my ($class, $cart, $input, $split_input) = @_;
+    $input //= "(UNDEF)";
+    _log("PROMPT $buffer{prompt} >> $input");
+}
+
+sub hook_reject {
+    my ($class, $plugin, $reason, $abort) = @_;
+    _log("REJECT [$plugin] $reason");
+}
+
+sub hook_user_created {
+    my ($class, $username);
+    _log("NEWUSER $username");
+}
+
+sub hook_user_balance {
+    my ($class, $user, $old, $delta, $new, $transaction_id) = @_;
+    $_ = sprintf "%+.02f", $_ for $old, $delta, $new;
+    my $lost = $delta < 0 ? "lost" : "got";
+    $delta = abs($delta);
+    _log("BALANCE $transaction_id $user had $old, $lost $delta, now has $new");
+}
+
+sub hook_checkout {
+    my ($class, $cart, $username, $transaction_id) = @_;
+    _log("CHECKOUT $transaction_id $_") for $cart->as_strings;
+}
+
+sub hook_register {
+    my ($class, $plugin) = @_;
+    _log("REGISTER $plugin");
+}

@@ -1,0 +1,32 @@
+HELP "give [<account> [<amount>]]" => "Transfer money to user's account";
+
+sub command :Tab(give) {
+    my ($self, $cart, $command) = @_;
+
+    return NEXT if $command ne 'give';
+
+    return "Benificiary", \&benedinges;
+}
+
+sub benedinges :Tab(USERS) {
+    my ($self, $cart, $input) = @_;
+
+    $self->{user} = parse_user($input)
+        or return REJECT, "$input: No such user.";
+
+    return "Amount to give to $input", \&amount;
+}
+
+sub amount {
+    my ($self, $cart, $input) = @_;
+
+    my $amount = parse_amount($input)
+        or return REJECT, "$input: Invalid amount.";
+
+    my $user = $self->{user};
+
+    $cart->add(undef, -$amount, "Given to $user");
+    $cart->add($user, +$amount, "Received from \$you");
+
+    return ACCEPT;
+}

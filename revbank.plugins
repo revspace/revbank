@@ -1,0 +1,18 @@
+# Order matters. Read RevBank::Plugins for documentation.
+
+# First, plugins with no commands, or very specific commands
+
+log        # first, so that the registrations of other plugins are logged
+sigint
+restart
+help
+undo
+give
+take
+
+# Then, plugins that apply heuristics
+
+products   # matches product IDs (barcodes)
+withdraw   # matches amounts
+users      # matches usernames
+deposit    # wants to be after 'users'
