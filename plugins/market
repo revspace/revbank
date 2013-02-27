@@ -22,8 +22,10 @@ sub command :Tab(market) {
         my ($username, $id, $seller, $space, $description) = @$fields;
 
         next if $command ne $id;
-        next if $space  < 0;
-        next if $seller < 0;
+
+        $username = parse_user($username) or next;
+        $seller   = parse_amount($seller) or next;
+        $space    = parse_amount($space)  or next;
 
         $cart->add(undef, -($seller + $space), $description);
         $cart->add($username, 0+$seller, "\$you bought $description")
