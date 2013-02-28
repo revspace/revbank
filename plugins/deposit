@@ -20,7 +20,7 @@ sub command :Tab(deposit) {
     return NEXT;
 }
 
-sub amount {
+sub amount :Tab(13.37,42) {
     my ($self, $cart, $amount) = @_;
 
     $amount = parse_amount($amount)
@@ -31,7 +31,7 @@ sub amount {
     return ACCEPT;
 }
 
-sub create {
+sub create :Tab(yes,no) {
     my ($self, $cart, $yesno) = @_;
     my $user = $self->{new_user};
 

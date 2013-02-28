@@ -5,7 +5,24 @@ HELP "edit" => "Edit product list";
 
 my $filename = 'revbank.products';
 
-sub command :Tab(edit) {
+sub _read_products {
+    open my $fh, '<', $filename or die "$filename: $!";
+    my %products;
+    while (readline $fh) {
+        /^\s*#/ and next;
+        /\S/ or next;
+        chomp;
+        my ($ids, $p, $d) = split " ", $_, 3;
+        my @ids = split /,/, $ids;
+
+        $products{ $_ } = { id => $ids[0], price => $p, description => $d}
+            for @ids;
+    }
+
+    return \%products;
+}
+
+sub command :Tab(edit,&tab) {
     my ($self, $cart, $command) = @_;
 
     if ($command eq 'edit') {
@@ -13,25 +30,19 @@ sub command :Tab(edit) {
         return ACCEPT;
     }
 
-    my @products;
+    my $product = _read_products->{ $command } or return NEXT;
 
-    open my $fh, '<', $filename or die $!;
-    /\S/ && !/^\s*#/ and push @products, [split " ", $_, 3] while readline $fh;
-    chomp @$_ for @products;
+    my $price = parse_amount( $product->{price} ) or return NEXT;
 
-    for my $fields (@products) {
-        my ($ids, $price, $description) = @$fields;
+    $cart->add(
+        undef,
+        -$price,
+        $product->{description},
+        { product_id => $product->{id} }
+    );
+    return ACCEPT;
+}
 
-        my @ids = split /,/, $ids;
-        for my $id (@ids) {
-            next if $id ne $command;
-
-            $price = parse_amount($price) or next;
-
-            $cart->add(undef, -$price, $description, { product_id => $ids[0] });
-            return ACCEPT;
-        }
-    }
-
-    return NEXT;
+sub tab {
+    return grep /\D/, keys %{ _read_products() };
 }

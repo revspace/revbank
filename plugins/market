@@ -4,7 +4,25 @@ HELP "market" => "Edit market list";
 
 my $filename = 'revbank.market';
 
-sub command :Tab(market) {
+sub _read_market {
+    open my $fh, '<', $filename or die "$filename: $!";
+    my %market;
+    while (readline $fh) {
+        /^\s*#/ and next;
+        /\S/ or next;
+        chomp;
+        my ($user, $id, $seller, $space, $description) = split " ", $_, 5;
+        $market{$id} = {
+            user        => $user,
+            seller      => $seller,
+            space       => $space,
+            description => $description,
+        };
+    }
+    return \%market;
+}
+
+sub command :Tab(market,&tab) {
     my ($self, $cart, $command) = @_;
 
     if ($command eq 'market') {
@@ -12,26 +30,19 @@ sub command :Tab(market) {
         return ACCEPT;
     }
 
-    my @products;
+    my $product = _read_market->{ $command } or return NEXT;
 
-    open my $fh, '<', $filename or die $!;
-    /\S/ && !/^\s*#/ and push @products, [split " ", $_, 5] while readline $fh;
-    chomp @$_ for @products;
+    my $username = parse_user(  $product->{ user })   or return NEXT;
+    my $seller   = parse_amount($product->{ seller }) or return NEXT;
+    my $space    = parse_amount($product->{ space })  or return NEXT;
+    my $description = $product->{description};
 
-    for my $fields (@products) {
-        my ($username, $id, $seller, $space, $description) = @$fields;
+    $cart->add(undef, -($seller + $space), $description,{product_id=>$command});
+    $cart->add($username, 0+$seller, "\$you bought $description")
+        if 0+$seller;
+    return ACCEPT;
+}
 
-        next if $command ne $id;
-
-        $username = parse_user($username) or next;
-        $seller   = parse_amount($seller) or next;
-        $space    = parse_amount($space)  or next;
-
-        $cart->add(undef, -($seller + $space), $description, {product_id=>$id});
-        $cart->add($username, 0+$seller, "\$you bought $description")
-            if 0+$seller;
-        return ACCEPT;
-    }
-
-    return NEXT;
+sub tab {
+    return grep /\D/, keys %{ _read_market() };
 }

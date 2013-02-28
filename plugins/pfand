@@ -22,7 +22,7 @@ sub command :Tab(pfand) {
     return "Pfand zurueck fuer", \&product;
 }
 
-sub product {
+sub product :Tab(&tab) {
     my ($self, $cart, $product) = @_;
     my $pfand = _read_pfand->{ $product };
 
@@ -32,6 +32,10 @@ sub product {
         say "$product: Kein Pfand";
     }
     return ACCEPT;
+}
+
+sub tab {
+    return keys %{ _read_pfand() };
 }
 
 sub hook_add {

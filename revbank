@@ -78,12 +78,19 @@ OUTER: for (;;) {
             call_hooks "prompt", $cart, $prompt;
 
             my %completions = qw(abort 1);
-            for (@plugins) {
+            for my $plugin (@plugins) {
                 my $attr = attributes::get(
-                    ref $method ? $method : $_->can($method)
+                    ref $method ? $method : $plugin->can($method)
                 ) or next;
                 my ($tab) = $attr =~ /Tab \( (.*?) \)/x;
-                $completions{$_}++ for split /\s*,\s*/, $tab;
+                for my $keyword (split /\s*,\s*/, $tab) {
+                    if ($keyword =~ /^&(.*)/) {
+                        my $method = $1;
+                        @completions{ $plugin->$method } = ();
+                    } else {
+                        $completions{ $keyword }++;
+                    }
+                }
             }
             if (delete $completions{USERS}) {
                 $completions{$_}++ for RevBank::Users::names;

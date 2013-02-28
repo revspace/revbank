@@ -2,7 +2,7 @@
 
 HELP "nyan" => "Nyan!";
 
-sub command :Tab(nyan) {
+sub command :Tab(nyan,nyanutf8) {
     my ($self, $cart, $command) = @_;
 
     return NEXT if $command !~ /^(?:nyan|nyanutf8)$/;
