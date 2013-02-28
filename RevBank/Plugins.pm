@@ -228,6 +228,17 @@ Called when user input was given. C<$split_input> is a boolean that is true
 if the input will be split on whitespace, rather than treated as a whole.
 The input MAY be altered by the plugin.
 
+=item hook_add $class, $cart, $user, $item
+
+Called when something is added to the cart. Of course, like in C<< $cart->add
+>>, C<$user> will be undef if the product is added for the current user.
+
+C<$item> is a reference to a hash with the keys C<amount>, C<description> and
+the metadata given in the C<add> call. Changing the values changes the actual
+item going into the cart!
+
+Be careful to avoid infinite loops if you add new stuff.
+
 =item hook_checkout $class, $cart, $user, $transaction_id
 
 Called when the transaction is finalized.

@@ -17,11 +17,13 @@ sub add {
     my ($self, $user, $amount, $description, $data) = @_;
     $user ||= '$you';
     $data ||= {};
-    push @{ $self->{ $user } }, {
+    my $item = {
         %$data,  # Internal stuff, not logged or printed.
         amount => $amount,
         description => $description,
     };
+    RevBank::Plugins::call_hooks("add", $self, $user, $item);
+    push @{ $self->{ $user } }, $item;
 }
 
 sub empty {
