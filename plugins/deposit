@@ -11,7 +11,7 @@ sub command :Tab(deposit) {
         return "Amount to deposit into your account", \&amount;
     }
 
-    if ($cart->select_items(is_deposit => 1)) {
+    if ($cart->select_items('is_deposit')) {
         # No other plugin recognised the input, so it must be a new user.
         $self->{new_user} = $command;
         return "Add new account for user '$command'?", \&create;
@@ -46,7 +46,7 @@ sub create {
 sub hook_checkout {
     my ($class, $cart, $user, $transaction_id) = @_;
     my $sum;
-    $sum += $_->{amount} for $cart->select_items(is_deposit => 1);
+    $sum += $_->{amount} for $cart->select_items('is_deposit');
 
     say sprintf "Don't forget to add EUR %.2f to the cash box!", $sum  if $sum;
 }

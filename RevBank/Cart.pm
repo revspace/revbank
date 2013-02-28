@@ -110,13 +110,13 @@ sub select_items {
 
     use v5.12;  # New smartmatch semantics
 
-    my $match_all = (@_ == 1);  # Match everything if no key/match is given.
-
     my @matches;
     for my $user (keys %$self) {
         for my $item (@{ $self->{$user} }) {
             push @matches, { user => $user, %$item }
-                if $match_all or $item->{ $key } ~~ $smartmatch;
+                if @_ == 1  # No key or match given: match everything
+                or @_ == 2 and exists $item->{ $key }   # Just a key
+                or @_ == 3 and $item->{ $key } ~~ $smartmatch;
         }
     }
 
