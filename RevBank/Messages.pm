@@ -46,7 +46,8 @@ sub hook_reject {
 sub hook_user_balance {
     my ($class, $username, $old, $delta, $new) = @_;
     my $sign = $delta >= 0 ? '+' : '-';
-    printf "New balance for %s: %+.2f %s %.2f = \e[1m%+.2f\e[0m %s\n",
+    my $rood = $new < 0 ? '31;' : '';
+    printf "New balance for %s: %+.2f %s %.2f = \e[${rood}1m%+.2f\e[0m %s\n",
         $username, $old, $sign, abs($delta), $new,
         ($new < -13.37 ? "\e[5;1m(!!)\e[0m" : "");
 }
