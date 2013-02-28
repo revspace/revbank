@@ -2,7 +2,7 @@
 
 HELP "cash" => "Checkout without a user account";
 
-sub command {
+sub command :Tab(cash) {
     my ($self, $cart, $command) = @_;
 
     return NEXT if $command ne 'cash';
