@@ -1,0 +1,28 @@
+#!perl
+
+sub command { NEXT }
+
+sub hook_checkout {
+    my ($class, $cart, $user, $transaction_id) = @_;
+
+    # Hack42 for some reason used the dutch word in their revbank1 hack.
+    my $filename = -e("revbank.voorraad")
+        ? "revbank.voorraad"
+        : "revbank.stock";
+
+    my @items = $cart->select_items('product_id') or return;
+
+    my %stock = do {
+        my $in;
+        open($in, '<', $filename)
+        ? map { split " ", $_, 2 } readline $in
+        : ()
+    };
+
+    $stock{ $_->{product_id} }-- for @items;
+
+    open my $out, '>', "$filename.$$" or warn "$filename.$$: $!";
+    printf {$out} "%-16s %+9d\n", $_, $stock{$_} for sort keys %stock;
+    close $out or die "$filename.$$: $!";
+    rename "$filename.$$", $filename or die $!;
+}
