@@ -106,9 +106,7 @@ sub checkout {
 }
 
 sub select_items {
-    my ($self, $key, $smartmatch) = @_;
-
-    use v5.12;  # New smartmatch semantics
+    my ($self, $key) = @_;
 
     my @matches;
     for my $user (keys %$self) {
@@ -116,7 +114,6 @@ sub select_items {
             push @matches, { user => $user, %$item }
                 if @_ == 1  # No key or match given: match everything
                 or @_ == 2 and exists $item->{ $key }   # Just a key
-                or @_ == 3 and $item->{ $key } ~~ $smartmatch;
         }
     }
 
