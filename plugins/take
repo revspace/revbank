@@ -1,6 +1,6 @@
 #!perl
 
-HELP "take [<accounts> [<amount>]]" => "Take money from users (equal parts)";
+HELP "take <accounts> <amount> <reason>"=>"Take money from users (equal parts)";
 
 sub command :Tab(take,steal) {
     my ($self, $cart, $command) = @_;

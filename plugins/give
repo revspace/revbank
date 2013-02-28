@@ -1,6 +1,6 @@
 #!perl
 
-HELP "give [<account> [<amount>]]" => "Transfer money to user's account";
+HELP "give <account> <amount> [<reason>]" => "Transfer money to user's account";
 
 sub command :Tab(give) {
     my ($self, $cart, $command) = @_;
@@ -22,13 +22,28 @@ sub benedinges :Tab(USERS) {
 sub amount {
     my ($self, $cart, $input) = @_;
 
-    my $amount = parse_amount($input)
+    $self->{amount} = parse_amount($input)
         or return REJECT, "$input: Invalid amount.";
 
     my $user = $self->{user};
+    my $amount = $self->{amount};
 
-    $cart->add(undef, -$amount, "Given to $user");
-    $cart->add($user, +$amount, "Received from \$you");
+    return "Why are you giving $amount to $user, or enter your username to end",
+        \&reason;
+}
 
+sub reason :Tab(whatevah) {
+    my ($self, $cart, $input) = @_;
+
+    my $user = $self->{user};
+    my $amount = $self->{amount};
+    if ($user = parse_user($input)) {
+      $cart->add(undef, -$amount, "Given to $user");
+      $cart->add($user, +$amount, "Received from \$you");
+      $cart->checkout($input);
+    } else {
+      $cart->add(undef, -$amount, "Given to $user ($input)");
+      $cart->add($user, +$amount, "Received from \$you ($input)");
+    }
     return ACCEPT;
 }

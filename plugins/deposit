@@ -2,7 +2,7 @@
 
 # This plugin must at the end in the plugins file.
 
-HELP "deposit [<amount>]" => "[Create and] deposit into an account";
+HELP "deposit <amount>" => "[Create and] deposit into an account";
 
 sub command :Tab(deposit) {
     my ($self, $cart, $command) = @_;
