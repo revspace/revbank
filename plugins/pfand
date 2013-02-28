@@ -40,7 +40,7 @@ sub hook_add {
     return if exists $item->{is_pfand};
     return if not exists $item->{product_id};
 
-    my $pfand = _read_pfand->{ $item->{product_id} };
+    my $pfand = _read_pfand->{ $item->{product_id} } or return;
 
     $cart->add(undef, -$pfand, "Pfand");
 }
