@@ -7,16 +7,16 @@ sub command :Tab(give) {
 
     return NEXT if $command ne 'give';
 
-    return "Benificiary", \&benedinges;
+    return "Benificiary", \&benificiary;
 }
 
-sub benedinges :Tab(USERS) {
+sub benificiary :Tab(USERS) {
     my ($self, $cart, $input) = @_;
 
-    $self->{user} = parse_user($input)
+    $self->{benificiary} = parse_user($input)
         or return REJECT, "$input: No such user.";
 
-    return "Amount to give to $self->{user}", \&amount;
+    return "Amount to give to $self->{benificiary}", \&amount;
 }
 
 sub amount {
@@ -25,25 +25,25 @@ sub amount {
     $self->{amount} = parse_amount($input)
         or return REJECT, "$input: Invalid amount.";
 
-    my $user = $self->{user};
+    my $benificiary = $self->{benificiary};
     my $amount = $self->{amount};
 
-    return "Why are you giving $amount to $user, or enter your username to end",
-        \&reason;
+    return "Why are you giving $amount to $benificiary, "
+        . "or enter your username to end", \&reason;
 }
 
 sub reason :Tab(whatevah) {
     my ($self, $cart, $input) = @_;
 
-    my $user = $self->{user};
+    my $benificiary = $self->{benificiary};
     my $amount = $self->{amount};
-    if ($input = parse_user($input)) {
-      $cart->add(undef, -$amount, "Given to $user");
-      $cart->add($user, +$amount, "Received from \$you");
-      $cart->checkout($input);
-    } else {
-      $cart->add(undef, -$amount, "Given to $user ($input)");
-      $cart->add($user, +$amount, "Received from \$you ($input)");
-    }
+
+    my $user = parse_user($input);
+    my $reason = $user ? "" : " ($input)";
+
+    $cart->add(undef,        -$amount, "Given to $benificiary" . $reason);
+    $cart->add($benificiary, +$amount, "Received from \$you" . $reason);
+    $cart->checkout($input) if $user;
+
     return ACCEPT;
 }
