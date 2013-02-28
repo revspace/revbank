@@ -27,7 +27,7 @@ sub product {
     my $pfand = _read_pfand->{ $product };
 
     if ($pfand) {
-        $cart->add(undef, $pfand, "Pfand zurueck");
+        $cart->add(undef, +$pfand, "Pfand zurueck", { is_pfand => 1 });
     } else {
         say "$product: Kein Pfand";
     }
