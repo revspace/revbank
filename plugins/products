@@ -20,14 +20,17 @@ sub command :Tab(edit) {
     chomp @$_ for @products;
 
     for my $fields (@products) {
-        my ($id, $price, $description) = @$fields;
+        my ($ids, $price, $description) = @$fields;
 
-        next if $command ne $id;
+        my @ids = split /,/, $ids;
+        for my $id (@ids) {
+            next if $id ne $command;
 
-        $price = parse_amount($price) or next;
+            $price = parse_amount($price) or next;
 
-        $cart->add(undef, -$price, $description);
-        return ACCEPT;
+            $cart->add(undef, -$price, $description, { product_id => $ids[0] });
+            return ACCEPT;
+        }
     }
 
     return NEXT;
