@@ -14,7 +14,7 @@ sub _read_pfand {
     };
 }
 
-sub command {
+sub command :Tab(pfand) {
     my ($self, $cart, $command) = @_;
 
     return NEXT if $command ne 'pfand';
