@@ -37,7 +37,7 @@ sub reason :Tab(whatevah) {
 
     my $user = $self->{user};
     my $amount = $self->{amount};
-    if ($user = parse_user($input)) {
+    if ($input = parse_user($input)) {
       $cart->add(undef, -$amount, "Given to $user");
       $cart->add($user, +$amount, "Received from \$you");
       $cart->checkout($input);
