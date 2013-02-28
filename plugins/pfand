@@ -1,0 +1,47 @@
+HELP "pfand" => "Pfand zurueck";
+
+# This is a demo plugin. It's called "pfand" because "deposit" would be
+# confusing and only the Germans are crazy enough to have deposits on small
+# bottles anyway ;)
+
+# The file format for 'revbank.pfand' is simply two whitespace separated
+# columns: product id and pfand amount.
+
+sub _read_pfand {
+    open my $fh, 'revbank.pfand' or die $!;
+    return {
+        map { split " " } grep /\S/, grep !/^\s*#/, readline $fh
+    };
+}
+
+sub command {
+    my ($self, $cart, $command) = @_;
+
+    return NEXT if $command ne 'pfand';
+
+    return "Pfand zurueck fuer", \&product;
+}
+
+sub product {
+    my ($self, $cart, $product) = @_;
+    my $pfand = _read_pfand->{ $product };
+
+    if ($pfand) {
+        $cart->add(undef, $pfand, "Pfand zurueck");
+    } else {
+        say "$product: Kein Pfand";
+    }
+    return ACCEPT;
+}
+
+sub hook_add {
+    my ($class, $cart, $user, $item) = @_;
+    return if defined $user;
+    return if exists $item->{is_pfand};
+    return if not exists $item->{product_id};
+
+    my $pfand = _read_pfand->{ $item->{product_id} };
+
+    $cart->add(undef, -$pfand, "Pfand");
+}
+
