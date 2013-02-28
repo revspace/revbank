@@ -1,6 +1,17 @@
 #!perl
 
-sub command { NEXT }
+HELP "cash" => "Checkout without a user account";
+
+sub command {
+    my ($self, $cart, $command) = @_;
+
+    return NEXT if $command ne 'cash';
+
+    call_hooks("checkout", $cart, 'cash', 0);  # Fake checkout
+    $cart->empty;
+
+    return ACCEPT;
+}
 
 sub hook_checkout {
     my ($class, $cart, $user, $transaction_id) = @_;
