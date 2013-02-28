@@ -11,7 +11,7 @@ sub command :Tab(deposit) {
         return "Amount to deposit into your account", \&amount;
     }
 
-    if ($cart->select_items(qr/^Deposit$/)) {
+    if ($cart->select_items(is_deposit => 1)) {
         # No other plugin recognised the input, so it must be a new user.
         $self->{new_user} = $command;
         return "Add new account for user '$command'?", \&create;
@@ -26,7 +26,7 @@ sub amount {
     $amount = parse_amount($amount)
         or return REJECT, "Invalid amount";
 
-    $cart->add(undef, +$amount, "Deposit");
+    $cart->add(undef, +$amount, "Deposit", { is_deposit => 1 });
 
     return ACCEPT;
 }
@@ -46,7 +46,7 @@ sub create {
 sub hook_checkout {
     my ($class, $cart, $user, $transaction_id) = @_;
     my $sum;
-    $sum += $_->{amount} for $cart->select_items(qr/^Deposit$/);
+    $sum += $_->{amount} for $cart->select_items(is_deposit => 1);
 
     say sprintf "Don't forget to add EUR %.2f to the cash box!", $sum  if $sum;
 }

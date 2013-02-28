@@ -14,9 +14,11 @@ sub new {
 }
 
 sub add {
-    my ($self, $user, $amount, $description) = @_;
+    my ($self, $user, $amount, $description, $data) = @_;
     $user ||= '$you';
+    $data ||= {};
     push @{ $self->{ $user } }, {
+        %$data,  # Internal stuff, not logged or printed.
         amount => $amount,
         description => $description,
     };
@@ -104,14 +106,17 @@ sub checkout {
 }
 
 sub select_items {
-    my ($self, $regex) = @_;
-    $regex ||= qr/(?:)/;  # Match everything if no regex is given
+    my ($self, $key, $smartmatch) = @_;
+
+    use v5.12;  # New smartmatch semantics
+
+    my $match_all = (@_ == 1);  # Match everything if no key/match is given.
 
     my @matches;
     for my $user (keys %$self) {
         for my $item (@{ $self->{$user} }) {
             push @matches, { user => $user, %$item }
-                if $item->{description} =~ /$regex/;
+                if $match_all or $item->{ $key } ~~ $smartmatch;
         }
     }
 
