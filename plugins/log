@@ -30,7 +30,7 @@ sub hook_reject {
 }
 
 sub hook_user_created {
-    my ($class, $username);
+    my ($class, $username) = @_;
     _log("NEWUSER $username");
 }
 
