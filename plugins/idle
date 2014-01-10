@@ -1,0 +1,28 @@
+#!perl
+
+my $timeout = 10;
+
+sub command { NEXT }
+
+sub hook_prompt_idle {
+    my ($class, $cart, $plugin, $seconds, $readline) = @_;
+    if ($seconds >= $timeout and $cart->size and not $plugin) {
+        $readline->ding;
+
+        return if $seconds > $timeout;  # text only once
+
+        my $text = $readline->copy_text;
+        my $point = $readline->{point};
+
+        $readline->save_prompt;
+        $readline->replace_line("");
+        $readline->redisplay;
+
+        print "\e[33;2;1mTransaction incomplete.\e[0m Enter username to pay/finish or 'abort' to abort.\n";
+
+        $readline->restore_prompt;
+        $readline->replace_line($text);
+        $readline->{point} = $point;
+        $readline->redisplay;
+    }
+}

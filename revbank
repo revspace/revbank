@@ -2,8 +2,9 @@
 
 use strict;
 use attributes;
-use Term::ReadLine;
+use IO::Select;
 use List::Util ();
+use Term::ReadLine;
 use RevBank::Plugins;
 use RevBank::Global;
 use RevBank::Messages;
@@ -20,19 +21,47 @@ $| = 1;
 my $readline = Term::ReadLine->new($0);
 $readline->ornaments('me,md,,');
 
+my $select = IO::Select->new;
+$select->add(\*STDIN);
+
+my $cart = RevBank::Cart->new;
+
 sub prompt {
-    my ($prompt, @completions) = @_;
+    my ($prompt, $plugins, @completions) = @_;
 
     $prompt =~ s/$/: /;
     $prompt =~ s/\?: $/? /;
 
     my @matches;
     $readline->Attribs->{completion_entry_function} = sub {
-        my ($word, $state) = @_;
+    my ($word, $state) = @_;
         @matches = grep /^\Q$word\E/i, @completions if $state == 0;
         return shift @matches;
     };
-    my $input = $readline->readline($prompt);
+
+    my $done;
+    my $input;
+
+    $readline->callback_handler_install($prompt, sub {
+        $done = 1;
+        $input = shift;
+        $readline->callback_handler_remove;
+    });
+    
+    my $begin = my $time = time;
+    while (not $done) { 
+        $readline->callback_read_char if $select->can_read(.05);
+        if (time > $time) {
+            $time = time;
+            call_hooks(
+                "prompt_idle",
+                $cart,
+                (@$plugins > 1 ? undef : $plugins->[0]), # >1 plugin = main loop
+                $time - $begin,
+                $readline,
+            );
+        }
+    }
 
     print "\e[0m";
     defined $input or return;
@@ -47,7 +76,6 @@ RevBank::Plugins->load;
 
 call_hooks("startup");
 
-my $cart = RevBank::Cart->new;
 my $old_cart_size = 0;
 
 my @words;
@@ -99,7 +127,7 @@ OUTER: for (;;) {
                 delete $completions{abort};
             }
 
-            my $input = prompt $prompt, keys %completions;
+            my $input = prompt $prompt, \@plugins, keys %completions;
 
             call_hooks "input", $cart, $input, $split_input;
 

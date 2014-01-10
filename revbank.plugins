@@ -6,12 +6,13 @@ log        # first, so that the registrations of other plugins are logged
 sigint
 restart
 help
+idle
 undo
 give
 take
-#nyan      # fun, but not compatible with dumb terminals
-#pfand     # makes little sense in a self service environment
-#stock
+nyan      # fun, but not compatible with dumb terminals
+pfand     # makes little sense in a self service environment
+stock
 
 # Then, plugins that apply heuristics
 
