@@ -7,7 +7,7 @@ sub command { NEXT }
 sub hook_prompt_idle {
     my ($class, $cart, $plugin, $seconds, $readline) = @_;
     if ($seconds >= $timeout and $cart->size and not $plugin) {
-        $readline->ding;
+        call_hooks("beep");
 
         return if $seconds > $timeout;  # text only once
 

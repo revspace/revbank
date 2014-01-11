@@ -10,9 +10,12 @@ idle
 undo
 give
 take
-nyan      # fun, but not compatible with dumb terminals
-pfand     # makes little sense in a self service environment
+nyan       # fun, but not compatible with dumb terminals
+pfand      # makes little sense in a self service environment
 stock
+
+beep_terminal
+
 
 # Then, plugins that apply heuristics
 
