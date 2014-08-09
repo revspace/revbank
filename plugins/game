@@ -6,10 +6,12 @@
 
 use Time::HiRes qw( gettimeofday tv_interval);
 
-HELP "game" => "Scan-foo game!";
+HELP "game" => "Scan-fu game!";
 
 my $fastest=1000;
 my $fastest_name="nobody";
+my $start_time;
+my $step;
 
 sub command :Tab(game) {
 
@@ -17,39 +19,64 @@ sub command :Tab(game) {
 
     return NEXT if $command !~ /^(?:game)$/;
 
-    print "\nWelcome to SCAN-FOO \\o/\n";
+    print "\nWelcome to SCAN-FU \\o/\n";
 
     print "\nRecord time is $fastest by $fastest_name\n";
 
-    my $start_time=[gettimeofday];
+    $start_time=[gettimeofday];
+    $step=1;
 
-    for (my $i=1; $i<=5; $i++)
+    return "NOW SCAN game_$step", \&step;
+
+}
+
+
+sub step :Tab(whatevah) {
+    my ($self, $cart, $input) = @_;
+
+    if ($step<5)
     {
-        print "NOW SCAN game_$i: ";
-        my $scanned=<STDIN>;
-        if ($scanned ne "game_$i\n")
+        if ($input ne "game_$step")
         {
-            print "\nFAIL! :(  *sad trombone*\n";
+            print "\n\aFAIL! :(  *sad trombone*\n";
 
             return ACCEPT;
         }
+
+        $step++;
+
+        return "NOW SCAN game_$step", \&step;
     }
-
-    my $elapsed = tv_interval ( $start_time, [gettimeofday]);
-
-    print "Completed in $elapsed seconds *tadaah*\n";
-
-    if ($elapsed < $fastest)
+    else
     {
-        print " #####################\n";
-        print " #### NEW RECORD! ####\n";
-        print " #####################\n";
-        print " You did it in $elapsed !!!\n";
 
-        print "Enter your name: ";
-        $fastest_name=<STDIN>;
-        $fastest=$elapsed;
+        my $elapsed = tv_interval ( $start_time, [gettimeofday]);
+
+        print "\aCompleted in $elapsed seconds *tadaah*\n";
+
+        if ($elapsed < $fastest)
+        {
+            print " #####################\n";
+            print " #### NEW RECORD! ####\n";
+            print " #####################\n";
+            print " You did it in $elapsed !!!\n";
+
+            $fastest_name="(unknown)";
+            $fastest=$elapsed;
+
+            return "Enter your name for the hall of fame", \&name;
+
+        }
+
+        return ACCEPT;
     }
+}
+
+sub name :Tab(whatevah) {
+    my ($self, $cart, $input) = @_;
+
+    $fastest_name=$input;
 
     return ACCEPT;
 }
+
