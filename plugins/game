@@ -57,7 +57,7 @@ sub command :Tab(game)
 sub step :Tab(whatevah) {
     my ($self, $cart, $input) = @_;
 
-    if ($step<1)
+    if ($step<5)
     {
         if ($input ne "game_$step")
         {
