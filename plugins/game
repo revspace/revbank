@@ -8,13 +8,18 @@ use Time::HiRes qw( gettimeofday tv_interval);
 
 HELP "game" => "Scan-foo game!";
 
+my $fastest=1000;
+my $fastest_name="nobody";
+
 sub command :Tab(game) {
+
     my ($self, $cart, $command) = @_;
 
     return NEXT if $command !~ /^(?:game)$/;
 
     print "\nWelcome to SCAN-FOO \\o/\n";
 
+    print "\nRecord time is $fastest by $fastest_name\n";
 
     my $start_time=[gettimeofday];
 
@@ -32,7 +37,19 @@ sub command :Tab(game) {
 
     my $elapsed = tv_interval ( $start_time, [gettimeofday]);
 
-    print "COMPLETED in $elapsed seconds *tadaah*\n";
+    print "Completed in $elapsed seconds *tadaah*\n";
+
+    if ($elapsed < $fastest)
+    {
+        print " #####################\n";
+        print " #### NEW RECORD! ####\n";
+        print " #####################\n";
+        print " You did it in $elapsed !!!\n";
+
+        print "Enter your name: ";
+        $fastest_name=<STDIN>;
+        $fastest=$elapsed;
+    }
 
     return ACCEPT;
 }
