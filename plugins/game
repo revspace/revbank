@@ -1,0 +1,137 @@
+#!perl
+
+#Scan-foo-game for Revbank - (C)Edwin Eefting (psy0rz)
+
+#Released under GPL or whatever revbank uses as license :)
+
+use Time::HiRes qw( gettimeofday tv_interval);
+
+HELP "game" => "Scan-fu game!";
+
+my $start_time;
+my $step;
+my $slowest;
+my $elapsed=1000;
+
+sub print_highscores()
+{
+    $slowest=1000;
+    print "\n---- fastest times ----\n";
+    open my $in, "highscores.txt";
+    my $nr=0;
+    while (<$in>)
+    {
+        my ($name,$time)=split(" ");
+        printf "$nr: %f $name\n", $time;
+        $nr++;
+        $slowest=$time;
+    }
+    if ($nr<10)
+    {
+        $slowest=1000;
+    }
+
+    close($in);
+    print "-----------------------\n";
+}
+
+sub command :Tab(game) 
+{
+
+    my ($self, $cart, $command) = @_;
+
+    return NEXT if $command !~ /^(?:game)$/;
+
+    print "\nWelcome to SCAN-FU \\o/\n";
+
+    print_highscores();
+
+    $start_time=[gettimeofday];
+    $step=1;
+
+    return "NOW SCAN game_$step", \&step;
+
+}
+
+
+sub step :Tab(whatevah) {
+    my ($self, $cart, $input) = @_;
+
+    if ($step<5)
+    {
+        if ($input ne "game_$step")
+        {
+            print "\n\aFAIL! :(  *sad trombone*\n";
+
+            return ACCEPT;
+        }
+
+        $step++;
+
+        return "NOW SCAN game_$step", \&step;
+    }
+    else
+    {
+
+        $elapsed = tv_interval ( $start_time, [gettimeofday]);
+
+        print "\aCompleted in $elapsed seconds *tadaah*\n";
+
+        if ($elapsed < $slowest)
+        {
+            print " #####################\n";
+            print " #### NEW RECORD! ####\n";
+            print " #####################\n";
+            print " You did it in $elapsed !!!\n";
+
+            return "Enter your name for the hall of fame", \&name;
+
+        }
+
+        return ACCEPT;
+    }
+}
+
+sub name :Tab(whatevah) 
+{
+    my ($self, $cart, $input) = @_;
+
+
+    #store new highscores:
+    #(ulgy as hell...but hey i'm sleepy :)
+
+    open my $in, "<highscores.txt";
+    open my $out, ">highscores.txt.tmp";
+    my $nr=0;
+    while (<$in>)
+    {
+        $nr++;
+        my ($name,$time)=split(" ");
+        if ($elapsed!=-1 && $elapsed<=$time)
+        {
+            print $out "$input $elapsed\n";
+            $elapsed=-1;
+            $nr++;
+        }
+
+        print $out "$name $time\n";
+
+        if ($nr>10)
+        {
+            last;
+        }
+    }
+    if ($nr<10 && $elapsed!=-1)
+    {
+        print $out "$input $elapsed\n";
+    }
+
+    close($in);
+    close($out);
+    rename("highscores.txt.tmp", "highscores.txt");
+
+    print_highscores();
+
+    return ACCEPT;
+}
+

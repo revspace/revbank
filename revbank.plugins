@@ -16,6 +16,7 @@ stock
 
 beep_terminal
 
+game       # Scan-foo game
 
 # Then, plugins that apply heuristics
 
