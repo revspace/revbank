@@ -1,0 +1,26 @@
+#!perl
+
+HELP "grandtotal" => "Summary of all accounts";
+
+sub command :Tab(grandtotal) {
+    my ($self, $cart, $command) = @_;
+
+    return NEXT if $command ne 'grandtotal';
+
+    my $pos;
+    my $neg;
+
+    open my $fh, "<", "revbank.accounts";
+    while (defined(my $line = readline $fh)) {
+        my $credit = (split " ", $line)[1];
+        $neg += $credit if $credit < 0;
+        $pos += $credit if $credit > 0;
+    }
+
+    printf "Total positive: EUR %8.2f\n", $pos;
+    printf "Total negative: EUR \e[31;1m%8.2f\e[0m\n", $neg;
+    printf "GRAND TOTAL:    EUR \e[1m%8.2f\e[0m\n", $pos + $neg;
+
+    return ACCEPT;
+}
+
