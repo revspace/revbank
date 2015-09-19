@@ -42,8 +42,16 @@ sub shame {
     return ACCEPT;
 }
 
+sub recent {
+    my ($n, $u) = @_;
+    $n += 0;
+    print "Last $n transactions for $u:\n";
+    system "perl -lane'lc(\$F[3]) eq lc('\Q$u\E') or next; s/CHECKOUT\\s+\\S+\\s+\\S+\\s+// or next; s/  #// or next; s/_/ /; print' .revbank.log | tail -n$n";
+}
+
 sub balance {
     my ($self, $u) = @_;
+    recent(10, $u);
     printf "Balance for $u is \e[1m%+.2f\e[0m\n", RevBank::Users::balance($u);
     say "NB: Products/amounts/commands FIRST, username LAST.";
     return ABORT;
