@@ -20,7 +20,7 @@ sub undo {
     open my $in,  '<', $filename or die "$filename: $!";
     open my $out, '>', "$filename.$$" or die "$filename.$$: $!";
     while (defined(my $line = readline $in)) {
-        if ($line =~ /^$tid\s/) {
+        if ($line =~ /^\Q$tid\E\s/) {
             my (undef, $user, $delta) = split " ", $line;
             $cart->add($user, $delta, "Undo $tid");
         } else {
