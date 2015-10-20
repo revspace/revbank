@@ -46,7 +46,7 @@ sub recent {
     my ($n, $u) = @_;
     $n += 0;
     print "Last $n transactions for $u:\n";
-    system "perl -lane'lc(\$F[3]) eq lc('\Q$u\E') or next; s/CHECKOUT\\s+\\S+\\s+\\S+\\s+// or next; s/  #// or next; s/_/ /; print' .revbank.log | tail -n$n";
+    system "perl -lane'lc(\$F[3]) eq lc(q[\Q$u\E]) or next; s/CHECKOUT\\s+\\S+\\s+\\S+\\s+// or next; s/  #// or next; s/_/ /; print' .revbank.log | tail -n$n";
 }
 
 sub balance {
