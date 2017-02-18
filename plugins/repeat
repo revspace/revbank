@@ -1,0 +1,111 @@
+my $err_stacked = "Stacked repetition is not supported.";
+my $err_multi = "Repetition not supported in multi-user transactions.";
+my $err_pfand = "Plugins 'pfand' and 'repeat' cannot be combined.";
+
+my $limit = 24;
+my $err_limit = "Repetition is limited at $limit items.";
+
+sub _do_repeat {
+    my ($cart, $item, $num) = @_;
+
+    my $data = $item->{data};
+    $data->{_repeated} = 1;
+
+    $cart->add( @{ $item }{qw/user amount description/}, $data ) for 2..$num;
+}
+
+sub command {
+    my ($self, $cart, $command) = @_;
+
+    my @items = $cart->select_items;
+    my $last = $items[-1];
+
+    return ABORT, $err_pfand if grep $_->{is_pfand}, @items;
+
+    my ($pre, $post) = $command =~ /^(\d+)?[x*](\d+)?$/
+        or return NEXT;
+
+    return NEXT if $pre and $post;  # 123x123 -> invalid syntax
+
+    return REJECT, $err_multi if $cart->is_multi_user;
+
+    if ($post) {
+        return REJECT, $err_limit if $post > $limit;
+        return ABORT, "Can't repeat an empty transaction." if not $cart->size;
+        return REJECT, $err_stacked if $last->{_repeated};
+
+        _do_repeat($cart, $last, $post);
+        return ACCEPT;
+    }
+
+    my $item_replaced;
+
+    if (not $pre and not $post) {
+        # Lone operator. Convert withdrawal into repetition.
+
+        if ($last->{is_withdrawal}) {
+            $pre = abs $last->{amount};
+            $pre == int $pre or return REJECT, "Repeat only works on integers.";
+            $cart->delete($last->{user}, -1);
+            $item_replaced = 1;
+        } elsif (not $cart->size) {
+            return ABORT, "Can't repeat an empty transaction.";
+        }
+    }
+
+    if ($pre) {
+        $pre = abs $pre;  # withdrawal is negative
+
+        return REJECT, $err_limit if $pre > $limit;
+        $cart->add(undef, 0, "Next product repeated $pre times", { _repeat => abs $pre });
+        return ACCEPT;
+    }
+
+    return REJECT, $err_stacked if $last->{_repeated};
+    return "Multiply previous product by", \&repeat;
+}
+
+sub repeat {
+    my ($self, $cart, $arg) = @_;
+
+    $arg =~ /^\d+$/ and $arg > 0
+        or return REJECT, "Invalid value.";
+
+    return REJECT, $err_limit if $arg > $limit;
+
+    my @items = $cart->select_items;
+    my $last = $items[-1];
+
+    _do_repeat($cart, $last, $arg);
+    return ACCEPT;
+}
+
+sub hook_added {
+    my ($self, $cart, $user, $item) = @_;
+    $cart->size >= 2 or return;
+
+    return ABORT, $err_multi if $cart->is_multi_user;
+
+    my @repeats = $cart->select_items('_repeat');
+    return ABORT, "Multiple repeats queued; I'm confused." if @repeats > 1;
+    return if not @repeats;
+
+    my @items = $cart->select_items;
+    return ABORT, $err_pfand if grep $_->{is_pfand}, @items;
+
+    for my $i (0 .. $#items - 1) {
+        my $item = $items[$i];
+        $item->{_repeat} or next;
+
+        my $next = $items[$i + 1];
+
+        return ABORT, $err_stacked if $next->{_repeat};
+
+        my $num = $item->{_repeat};
+        $cart->delete($item->{user}, $i);
+
+        _do_repeat($cart, $next, $num);
+
+        return;
+    }
+}

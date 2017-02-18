@@ -10,7 +10,7 @@ use RevBank::Global;
 
 sub new {
     my ($class) = @_;
-    return bless { }, $class;
+    return bless { items => {} }, $class;
 }
 
 sub add {
@@ -22,18 +22,21 @@ sub add {
         description => $description,
     };
     RevBank::Plugins::call_hooks("add", $self, $user, $item);
-    $user ||= '$you';
-    push @{ $self->{ $user } }, $item;
+    push @{ $self->{items}{ $user || '$you' } }, $item;
+    $self->{changed}++;
+    RevBank::Plugins::call_hooks("added", $self, $user, $item);
 }
 
 sub delete {
     my ($self, $user, $index) = @_;
-    splice @{ $self->{ $user } }, $index, 1, ();
+    splice @{ $self->{items}{ $user } }, $index, 1, ();
+    $self->{changed}++;
 }
 
 sub empty {
     my ($self) = @_;
-    %$self = ();
+    %$self = (items => {});
+    $self->{changed}++;
 }
 
 sub _dump_item {
@@ -54,8 +57,9 @@ sub as_strings {
 
     my @s;
 
-    for my $user (sort keys %$self) {
-        my @items = @{ $self->{$user} };
+    my $items = $self->{items};
+    for my $user (sort keys %$items) {
+        my @items = @{ $items->{$user} };
         my $sum = List::Util::sum(map $_->{amount}, @items);
 
         push @s, _dump_item($prefix, $user, $_->{amount}, "# $_->{description}")
@@ -74,20 +78,22 @@ sub display {
 
 sub size {
     my ($self) = @_;
-    return List::Util::sum(map scalar @{ $self->{$_} }, keys %$self) || 0;
+    my $items = $self->{items};
+    return List::Util::sum(map scalar @{ $items->{$_} }, keys %$items) || 0;
 }
 
 sub _set_user {
     my ($self, $user) = @_;
+    my $items = $self->{items};
 
-    exists $self->{'$you'}
+    exists $items->{'$you'}
         or Carp::croak("Error: no cart items for shell user");
 
-    $self->{$user} ||= [];
+    $items->{$user} ||= [];
 
-    push @{ $self->{$user} }, @{ delete $self->{'$you'} };
+    push @{ $items->{$user} }, @{ delete $items->{'$you'} };
 
-    for (values %$self) {
+    for (values %$items) {
         $_->{description} =~ s/\$you\b/$user/g for @$_;
     }
 }
@@ -96,14 +102,15 @@ sub checkout {
     my ($self, $user) = @_;
 
     $self->_set_user($user) if $user;
+    my $items = $self->{items};
 
-    exists $self->{'$you'} and die "Incomplete transaction; user not set.";
+    exists $items->{'$you'} and die "Incomplete transaction; user not set.";
 
     my $transaction_id = time() - 1300000000;
     RevBank::Plugins::call_hooks("checkout", $self, $user, $transaction_id);
 
-    for my $account (keys %$self) {
-        my $sum = List::Util::sum(map $_->{amount}, @{ $self->{$account} });
+    for my $account (keys %$items) {
+        my $sum = List::Util::sum(map $_->{amount}, @{ $items->{$account} });
         RevBank::Users::update($account, $sum, $transaction_id);
     }
 
@@ -114,10 +121,11 @@ sub checkout {
 
 sub select_items {
     my ($self, $key) = @_;
+    my $items = $self->{items};
 
     my @matches;
-    for my $user (keys %$self) {
-        for my $item (@{ $self->{$user} }) {
+    for my $user (keys %$items) {
+        for my $item (@{ $items->{$user} }) {
             push @matches, { user => $user, %$item }
                 if @_ == 1  # No key or match given: match everything
                 or @_ == 2 and exists $item->{ $key }   # Just a key
@@ -129,7 +137,12 @@ sub select_items {
 
 sub is_multi_user {
     my ($self) = @_;
-    return keys(%$self) > 1;
+    return keys(%{ $self->{items} }) > 1;
+}
+
+sub changed {
+    my ($self) = @_;
+    return delete $self->{changed};
 }
 
 1;

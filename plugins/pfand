@@ -27,7 +27,7 @@ sub product :Tab(&tab) {
     my $pfand = _read_pfand->{ $product };
 
     if ($pfand) {
-        $cart->add(undef, +$pfand, "Pfand zurueck", { is_pfand => 1 });
+        $cart->add(undef, +$pfand, "Pfand zurueck", { is_return => 1 });
     } else {
         say "$product: Kein Pfand";
     }
@@ -41,11 +41,11 @@ sub tab {
 sub hook_add {
     my ($class, $cart, $user, $item) = @_;
     return if defined $user;
-    return if exists $item->{is_pfand};
+    return if exists $item->{is_return};
     return if not exists $item->{product_id};
 
     my $pfand = _read_pfand->{ $item->{product_id} } or return;
 
-    $cart->add(undef, -$pfand, "Pfand");
+    $cart->add(undef, -$pfand, "Pfand", { is_pfand => 1 });
 }
 

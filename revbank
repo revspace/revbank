@@ -79,16 +79,13 @@ RevBank::Plugins->load;
 
 call_hooks("startup");
 
-my $old_cart_size = 0;
-
 my @words;
 
 OUTER: for (;;) {
     print "\n" if not @words;
 
-    if (not @words and $cart->size != $old_cart_size) {
+    if (not @words and $cart->changed) {
         call_hooks("cart_changed", $cart);
-        $old_cart_size = $cart->size;
     }
 
     my $split_input = 1;

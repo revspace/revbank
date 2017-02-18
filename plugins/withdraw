@@ -8,7 +8,8 @@ sub command {
     my $amount = parse_amount($command);
     defined $amount or return NEXT;
 
-    $cart->add(undef, -$amount, "Withdrawal or unlisted product");
+    $cart->add(undef, -$amount, "Withdrawal or unlisted product",
+        { is_withdrawal => 1 });
 
     return ACCEPT;
 }

@@ -2,6 +2,7 @@ package RevBank::Plugins;
 use strict;
 use RevBank::Eval;
 use RevBank::Plugin;
+use RevBank::Global;
 use Exporter;
 our @EXPORT = qw(call_hooks load_plugins);
 
@@ -16,7 +17,14 @@ sub call_hooks {
     my $hook = shift;
     my $method = "hook_$hook";
     for my $class (@plugins) {
-         $class->$method(@_) if $class->can($method);
+         if ($class->can($method)) {
+            my ($rv, $message) = $class->$method(@_);
+
+            if (defined $rv and ref $rv) {
+                main::abort($message) if $rv == ABORT;
+                warn "$class->$method returned an unsupported value.\n";
+            }
+        }
     }
 };
 
