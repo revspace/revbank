@@ -26,6 +26,11 @@ sub add {
     push @{ $self->{ $user } }, $item;
 }
 
+sub delete {
+    my ($self, $user, $index) = @_;
+    splice @{ $self->{ $user } }, $index, 1, ();
+}
+
 sub empty {
     my ($self) = @_;
     %$self = ();
@@ -120,6 +125,11 @@ sub select_items {
     }
 
     return @matches;
+}
+
+sub is_multi_user {
+    my ($self) = @_;
+    return keys(%$self) > 1;
 }
 
 1;

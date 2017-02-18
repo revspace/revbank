@@ -5,11 +5,14 @@ use attributes;
 use IO::Select;
 use List::Util ();
 use Term::ReadLine;
+require Term::ReadLine::Gnu;  # The other one sucks.
+
+use FindBin qw($RealBin);
+use lib "$RealBin/lib";
 use RevBank::Plugins;
 use RevBank::Global;
 use RevBank::Messages;
 use RevBank::Cart;
-require Term::ReadLine::Gnu;  # The other one sucks.
 
 our $VERSION = "2.0";
 our %HELP = (
