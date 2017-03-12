@@ -19,6 +19,20 @@ our %HELP = (
     "abort" => "Abort the current transaction",
 );
 
+my @words;
+my $one_off = 0;
+
+if (@ARGV) {
+    # Non-interactive like in sh: -c command_string
+    @ARGV >= 1 and $ARGV[0] eq '-c' or die "$0 has no switches, except -c.";
+
+    $one_off = 1;
+
+    @words = split " ", $ARGV[1];
+    push @words, @ARGV[3 .. $#ARGV] if @ARGV > 3;
+    push @words, "help" if not @words;
+}
+
 $| = 1;
 
 my $readline = Term::ReadLine->new($0);
@@ -79,8 +93,6 @@ RevBank::Plugins->load;
 
 call_hooks("startup");
 
-my @words;
-
 OUTER: for (;;) {
     print "\n" if not @words;
 
@@ -103,6 +115,13 @@ OUTER: for (;;) {
 
     PROMPT: {
         if (not @words) {
+            if ($one_off) {
+                exit if $one_off++ > 1;
+
+                abort "Incomplete command." if $cart->size;
+                exit;
+            }
+
             call_hooks "prompt", $cart, $prompt;
 
             my %completions = qw(abort 1);
@@ -159,6 +178,8 @@ OUTER: for (;;) {
                     ($method) = @rvargs;
                     call_hooks "plugin_fail", $plugin->id, "No method supplied"
                         if not ref $method;
+
+                    abort "Incomplete command." if $one_off and not @words;
                     next WORD;
                 }
                 if ($rv == ABORT) {
@@ -196,6 +217,10 @@ revbank - Banking for hackerspace visitors
 =head1 DESCRIPTION
 
 Maybe I'll write some documentation, but not now.
+
+Shell-like invocation with C<-c> is supported, sort of, but it has to be a
+complete command. Currently, multiple commands are supported on the command
+line (space separated), but that's an unintended feature...
 
 =head1 PLUGINS
 
