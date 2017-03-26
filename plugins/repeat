@@ -84,11 +84,11 @@ sub hook_added {
     my ($self, $cart, $user, $item) = @_;
     $cart->size >= 2 or return;
 
-    return ABORT, $err_multi if $cart->is_multi_user;
-
-    my @repeats = $cart->select_items('_repeat');
-    return ABORT, "Multiple repeats queued; I'm confused." if @repeats > 1;
-    return if not @repeats;
+    my @planned = $cart->select_items('_repeat');
+    my @repeated = $cart->select_items('_repeated');
+    return ABORT, $err_multi if $cart->is_multi_user and @planned || @repeated;
+    return ABORT, "Multiple repeats queued; I'm confused." if @planned > 1;
+    return if not @planned;
 
     my @items = $cart->select_items;
     return ABORT, $err_pfand if grep $_->{is_pfand}, @items;
