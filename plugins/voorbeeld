@@ -1,3 +1,5 @@
+#!perl
+
 sub command { print "@_\n"; NEXT }
 
 

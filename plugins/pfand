@@ -1,3 +1,5 @@
+#!perl
+
 HELP "pfand" => "Pfand zurueck";
 
 # This is a demo plugin. It's called "pfand" because "deposit" would be
