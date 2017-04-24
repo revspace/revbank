@@ -1,5 +1,7 @@
 #!perl
 
+HELP "*<N>, x<N>, <N>x, <N>*" => "Repeat previous/next product N times";
+
 my $err_stacked = "Stacked repetition is not supported.";
 my $err_multi = "Repetition not supported in multi-user transactions.";
 my $err_pfand = "Plugins 'pfand' and 'repeat' cannot be combined.";
