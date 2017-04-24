@@ -1,0 +1,30 @@
+#!perl
+
+HELP "dinnerbonus" => "Add fee for cooking supplies";
+
+sub command :Tab(kookbonus,dinnerbonus) {
+    my ($self, $cart, $command) = @_;
+
+    my $bonus = 1.00;
+
+    $command eq 'kookbonus' or $command eq 'dinnerbonus'
+        or return NEXT;
+
+    my @users = grep !/^\$you$/, map $_->{user}, $cart->select_items
+        or return REJECT, "$command requires a pending transaction.";
+
+    for my $user (@users) {
+        $cart->add( $user, -$bonus, "Kookbonus by \$you" );
+    }
+
+    my $users = join '/', @users;
+
+    $cart->add(
+        "kookpotje",
+        scalar @users * $bonus,
+        "Kookbonus from $users by \$you"
+    );
+
+    return ACCEPT;
+}
+
