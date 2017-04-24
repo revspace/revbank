@@ -4,24 +4,39 @@ HELP "help" => "The stuff you're looking at right now :)";
 
 use List::Util qw(max);
 
+my $bold = "\e[1m";
+my $underline = "\e[4m";
+my $off = "\e[0m";
+
 sub command :Tab(help,wtf,omgwtfbbq) {
     my ($self, $cart, $command) = @_;
 
     return NEXT if $command !~ /^(?:help|wtf|omgwtfbbq)$/;
 
-    say <<END;
+    say "\n${bold}Valid commands:${off}";
 
-1. Enter products, amounts or commands
-2. Enter your name
+    my $width = max(map length s/[<>]//rg, keys %::HELP);
 
-You can press <Enter> after each element to get a follow-up prompt, or separate
-individual elements with whitespace.
+    for my $command (sort keys %::HELP) {
+        my $display = $command;
 
-Valid commands:
+        my $length = length $display =~ s/[<>]//rg;
+
+        $display =~ s/</$underline/g;
+        $display =~ s/>/$off/g;
+
+        # Because of markup codes, a simple %-42s doesn't work.
+        $display .= " " x ($width - $length);
+
+        say sprintf "  %s %s", $display, $::HELP{$command};
+    }
+
+    print <<"END";
+
+${bold}Simple usage:  ${off} press <Enter> after a command for follow-up prompts
+${bold}Advanced usage:${off} pass space separated arguments to parameters
+Complete each transaction with ${underline}account${off} (i.e. enter your name).
 END
-
-    my $width = max(map length, keys %::HELP);
-    say sprintf "  %-${width}s  %s", $_, $::HELP{$_} for sort keys %::HELP;
 
     return ACCEPT;
 }
