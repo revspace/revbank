@@ -32,7 +32,8 @@ sub arg :Tab(USERS) {
 
         my $them = @users == 1 ? $users[0] : 'each';
 
-        return "Why are you taking $each from $them?", \&reason;
+        return sprintf("Why are you taking %.2f from %s?", $each, $them),
+            \&reason;
     }
 
     my $user = parse_user($arg);

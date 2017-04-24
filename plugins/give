@@ -25,11 +25,11 @@ sub amount {
     $self->{amount} = parse_amount($input)
         or return REJECT, "$input: Invalid amount.";
 
-    my $benificiary = $self->{benificiary};
-    my $amount = $self->{amount};
-
-    return "Why are you giving $amount to $benificiary, "
-        . "or enter your username to end", \&reason;
+    return sprintf(
+        "Why are you giving %.2f to %s, or enter your username to end",
+        $self->{amount},
+        $self->{benificiary}
+    ), \&reason;
 }
 
 sub reason :Tab(whatevah) {
