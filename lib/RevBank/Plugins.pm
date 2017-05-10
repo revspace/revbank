@@ -249,7 +249,11 @@ Be careful to avoid infinite loops if you add new stuff.
 
 =item hook_checkout $class, $cart, $user, $transaction_id
 
-Called when the transaction is finalized.
+Called when the transaction is finalized, before accounts are updated.
+
+=item hook_checkout $class, $cart, $user, $transaction_id
+
+Called when the transaction is finalized, after accounts were updated.
 
 =item hook_reject $class, $plugin, $reason, $abort
 

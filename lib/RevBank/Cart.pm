@@ -114,6 +114,8 @@ sub checkout {
         RevBank::Users::update($account, $sum, $transaction_id);
     }
 
+    RevBank::Plugins::call_hooks("checkout_done", $self, $user,$transaction_id);
+
     $self->empty;
 
     sleep 1;  # Ensure new timestamp/id for new transaction
