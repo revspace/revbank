@@ -64,9 +64,9 @@ sub prompt {
         $input = shift;
         $readline->callback_handler_remove;
     });
-    
+
     my $begin = my $time = time;
-    while (not $done) { 
+    while (not $done) {
         $readline->callback_read_char if $select->can_read(.05);
         if (time > $time) {
             $time = time;
