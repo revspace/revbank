@@ -14,7 +14,6 @@ take
 nyan       # fun, but not compatible with dumb terminals
 pfand      # makes little sense in a self service environment
 stock
-quit
 
 beep_terminal
 
