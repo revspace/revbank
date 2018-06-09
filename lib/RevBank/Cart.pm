@@ -15,6 +15,10 @@ sub new {
 
 sub add {
     my ($self, $user, $amount, $description, $data) = @_;
+
+    # Note: 'repeat' plugin is currently dependent on this specific
+    # implementation!
+
     $data ||= {};
     my $item = {
         %$data,  # Internal stuff, not logged or printed.

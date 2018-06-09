@@ -12,10 +12,11 @@ my $err_limit = "Repetition is limited at $limit items.";
 sub _do_repeat {
     my ($cart, $item, $num) = @_;
 
-    my $data = $item->{data};
-    $data->{_repeated} = 1;
+    $item->{_repeated} = 1;
 
-    $cart->add( @{ $item }{qw/user amount description/}, $data ) for 2..$num;
+    # Strongly dependent on the implementation of RevBank::Cart and the 'add'
+    # method. Bad idea, but meh.
+    $cart->add( @{ $item }{qw/user amount description/}, $item ) for 2..$num;
 }
 
 sub command {
