@@ -1,0 +1,31 @@
+#!perl
+
+sub command { NEXT }
+
+sub hook_deposit_methods {
+    my ($class, $hash) = @_;
+
+    print <<"END";
+
+Please type one of the following:
+
+'iban':      IBAN transfer (NL 69 ABNA 0431 1582 07)
+'cash':      Cash in the cash box
+'reimburse': Reimbursement of expenses agreed upon in advance
+             Note: we require an invoice or receipt with this exact amount!
+'other':     Provide a manual description
+END
+
+    %$hash = (
+        iban => { description => "Deposit (IBAN transfer)" },
+        cash => { description => "Deposit (Cash)" },
+        other => { description => "Deposit (%s)", prompts => [ "Description" ] },
+        reimburse => {
+            description => "Reimbursement (%s, approval: %s)",
+            prompts => [
+                "Please provide a short description",
+                "Which board member gave approval?",
+            ],
+        },
+    );
+}

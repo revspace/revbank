@@ -23,11 +23,53 @@ sub command :Tab(deposit) {
 sub amount :Tab(13.37,42) {
     my ($self, $cart, $amount) = @_;
 
-    $amount = parse_amount($amount)
+    $self->{amount} = parse_amount($amount)
         or return REJECT, "Invalid amount";
 
-    $cart->add(undef, +$amount, "Deposit", { is_deposit => 1 });
+    call_hooks("deposit_methods", $self->{deposit_methods} = {});
 
+    return "How are we receiving this EUR $amount?", \&how
+        if keys %{ $self->{deposit_methods} };
+
+    $cart->add(undef, +$self->{amount}, "Deposit", { is_deposit => 1 });
+    return ACCEPT;
+}
+
+sub how :Tab(&how_tab) {
+    my ($self, $cart, $input) = @_;
+
+    my %methods = %{ $self->{deposit_methods} };
+
+    my $how = $self->{how} = $methods{$input}
+        or return REJECT, "'$input' is not a valid answer.";
+
+    if (@{ $how->{prompts} // [] }) {
+        return shift @{ $how->{prompts} }, \&how_prompt;
+    }
+
+    $cart->add(undef, +$self->{amount}, $how->{description}, { is_deposit => 1 });
+    return ACCEPT;
+}
+
+sub how_tab {
+    my ($self) = @_;
+    return keys %{ $self->{deposit_methods} };
+}
+
+sub how_prompt {
+    my ($self, $cart, $input) = @_;
+
+    my $how = $self->{how};
+
+    push @{ $how->{answers} }, $input;
+
+    if (@{ $how->{prompts} }) {
+        return shift @{ $how->{prompts} }, \&how_prompt;
+    }
+
+    my $desc = sprintf $how->{description}, @{ $how->{answers} };
+
+    $cart->add(undef, +$self->{amount}, $desc, { is_deposit => 1 });
     return ACCEPT;
 }
 
@@ -41,13 +83,5 @@ sub create :Tab(yes,no) {
         return ACCEPT;
     }
     return ABORT;
-}
-
-sub hook_checkout {
-    my ($class, $cart, $user, $transaction_id) = @_;
-    my $sum;
-    $sum += $_->{amount} for $cart->select_items('is_deposit');
-
-    say sprintf "Don't forget to add EUR %.2f to the cash box!", $sum  if $sum;
 }
 
