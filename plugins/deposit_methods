@@ -3,9 +3,9 @@
 sub command { NEXT }
 
 sub hook_deposit_methods {
-    my ($class, $hash) = @_;
+    my ($class, $message, $hash) = @_;
 
-    print <<"END";
+    $$message =  <<"END";
 
 Please type one of the following:
 

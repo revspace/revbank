@@ -26,9 +26,9 @@ sub amount :Tab(13.37,42) {
     $self->{amount} = parse_amount($amount)
         or return REJECT, "Invalid amount";
 
-    call_hooks("deposit_methods", $self->{deposit_methods} = {});
+    call_hooks("deposit_methods", \my $message, $self->{deposit_methods} = {});
 
-    return "How are we receiving this EUR $amount?", \&how
+    return $message . "How are we receiving this EUR $amount?", \&how
         if keys %{ $self->{deposit_methods} };
 
     $cart->add(undef, +$self->{amount}, "Deposit", { is_deposit => 1 });
