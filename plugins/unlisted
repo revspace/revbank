@@ -1,0 +1,22 @@
+#!perl
+
+HELP "unlisted" => "Buy unlisted product (manual entry)";
+
+sub command :Tab(unlisted) {
+    my ($self, $cart, $command) = @_;
+    $command eq 'unlisted' or return NEXT;
+    return "Amount to deduct from your account", \&amount;
+}
+
+sub amount {
+    my ($self, $cart, $arg) = @_;
+    $self->{amount} = parse_amount($arg) or return REJECT, "Invalid amount.";
+    return "Please provide a short description", \&description;
+}
+
+sub description {
+    my ($self, $cart, $desc) = @_;
+    $cart->add(undef, -$self->{amount}, $desc);
+    return ACCEPT;
+}
+
