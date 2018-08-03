@@ -13,6 +13,19 @@ sub command :Tab(help,wtf,omgwtfbbq) {
 
     return NEXT if $command !~ /^(?:help|wtf|omgwtfbbq)$/;
 
+    # GNU less(1) and more(1) are a bad choice to present to total newbies who
+    # might have no interest in learning to use these surprisingly powerful
+    # tools, so I will not accepting patches to use either of those, or to use
+    # the PAGER environment variable (because that will typically be set to
+    # either one of those by default). For example, typing "v" will excute
+    # vi...
+    # On the other hand, busybox(1) has a "more" applet that gives the user
+    # clear instructions and seems mostly harmless too.
+    my $pipe;
+    if (open $pipe, "|-", "busybox", "more") {
+        select $pipe;
+    }
+
     say "\n${bold}Valid commands:${off}";
 
     my $width = max(map length s/[<>]//rg, keys %::HELP);
@@ -37,6 +50,9 @@ ${bold}Simple usage:  ${off} press <Enter> after a command for follow-up prompts
 ${bold}Advanced usage:${off} pass space separated arguments to parameters
 Complete each transaction with ${underline}account${off} (i.e. enter your name).
 END
+
+    select STDOUT;
+    close $pipe;
 
     return ACCEPT;
 }
