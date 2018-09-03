@@ -35,9 +35,8 @@ sub hook_add {
     } _read_warnings;
 
     if (@warnings) {
-        print "\e[7m>> $_ <<\e[0m " for @warnings;
+        print "\e[7m>> $_ <<\e[0m\n" for @warnings;
         sleep 2;
-        print "\n";
     }
 }
 
