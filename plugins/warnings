@@ -6,10 +6,14 @@
 sub _read_warnings {
     open my $fh, 'revbank.warnings' or die $!;
     return map {
-        my ($matcher, $text) = split " ", $_, 2;
-        chomp $text;
-
-        my ($regex) = $matcher =~ m[^/([^/]+)/$];
+        my ($regex, $products, $text) = m[^
+            (?:
+                /((?>[^/\\]++|\\.)*+)/  # /regex with support for \/escaped\/ slashes/
+            |   (\S+)                   # products IDs, comma separated
+            )
+            \s+
+            (.*)
+        ]x;
 
         $regex
         ? sub {
@@ -18,7 +22,7 @@ sub _read_warnings {
         }
         : sub {
             my ($id, $desc) = @_;
-            (grep { $_ eq $id } split /,/, $matcher) ? $text : ();
+            (grep { $_ eq $id } split /,/, $products) ? $text : ();
         }
     } grep /\S/, grep !/^\s*#/, readline $fh;
 }
