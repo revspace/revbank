@@ -45,12 +45,14 @@ sub hook_add {
     my $text = join "\n", map ">> $_ <<", @warnings;
     my $delay = 1.5 / length($text);
 
+    system "stty -echo 2>/dev/null";
     print "\e[7m";  # reverse video
     for my $c (split //, $text) {
         print $c eq "\n" ? "\e[0m\n\e[7m" : $c;
         sleep $delay;
     }
     print "\e[0m\n";
+    system "stty echo 2>/dev/null";
     sleep .5;
 }
 
