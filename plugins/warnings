@@ -3,6 +3,8 @@
 # The file format for 'revbank.warnings' is simply two whitespace separated
 # columns: product id (or /regex/ for descriptions) and the warning text.
 
+use Time::HiRes qw(sleep);
+
 sub _read_warnings {
     open my $fh, 'revbank.warnings' or die $!;
     return map {
@@ -38,9 +40,17 @@ sub hook_add {
         $_->( $item->{product_id}, $item->{description} )
     } _read_warnings;
 
-    if (@warnings) {
-        print "\e[7m>> $_ <<\e[0m\n" for @warnings;
-        sleep 2;
+    return if not @warnings;
+
+    my $text = join "\n", map ">> $_ <<", @warnings;
+    my $delay = 1.5 / length($text);
+
+    print "\e[7m";  # reverse video
+    for my $c (split //, $text) {
+        print $c eq "\n" ? "\e[0m\n\e[7m" : $c;
+        sleep $delay;
     }
+    print "\e[0m\n";
+    sleep .5;
 }
 
