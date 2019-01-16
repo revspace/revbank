@@ -7,8 +7,8 @@ sub command :Tab(grandtotal) {
 
     return NEXT if $command ne 'grandtotal';
 
-    my $pos;
-    my $neg;
+    my $pos = 0;
+    my $neg = 0;
 
     open my $fh, "<", "revbank.accounts";
     while (defined(my $line = readline $fh)) {
