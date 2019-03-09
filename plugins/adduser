@@ -1,0 +1,32 @@
+#!perl
+
+HELP "adduser <name>" => "Create an account";
+
+sub command :Tab(adduser) {
+    my ($self, $cart, $command) = @_;
+
+    $command eq 'adduser' or return NEXT;
+
+    if ($cart->size) {
+        return REJECT, "Create the account *before* scanning things.";
+    }
+
+    return "Name for the new account", \&username;
+}
+
+sub username {
+    my ($self, $cart, $name) = @_;
+
+    return REJECT, "Sorry, whitespace is not allowed."
+        if $name =~ /\s/;
+
+    return REJECT, "That's too numeric to be a user name."
+        if defined parse_amount($name);
+
+    return REJECT, "That name already exists."
+        if defined parse_user($name);
+
+    RevBank::Users::create( $name );
+
+    return ACCEPT;
+}

@@ -11,13 +11,16 @@ undo
 give
 grandtotal
 take
-nyan       # fun, but not compatible with dumb terminals
 pfand      # makes little sense in a self service environment
 stock
+unlisted
+#warnings
+adduser
 
 beep_terminal
 
-game       # Scan-foo game
+#nyan       # fun, but not compatible with dumb terminals
+#game       # Scan-foo game
 
 # Then, plugins that apply heuristics
 
@@ -26,3 +29,5 @@ market     # also matches product IDs
 withdraw   # matches amounts
 users      # matches usernames
 deposit    # wants to be after 'users'
+#deposit_methods  # Extra options for 'deposit'. Edit/configure first!
+repeat
