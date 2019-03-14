@@ -85,6 +85,7 @@ sub prompt {
 
     print "\e[0m";
     defined $input or return;
+    $readline->addhistory($input);
 
     $input =~ s/^\s+//;  # trim leading whitespace
     $input =~ s/\s+$//;  # trim trailing whitespace
