@@ -1,0 +1,57 @@
+#!perl
+
+use List::Util ();
+
+HELP "split <account>..." => "Split the bill with others";
+
+sub _select_split {
+    my ($cart) = @_;
+    grep $_->{amount} < 0, grep $_->{user} eq '$you', $cart->select_items
+}
+
+sub command :Tab(take,steal,split) {
+    my ($self, $cart, $command) = @_;
+
+    $command eq 'split' or return NEXT;
+
+    $self->{users} = [];
+
+    my $sum = List::Util::sum(map -$_->{amount}, _select_split($cart));
+    $self->{split_amount} = $sum;
+
+    return REJECT, "Nothing to split. Add products first." if not $sum;
+
+    printf "Splitting %.2f over \$you and others.\n", $sum;
+    return "User to take from (not yourself)", \&arg;
+}
+
+sub arg :Tab(USERS) {
+    my ($self, $cart, $arg) = @_;
+
+    my $users = $self->{users};
+
+    if (@$users and $arg eq $self->{split_finish}) {
+        my $amount = $self->{split_amount};
+        my $each  = sprintf "%.2f", $amount / (@$users + 1);
+        my $total = sprintf "%.2f", @$users * $each;
+        my $desc = join " + ", map $_->{description}, _select_split($cart);
+
+        for my $user (@$users) {
+            $cart->add( $user, -$each, "Taken by \$you (Split: $desc)" );
+        }
+
+        my $users = join '/', @$users;
+        $cart->add( undef, $total, "Taken from $users (Split: $desc)" );
+
+        return ACCEPT;
+    }
+
+    my $user = parse_user($arg) or return REJECT, "$arg: No such user.";
+    push @$users, $user;
+
+    my $each = sprintf "%.2f", $self->{split_amount} / (@$users + 1);
+    $self->{split_finish} = $each;
+
+    return "User to take from (not yourself) or $each to finish", \&arg;
+}
+

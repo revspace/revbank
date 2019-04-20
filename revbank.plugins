@@ -11,6 +11,7 @@ undo
 give
 grandtotal
 take
+split
 pfand      # makes little sense in a self service environment
 stock
 unlisted
