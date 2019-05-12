@@ -1,6 +1,5 @@
 #!perl
 
-use Term::QRCode;
 use List::Util qw(sum);
 
 sub command { NEXT }
@@ -22,16 +21,21 @@ sub hook_checkout {
 
     if (defined $amount && $amount > 0) {
         print "Here's your EPC QR code:\n";
-        print Term::QRCode->new->plot(join(
+        open my $pipe, "| qrencode -t ansiutf8 -m 2"
+            or die "Couldn't run qrencode";
+
+        print $pipe join(
             "\n",
-            "BCD", "001", 1, "SCT",
-            "BANKCC01",           # Change this to your bank's BIC number
+            "BCD", "002", 1, "SCT",
+            "",
             "Your Hackerspace",   # Account name
             "NL12ABCD1234567890", # IBAN Number
             "EUR" . $amount,      # Amount
-            "CHAR", "",
-            "deposit $user (T: $transaction_id)", # Description
             "",
-        )) . "\n";
+            "",
+            "deposit", # $user (T: $transaction_id)", # Description
+            "",
+        );
+        close $pipe;
     }
 }
