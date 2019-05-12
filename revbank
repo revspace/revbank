@@ -230,6 +230,8 @@ line (space separated), but that's an unintended feature...
 
 Refer to L<RevBank::Plugins> for documentation about writing plugins.
 
+Plugins themselves may have some documentation in the respective plugin files.
+
 =head1 AUTHOR
 
 Juerd Waalboer <#####@juerd.nl>

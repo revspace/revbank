@@ -1,5 +1,22 @@
 #!perl
 
+# Note for Linux console users: this thing assumes UTF-8 support (so make sure
+# you're running under a UTF-8 locale!), but you will also need a font that
+# actually has all of the characters. Most console fonts do not support the
+# half blocks, and will result in a diamond instead.
+#
+# At least on Debian, this one works:
+#
+#   setfont /usr/share/consolefonts/Uni2-VGA14.psf.gz
+#
+# To make this the default, run "dpkg-reconfigure console-setup", and pick:
+# - "UTF-8"
+# - "Combined - Latin; Slavic Cyrillic; Greek"
+# - "VGA"
+# - "8x14"
+# and then reboot
+
+
 use IPC::Open2 qw(open2);
 use List::Util qw(sum);
 

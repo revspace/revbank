@@ -14,6 +14,8 @@ line (space separated), but that's an unintended feature...
 
 Refer to [RevBank::Plugins](https://metacpan.org/pod/RevBank::Plugins) for documentation about writing plugins.
 
+Plugins themselves may have some documentation in the respective plugin files.
+
 # AUTHOR
 
 Juerd Waalboer <#####@juerd.nl>
