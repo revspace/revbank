@@ -47,7 +47,7 @@ sub how :Tab(&how_tab) {
         return shift @{ $how->{prompts} }, \&how_prompt;
     }
 
-    $cart->add(undef, +$self->{amount}, $how->{description}, { is_deposit => 1 });
+    $cart->add(undef, +$self->{amount}, $how->{description}, { is_deposit => 1, method => $input });
     return ACCEPT;
 }
 
