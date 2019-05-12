@@ -32,9 +32,8 @@ sub command {
 
     return NEXT if $pre and $post;  # 123x123 -> invalid syntax
 
-    return REJECT, $err_multi if $cart->is_multi_user;
-
     if ($post) {
+        return REJECT, $err_multi if $cart->is_multi_user;
         return REJECT, $err_limit if $post > $limit;
         return ABORT, "Can't repeat an empty transaction." if not $cart->size;
         return REJECT, $err_stacked if $last->{_repeated};
@@ -89,13 +88,12 @@ sub hook_added {
     my ($self, $cart, $user, $item) = @_;
     $cart->size >= 2 or return;
 
+    my @items = $cart->select_items;
     my @planned = $cart->select_items('_repeat');
-    my @repeated = $cart->select_items('_repeated');
-    return ABORT, $err_multi if $cart->is_multi_user and @planned || @repeated;
+    return ABORT, $err_multi if $cart->is_multi_user and @planned;
     return ABORT, "Multiple repeats queued; I'm confused." if @planned > 1;
     return if not @planned;
 
-    my @items = $cart->select_items;
     return ABORT, $err_pfand if grep $_->{is_pfand}, @items;
 
     for my $i (0 .. $#items - 1) {
