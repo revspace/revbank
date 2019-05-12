@@ -1,0 +1,37 @@
+#!perl
+
+use Term::QRCode;
+use List::Util qw(sum);
+
+sub command { NEXT }
+
+sub hook_deposit_methods {
+    my ($class, $message, $hash) = @_;
+
+    $$message=~s/('iban'.*)$/$1\n'mobile':    IBAN transfer via an EPC QR code\n             Note: Only ING and Bunq support this method in the NL currently./gm;
+
+    $hash->{mobile} = { description => "Deposit (IBAN transfer using QR)"};
+}
+
+sub hook_checkout {
+    my ($class, $cart, $user, $transaction_id) = @_;
+
+    my @items = $cart->select_items("is_deposit");
+
+    my $amount = sum map $_->{amount}, grep $_->{method} eq "mobile", @items;
+
+    if (defined $amount && $amount > 0) {
+        print "Here's your EPC QR code:\n";
+        print Term::QRCode->new->plot(join(
+            "\n",
+            "BCD", "001", 1, "SCT",
+            "BANKCC01",           # Change this to your bank's BIC number
+            "Your Hackerspace",   # Account name
+            "NL12ABCD1234567890", # IBAN Number
+            "EUR" . $amount,      # Amount
+            "CHAR", "",
+            "deposit $user (T: $transaction_id)", # Description
+            "",
+        )) . "\n";
+    }
+}
