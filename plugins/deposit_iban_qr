@@ -1,0 +1,50 @@
+#!perl
+
+use IPC::Open2 qw(open2);
+use List::Util qw(sum);
+
+my $iban = "NL99ABCD1234567890";
+my $benificiary = "Account Name";
+
+sub command { NEXT }
+
+sub hook_checkout {
+    my ($class, $cart, $user, $transaction_id) = @_;
+
+    my @items = $cart->select_items("is_deposit");
+
+    my $amount = sum map $_->{amount}, grep $_->{method} eq "iban", @items;
+
+    if (defined $amount && $amount > 0) {
+        my $pid = open2 my $out, my $in, qw(qrencode -t ansiutf8 -m 2)
+            or die "Couldn't run qrencode";
+
+        print $in join(
+            "\n",
+            "BCD", "002", 1, "SCT",
+            "",
+            $benificiary,
+            $iban,
+            "EUR" . $amount,      # Amount
+            "",
+            "",
+            "rb $user",
+            "",
+        );
+        close $in;
+
+        local $/ = "\n";
+        my @lines = readline $out;
+        close $out;
+
+        waitpid($pid, 0);
+
+        $lines[1] =~ s/$/ Note: ING and Bunq are the only/;
+        $lines[2] =~ s/$/ Dutch banks that support these/;
+        $lines[3] =~ s/$/ EPC QR codes./;
+        $lines[5] =~ s/$/ For manual transfers, use this/;
+        $lines[6] =~ s/$/ IBAN: $iban/;
+
+        print @lines;
+    }
+}
