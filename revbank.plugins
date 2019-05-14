@@ -20,9 +20,6 @@ adduser
 
 beep_terminal
 
-#nyan       # fun, but not compatible with dumb terminals
-#game       # Scan-foo game
-
 # Then, plugins that apply heuristics
 
 products   # matches product IDs (barcodes)

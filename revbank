@@ -218,6 +218,25 @@ OUTER: for (;;) {
 
 revbank - Banking for hackerspace visitors
 
+=head1 ANNOUNCEMENTS
+
+The following will disappear in a future version:
+
+=head2 Deprecated: C<nyan>, C<game>
+
+These non-serious, non-banking plugins will be removed. Please remove them
+from C<revbank.plugins>.
+
+=head2 Deprecated: creating new accounts with C<deposit>
+
+For a while now, there has been a dedicated plugin, C<adduser> to create new
+accounts. The old way of creating new accounts (unknown input after a
+C<deposit> command was assumed to be the name of the a account) did not allow
+for any input validation and would cause trouble if a user name already
+existed.
+
+Please add C<adduser> to C<revbank.plugins>.
+
 =head1 DESCRIPTION
 
 Maybe I'll write some documentation, but not now.

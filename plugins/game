@@ -1,5 +1,7 @@
 #!perl
 
+warn "The game plugin is deprecated and will be removed from a future revbank";
+
 #Scan-foo-game for Revbank - (C)Edwin Eefting (psy0rz)
 
 #Released under GPL or whatever revbank uses as license :)

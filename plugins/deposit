@@ -14,6 +14,12 @@ sub command :Tab(deposit) {
     if ($cart->select_items('is_deposit')) {
         # No other plugin recognised the input, so it must be a new user.
         $self->{new_user} = $command;
+
+        my $x = RevBank::Plugin::adduser->can("command")
+            ? "Please use \e[4madduser\e[0m instead."
+            : "Please enable the \e[4madduser\e[0m plugin.";
+        warn "Creating accounts with \e[4mdeposit\e[m is deprecated. $x\n";
+
         return "Add new account for user '$command'?", \&create;
     }
 
