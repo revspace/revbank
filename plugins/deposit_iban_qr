@@ -56,8 +56,8 @@ sub hook_checkout {
 
         waitpid($pid, 0);
 
-        $lines[1] =~ s/$/ Note: ASN, Bunq, and ING are the/;
-        $lines[2] =~ s/$/ only Dutch banks that support/;
+        $lines[1] =~ s/$/ Note: ASN, Bunq, ING, and SNS are/;
+        $lines[2] =~ s/$/ the only Dutch banks that support/;
         $lines[3] =~ s/$/ these EPC QR codes./;
         $lines[5] =~ s/$/ For manual transfers, use this/;
         $lines[6] =~ s/$/ IBAN: $iban/;
