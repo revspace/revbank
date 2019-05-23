@@ -49,11 +49,13 @@ sub how :Tab(&how_tab) {
     my $how = $self->{how} = $methods{$input}
         or return REJECT, "'$input' is not a valid answer.";
 
+    $how->{_key} = $input;
+
     if (@{ $how->{prompts} // [] }) {
         return shift @{ $how->{prompts} }, \&how_prompt;
     }
 
-    $cart->add(undef, +$self->{amount}, $how->{description}, { is_deposit => 1, method => $input });
+    $cart->add(undef, +$self->{amount}, $how->{description}, { is_deposit => 1, method => $how->{_key} });
     return ACCEPT;
 }
 
@@ -75,7 +77,7 @@ sub how_prompt {
 
     my $desc = sprintf $how->{description}, @{ $how->{answers} };
 
-    $cart->add(undef, +$self->{amount}, $desc, { is_deposit => 1 });
+    $cart->add(undef, +$self->{amount}, $desc, { is_deposit => 1, method => $how->{_key} });
     return ACCEPT;
 }
 
