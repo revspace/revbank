@@ -43,7 +43,7 @@ sub reason :Tab(whatevah) {
 
     $cart->add(undef,        -$amount, "Given to $benificiary" . $reason);
     $cart->add($benificiary, +$amount, "Received from \$you" . $reason);
-    $cart->checkout($input) if $user;
+    $cart->checkout($user) if $user;
 
     return ACCEPT;
 }
