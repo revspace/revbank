@@ -90,10 +90,11 @@ sub hook_added {
 
     my @items = $cart->select_items;
     my @planned = $cart->select_items('_repeat');
-    return ABORT, $err_multi if $cart->is_multi_user and @planned;
+    my @repeated = $cart->select_items('_repeated');
+
+    return ABORT, $err_multi if $cart->is_multi_user and @planned || @repeated;
     return ABORT, "Multiple repeats queued; I'm confused." if @planned > 1;
     return if not @planned;
-
     return ABORT, $err_pfand if grep $_->{is_pfand}, @items;
 
     for my $i (0 .. $#items - 1) {
