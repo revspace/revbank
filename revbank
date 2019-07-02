@@ -67,6 +67,13 @@ sub prompt {
 
     my $begin = my $time = time;
     while (not $done) {
+        if ($::ABORT_HACK) {
+            # Global variable that a signal handling plugin can set.
+            # Do not use, but "return ABORT" instead.
+            my $reason = $::ABORT_HACK;
+            $::ABORT_HACK = 0;
+            abort($reason);
+        }
         if ($select->can_read(.05)) {
             $readline->callback_read_char;
             $begin = $time;

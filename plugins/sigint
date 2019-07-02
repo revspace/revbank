@@ -2,4 +2,11 @@
 
 sub command { NEXT }
 
-$SIG{INT} = 'IGNORE';
+$SIG{INT} = sub {
+    $::ABORT_HACK = "^C";
+
+    # DO NOT USE this global variable. It's a nasty hack. In most cases,
+    # you should "return ABORT" instead, or maybe "main::abort()" when doing
+    # nastier stuff. You should only need $::ABORT_HACK in signal handlers.
+};
+
