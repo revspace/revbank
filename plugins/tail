@@ -1,0 +1,15 @@
+#!perl
+
+sub command :Tab(tail) {
+    my ($self, $cart, $command) = @_;
+
+    return NEXT if $command ne 'tail';
+
+    my $n = (`tput lines 2>/dev/null` || 13) - 3;
+    my $c = (`tput cols 2>/dev/null` || 80) + 0;
+
+    # ew :)
+    system "perl -lane's/CHECKOUT\\s+\\S+\\s+// or next; s/  #// or next; s/_/ /; print' .revbank.log | tail -n$n | perl -ple'\$_ = substr \$_, 0, $c'";
+
+    return ACCEPT;
+}
