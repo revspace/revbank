@@ -46,7 +46,7 @@ sub empty {
 sub _dump_item {
     my ($prefix, $user, $amount, $description) = @_;
     return sprintf(
-        "%s%-12s %4s EUR %5.2f  %s",
+        "%s%-12s %4s CHF %5.2f  %s",
         $prefix,
         $user,
         ($amount > 0 ? 'GAIN' : $amount < 0 ? 'LOSE' : ''),

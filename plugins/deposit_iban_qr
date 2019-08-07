@@ -42,7 +42,7 @@ sub hook_checkout {
             "",
             $benificiary,
             $iban,
-            "EUR" . $amount,      # Amount
+            "CHF" . $amount,      # Amount
             "",
             "",
             "rb $user",

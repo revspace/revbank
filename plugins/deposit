@@ -34,7 +34,7 @@ sub amount :Tab(13.37,42) {
 
     call_hooks("deposit_methods", \my $message, $self->{deposit_methods} = {});
 
-    return $message . "How are we receiving this EUR $amount?", \&how
+    return $message . "How are we receiving this CHF $amount?", \&how
         if keys %{ $self->{deposit_methods} };
 
     $cart->add(undef, +$self->{amount}, "Deposit", { is_deposit => 1 });
