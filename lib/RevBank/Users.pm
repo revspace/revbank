@@ -42,9 +42,15 @@ sub update {
         if (lc $a[0] eq lc $username) {
             $old = $a[1];
             $new = $old + $delta;
-            printf {$out} "%-16s %+9.2f %s",
-                $username, $new, now() or die $!;
-            print {$out} "\n" or die $!;
+
+            my $since = $a[3] // "";
+            $since = "+\@" . now() if $new  > 0 and (!$since or $old <= 0);
+            $since = "-\@" . now() if $new  < 0 and (!$since or $old >= 0);
+            $since = "0\@" . now() if $new == 0 and (!$since or $old != 0);
+
+            printf {$out} "%-16s %+9.2f %s %s\n", (
+                $username, $new, now(), $since
+            ) or die $!;
         } else {
             print {$out} $line or die $!;
         }
