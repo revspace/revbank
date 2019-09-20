@@ -22,6 +22,11 @@ sub balance {
     return _read()->{ lc $name }->[1];
 }
 
+sub since {
+    my ($name) = @_;
+    return _read()->{ lc $name }->[3];
+}
+
 sub create {
     my ($username) = @_;
     open my $fh, '>>', $filename or die $!;
