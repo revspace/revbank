@@ -1,0 +1,15 @@
+sub command { NEXT }
+
+# Terminal hacks
+
+# Reset terminal on startup
+system 'reset';
+
+# Select special characters in G1 on IBM 3151 for utf8 qr code, to counteract
+# brokenness caused by squeezen's linedrawing.
+sub hook_checkout {
+    my $select_charset = "\e>A";  # IBM 3151
+    my $device_control = "\eP" . $select_charset . "\e\\";  # ANSI
+    my $clear_line = "\r  \r";
+    print $device_control, $clear_line;
+}

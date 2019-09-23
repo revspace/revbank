@@ -1,0 +1,56 @@
+#!perl
+
+
+# Ja, het is lelijk. Even snel in elkaar geklust en daarna niet meer naar
+# gekeken. Pech :)   -- Juerd
+
+
+
+
+sub command :Tab(barcode) {
+    my ($self, $cart, $command) = @_;
+
+    return NEXT if $command ne "barcode";
+
+    return "Barcode data", \&data;
+}
+
+sub data {
+    my ($self, $cart, $input) = @_;
+
+    $cart->add(
+        undef,
+        -0.07,
+        "Barcode <$input>",
+        { is_barcode => 1, barcode_data => $input }
+    );
+
+    return ACCEPT;
+}
+
+sub hook_checkout {
+    my ($class, $cart, $username, $transaction_id) = @_;
+
+    my @barcodes;
+    for my $item ($cart->select_items('is_barcode')) {
+        push @barcodes, $item->{barcode_data};
+    }
+    if (@barcodes) {
+        print "\nCheck the following:\n  1. label tape is 12 mm\n  2. printer is on\n  3. wifi is enabled and connected\n\nPress enter to continue.";
+        readline STDIN;
+       
+        my $printjob = "";
+        
+        open my $bcgen, "-|", "/home/bar/revlabel/barcode.pl", @barcodes
+            or warn "Could not open script 1";
+
+        local $/;
+        my $filenames = readline $bcgen;
+        close $bcgen;
+
+        open my $fh, "| /home/bar/revlabel/ptouch-770-write 12 $filenames | nc -N 10.42.42.222 9100"
+            or warn "Couldn't open script 2\n";
+        print $fh $printjob;
+        close $fh;
+    }
+}

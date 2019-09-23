@@ -1,0 +1,16 @@
+sub command {
+    # Bij elke invoer (bijv. barcode-scan) terug naar window 0.
+    system qw(screen -S bar -X at % select 0);
+
+    # Iemand zet steeds vbell aan, en dus het piepje uit. Daardoor werkt de
+    # idle-plugin niet zinnig en dat kost geld.
+    system qw(screen -S bar -X vbell off);
+
+    return NEXT;
+}
+
+sub hook_abort {
+    command();
+    return undef;
+}
+

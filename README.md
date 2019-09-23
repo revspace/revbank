@@ -31,9 +31,14 @@ line (space separated), but that's an unintended feature...
 
 # PLUGINS
 
-Refer to [RevBank::Plugins](https://metacpan.org/pod/RevBank::Plugins) for documentation about writing plugins.
+Refer to [RevBank::Plugins](https://metacpan.org/pod/RevBank::Plugins) for
+documentation about writing plugins.
 
 Plugins themselves may have some documentation in the respective plugin files.
+
+Note that plugins that begin with `revspace_` are revspace specific hacks, and
+were not written with reusability in mind. They will probably not work for your
+setup.
 
 # AUTHOR
 

@@ -1,0 +1,15 @@
+#!perl
+
+sub command { NEXT }
+
+sub hook_user_balance {
+    my ($class, $username, $old, $delta, $new, $transaction_id) = @_;
+    my $msg = "$transaction_id ($username)";
+    $msg =~ s/[^\x20-\x7E]//g;
+    $msg =~ s/'//g;
+
+    system("(git commit -am '$msg') > /dev/null 2>&1")
+        == 0 or warn "Meh, gitfaal";
+    system("git gc --auto");
+}
+

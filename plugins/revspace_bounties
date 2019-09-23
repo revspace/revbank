@@ -1,0 +1,20 @@
+#!perl
+
+my %bounties = (
+    1 => [ 10, "Bedankt voor het vegen/stofzuigen" ],
+    2 => [ 10, "Bedankt voor het afvoeren van het afval" ],
+    3 => [ 25, "Bedankt voor het dweilen" ],
+    4 => [ 15, "Bedankt voor 't poetsen van alle tafels" ],
+);
+
+sub command :Tab(BOUNTY1,BOUNTY2,BOUNTY3,BOUNTY4) {
+    my ($self, $cart, $command) = @_;
+
+    if ($command =~ /BOUNTY(\d+)/) {
+        $cart->add(undef, +$bounties{$1}[0], $bounties{$1}[1]);
+        return ACCEPT;
+    }
+
+    return NEXT;
+}
+

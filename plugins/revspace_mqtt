@@ -1,0 +1,36 @@
+#!perl
+
+use Net::MQTT::Simple "mosquitto.space.revspace.nl";
+
+sub command { NEXT }
+
+sub hook_checkout {
+    my ($class, $cart, $user, $transaction_id) = @_;
+    my $filename = "revbank.sales";
+    my @items = $cart->select_items('product_id') or return;
+    my %already_retained;
+
+    my %stats = do {
+        my $in;
+        open($in, '<', $filename)
+        ? map { split " ", $_, 2 } readline $in
+        : ()
+    };
+
+    $stats{ $_->{product_id} }++ for @items;
+
+    for (@items) {
+        my $product = $_->{product_id};
+
+        publish "revspace/bank/sale" => $product;
+        next if $already_retained{ $product };
+
+        retain "revspace/bank/$product" => $stats{$_->{product_id}};
+        $already_retained{ $product } = 1;
+    }
+
+    open my $out, '>', "$filename.$$" or warn "$filename.$$: $!";
+    printf {$out} "%-16s %9d\n", $_, $stats{$_} for sort keys %stats;
+    close $out or die "$filename.$$: $!";
+    rename "$filename.$$", $filename or die $!;
+}
