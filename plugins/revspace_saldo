@@ -15,6 +15,8 @@ sub _box {
 sub hook_checkout_done {
     my ($class, $cart, $user, $transaction_id) = @_;
 
+    defined $user or return;  # hacks like 'undo' don't have an acting user
+
     my $balance = RevBank::Users::balance($user) or return;
     my $since   = RevBank::Users::since($user);
 
