@@ -8,7 +8,7 @@ sub command :Tab(adduser) {
     $command eq 'adduser' or return NEXT;
 
     if ($cart->size) {
-        return REJECT, "Create the account *before* scanning things.";
+        return ABORT, "Create the account *before* scanning things.";
     }
 
     return "Name for the new account", \&username;

@@ -20,6 +20,9 @@ our %HELP = (
 );
 
 my @words;
+my $retry;
+my @retry;
+
 my $one_off = 0;
 
 if (@ARGV) {
@@ -44,7 +47,7 @@ $select->add(\*STDIN);
 my $cart = RevBank::Cart->new;
 
 sub prompt {
-    my ($prompt, $plugins, @completions) = @_;
+    my ($prompt, $plugins, $completions) = @_;
 
     $prompt =~ s/$/: /;
     $prompt =~ s/\?: $/? /;
@@ -52,18 +55,30 @@ sub prompt {
     my @matches;
     $readline->Attribs->{completion_entry_function} = sub {
         my ($word, $state) = @_;
-        @matches = grep /^\Q$word\E/i, @completions if $state == 0;
+        @matches = grep /^\Q$word\E/i, @$completions if $state == 0;
         return shift @matches;
     };
 
     my $done;
     my $input;
 
+    print "$retry\n" if $retry;
     $readline->callback_handler_install($prompt, sub {
         $done = 1;
         $input = shift;
         $readline->callback_handler_remove;
     });
+
+    if ($retry) {
+        my $preset = join " ", @retry[0 .. $#retry - 1];
+        my $cursor = length $preset;
+        $preset .= " " . join " ", @{ $retry[-1] };
+        $readline->insert_text($preset);
+        $readline->Attribs->{point} = $cursor;
+        @retry = ();
+        $retry = 0;
+    }
+    $readline->redisplay();
 
     my $begin = my $time = time;
     while (not $done) {
@@ -119,6 +134,7 @@ OUTER: for (;;) {
     sub abort {
         print @_, " " if @_;
         @words = ();
+        @retry = ();
         call_hooks "abort", $cart;
         $cart->empty;
         { no warnings; redo OUTER; }
@@ -157,7 +173,7 @@ OUTER: for (;;) {
                 delete $completions{abort};
             }
 
-            my $input = prompt $prompt, \@plugins, keys %completions;
+            my $input = prompt $prompt, \@plugins, [ keys %completions ];
 
             call_hooks "input", $cart, $input, $split_input;
 
@@ -172,6 +188,7 @@ OUTER: for (;;) {
             abort if grep $_ eq 'abort', @words;
 
             my $word = shift @words;
+            push @retry, $word;
 
             PLUGIN: for my $plugin (@plugins) {
                 my ($rv, @rvargs) = eval { $plugin->$method($cart, $word) };
@@ -198,11 +215,22 @@ OUTER: for (;;) {
                 }
                 if ($rv == REJECT) {
                     my ($reason) = @rvargs;
-                    call_hooks "reject", $plugin->id, $reason, @words ? 1 : 0;
-                    abort if @words;
-                    redo PROMPT;
+                    #abort if @words;
+
+                    if (@words) {
+                        call_hooks "retry", $plugin->id, $reason, @words ? 1 : 0;
+                        push @retry, [@words];
+                        @words = ();
+                        $retry = $reason;
+                        redo OUTER;
+                    } else {
+                        call_hooks "reject", $plugin->id, $reason, @words ? 1 : 0;
+                        @retry = ();
+                        redo PROMPT;
+                    }
                 }
                 if ($rv == ACCEPT) {
+                    @retry = ();
                     next OUTER;
                 }
                 if ($rv == NEXT) {
@@ -215,6 +243,7 @@ OUTER: for (;;) {
                 abort;
             }
             call_hooks "invalid_input", $cart, $word;
+            @retry = ();
             abort if @words;
             redo OUTER;
         }
