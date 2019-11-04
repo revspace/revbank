@@ -15,7 +15,7 @@ sub amount {
     $self->{amount} = parse_amount($arg) or return REJECT, "Invalid amount.";
 
     if ($self->{command} eq 'donate') {
-        $cart->add(undef, -$self->{amount}, "Donation (THANK YOU!)");
+        $cart->add(-$self->{amount}, "Donation (THANK YOU!)");
         return ACCEPT;
     }
 
@@ -24,7 +24,7 @@ sub amount {
 
 sub description {
     my ($self, $cart, $desc) = @_;
-    $cart->add(undef, -$self->{amount}, $desc);
+    $cart->add(-$self->{amount}, $desc);
     return ACCEPT;
 }
 

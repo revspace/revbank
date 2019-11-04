@@ -3,7 +3,6 @@
 HELP "*<N>, x<N>, <N>x, <N>*" => "Repeat previous/next product N times";
 
 my $err_stacked = "Stacked repetition is not supported.";
-my $err_multi = "Repetition not supported in multi-user transactions.";
 my $err_pfand = "Plugins 'pfand' and 'repeat' cannot be combined.";
 
 my $limit = 24;
@@ -22,23 +21,21 @@ sub _do_repeat {
 sub command {
     my ($self, $cart, $command) = @_;
 
-    my @items = $cart->select_items;
-    my $last = $items[-1];
-
-    return ABORT, $err_pfand if grep $_->{is_pfand}, @items;
+    return ABORT, $err_pfand if $cart->entries('is_pfand');
 
     my ($pre, $post) = $command =~ /^(\d+)?[x*](\d+)?$/
         or return NEXT;
 
+    my $last = ($cart->entries)[-1];
+
     return NEXT if $pre and $post;  # 123x123 -> invalid syntax
 
     if ($post) {
-        return REJECT, $err_multi if $cart->is_multi_user;
         return REJECT, $err_limit if $post > $limit;
         return ABORT, "Can't repeat an empty transaction." if not $cart->size;
-        return REJECT, $err_stacked if $last->{_repeated};
+        return REJECT, $err_stacked if $last->multiplied;
 
-        _do_repeat($cart, $last, $post);
+        $last->quantity($post);
         return ACCEPT;
     }
 
@@ -47,10 +44,10 @@ sub command {
     if (not $pre and not $post) {
         # Lone operator. Convert withdrawal into repetition.
 
-        if ($last->{is_withdrawal}) {
+        if ($last->has_attribute('is_withdrawal')) {
             $pre = abs $last->{amount};
             $pre == int $pre or return REJECT, "Repeat only works on integers.";
-            $cart->delete($last->{user}, -1);
+            $cart->delete($last);
             $item_replaced = 1;
         } elsif (not $cart->size) {
             return ABORT, "Can't repeat an empty transaction.";
@@ -61,11 +58,11 @@ sub command {
         $pre = abs $pre;  # withdrawal is negative
 
         return REJECT, $err_limit if $pre > $limit;
-        $cart->add(undef, 0, "Next product repeated $pre times", { _repeat => abs $pre });
+        $cart->add(0, "Next product repeated $pre times", { _repeat => abs $pre });
         return ACCEPT;
     }
 
-    return REJECT, $err_stacked if $last->{_repeated};
+    return REJECT, $err_stacked if $last->multiplied;
     return "Multiply previous product by", \&repeat;
 }
 
@@ -77,39 +74,24 @@ sub repeat {
 
     return REJECT, $err_limit if $arg > $limit;
 
-    my @items = $cart->select_items;
-    my $last = $items[-1];
-
-    _do_repeat($cart, $last, $arg);
+    ($cart->entries)[-1]->quantity($arg);
     return ACCEPT;
 }
 
-sub hook_added {
-    my ($self, $cart, $user, $item) = @_;
+sub hook_added_entry {
+    my ($self, $cart, $entry) = @_;
     $cart->size >= 2 or return;
 
-    my @items = $cart->select_items;
-    my @planned = $cart->select_items('_repeat');
-    my @repeated = $cart->select_items('_repeated');
+    my @entries = $cart->entries;
+    my @planned = $cart->entries('_repeat');
+    my @repeated = grep $_->multiplied, $cart->entries;
 
-    return ABORT, $err_multi if $cart->is_multi_user and @planned || @repeated;
     return ABORT, "Multiple repeats queued; I'm confused." if @planned > 1;
     return if not @planned;
-    return ABORT, $err_pfand if grep $_->{is_pfand}, @items;
+    return ABORT, $err_pfand if $cart->entries('is_pfand');
 
-    for my $i (0 .. $#items - 1) {
-        my $item = $items[$i];
-        $item->{_repeat} or next;
+    my $num = $planned[0]->attribute('_repeat');
 
-        my $next = $items[$i + 1];
-
-        return ABORT, $err_stacked if $next->{_repeat};
-
-        my $num = $item->{_repeat};
-        $cart->delete($item->{user}, $i);
-
-        _do_repeat($cart, $next, $num);
-
-        return;
-    }
+    $cart->delete($planned[0]);
+    $entries[-1]->quantity($num);
 }

@@ -21,7 +21,7 @@ sub hook_checkout {
         ? "revbank.voorraad"
         : "revbank.stock";
 
-    my @items = $cart->select_items('product_id') or return;
+    my @entries = $cart->entries('product_id') or return;
 
     my %stock = do {
         my $in;
@@ -30,7 +30,7 @@ sub hook_checkout {
         : ()
     };
 
-    $stock{ $_->{product_id} }-- for @items;
+    $stock{ $_->attribute('product_id') } -= $_->quantity for @entries;
 
     open my $out, '>', "$filename.$$" or warn "$filename.$$: $!";
     printf {$out} "%-16s %+9d\n", $_, $stock{$_} for sort keys %stock;

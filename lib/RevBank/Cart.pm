@@ -19,14 +19,16 @@ sub _call_old_hooks {
 
     my $data = $entry->{attributes};
 
-    for ($entry, $entry->contras) {
-        my $item = {
-            %$data,
-            amount => $_->{amount},
-            description => $_->{description},
-        };
+    for (1 .. $entry->quantity) {
+        for ($entry, $entry->contras) {
+            my $item = {
+                %$data,
+                amount => $_->{amount},
+                description => $_->{description},
+            };
 
-        RevBank::Plugins::call_hooks($hook, $self, $_->{user}, $item);
+            RevBank::Plugins::call_hooks($hook, $self, $_->{user}, $item);
+        }
     }
 }
 
@@ -118,14 +120,17 @@ sub checkout {
     my %deltas;
     for my $entry (@$entries) {
         $entry->user($user);
-        $deltas{$_->{user}} += $_->{amount} for $entry, $entry->contras;
+
+        $deltas{$_->{user}} += $_->{amount} * $entry->quantity
+            for $entry, $entry->contras;
     }
 
     my $transaction_id = time() - 1300000000;
     RevBank::Plugins::call_hooks("checkout", $self, $user, $transaction_id);
 
     for my $account (keys %deltas) {
-        RevBank::Users::update($account, $deltas{$account}, $transaction_id);
+        RevBank::Users::update($account, $deltas{$account}, $transaction_id)
+            if $deltas{$account} != 0;
     }
 
     RevBank::Plugins::call_hooks("checkout_done", $self, $user, $transaction_id);
@@ -142,14 +147,24 @@ sub select_items {
     my @matches;
     for my $entry (@{ $self->{entries} }) {
         my %attributes = %{ $entry->{attributes} };
-        for my $item ($entry, $entry->contras) {
-            push @matches, { %attributes, %$item }
-                if @_ == 1  # No key or match given: match everything
-                or @_ == 2 and $entry->has_attribute($key)   # Just a key
+        for (1 .. $entry->quantity) {
+            for my $item ($entry, $entry->contras) {
+                push @matches, { %attributes, %$item }
+                    if @_ == 1  # No key or match given: match everything
+                    or @_ == 2 and $entry->has_attribute($key)   # Just a key
+            }
         }
     }
 
     return @matches;
+}
+
+sub entries {
+    my ($self, $attribute) = @_;
+
+    my @entries = @{ $self->{entries} };
+    return grep $_->has_attribute($attribute), @entries if defined $attribute;
+    return @entries;
 }
 
 sub is_multi_user {
@@ -158,8 +173,19 @@ sub is_multi_user {
 
 sub changed {
     my ($self) = @_;
-    return delete $self->{changed};
+
+    my $changed = 0;
+    for my $entry ($self->entries('changed')) {
+        $entry->attribute('changed', undef);
+        $changed = 1;
+    }
+    $changed = 1 if delete $self->{changed};
+    return $changed;
+}
+
+sub sum {
+    my ($self) = @_;
+    return List::Util::sum(map $_->{amount} * $_->quantity, @{ $self->{entries} });
 }
 
 1;
-

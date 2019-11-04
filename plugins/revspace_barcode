@@ -19,7 +19,6 @@ sub data {
     my ($self, $cart, $input) = @_;
 
     $cart->add(
-        undef,
         -0.07,
         "Barcode <$input>",
         { is_barcode => 1, barcode_data => $input }
@@ -32,15 +31,15 @@ sub hook_checkout {
     my ($class, $cart, $username, $transaction_id) = @_;
 
     my @barcodes;
-    for my $item ($cart->select_items('is_barcode')) {
-        push @barcodes, $item->{barcode_data};
+    for my $entry ($cart->entries('is_barcode')) {
+        push @barcodes, ($entry->attribute('barcode_data')) x $entry->quantity;
     }
     if (@barcodes) {
         print "\nCheck the following:\n  1. label tape is 12 mm\n  2. printer is on\n  3. wifi is enabled and connected\n\nPress enter to continue.";
         readline STDIN;
-       
+
         my $printjob = "";
-        
+
         open my $bcgen, "-|", "/home/bar/revlabel/barcode.pl", @barcodes
             or warn "Could not open script 1";
 

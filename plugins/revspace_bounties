@@ -11,7 +11,7 @@ sub command :Tab(BOUNTY1,BOUNTY2,BOUNTY3,BOUNTY4) {
     my ($self, $cart, $command) = @_;
 
     if ($command =~ /BOUNTY(\d+)/) {
-        $cart->add(undef, +$bounties{$1}[0], $bounties{$1}[1]);
+        $cart->add(+$bounties{$1}[0], $bounties{$1}[1]);
         return ACCEPT;
     }
 

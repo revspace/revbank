@@ -41,8 +41,10 @@ sub reason :Tab(whatevah) {
     my $user = parse_user($input);
     my $reason = $user ? "" : " ($input)";
 
-    $cart->add(undef,        -$amount, "Given to $benificiary" . $reason);
-    $cart->add($benificiary, +$amount, "Received from \$you" . $reason);
+    $cart
+        ->add(-$amount, "Given to $benificiary" . $reason)
+        ->add_contra($benificiary, +$amount, "Received from \$you" . $reason);
+
     $cart->checkout($user) if $user;
 
     return ACCEPT;

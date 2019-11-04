@@ -6,7 +6,7 @@ HELP "split <account>..." => "Split the bill with others";
 
 sub _select_split {
     my ($cart) = @_;
-    grep $_->{amount} < 0, grep $_->{user} eq '$you', $cart->select_items
+    grep $_->{amount} < 0, $cart->entries
 }
 
 sub command :Tab(take,steal,split) {
@@ -36,12 +36,12 @@ sub arg :Tab(USERS) {
         my $total = sprintf "%.2f", @$users * $each;
         my $desc = join " + ", map $_->{description}, _select_split($cart);
 
-        for my $user (@$users) {
-            $cart->add( $user, -$each, "Taken by \$you (Split: $desc)" );
-        }
-
         my $users = join '/', @$users;
-        $cart->add( undef, $total, "Taken from $users (Split: $desc)" );
+        my $entry = $cart->add($total, "Taken from $users (Split: $desc)" );
+
+        for my $user (@$users) {
+            $entry->add_contra( $user, -$each, "Taken by \$you (Split: $desc)" );
+        }
 
         return ACCEPT;
     }

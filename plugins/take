@@ -59,12 +59,11 @@ sub reason :Tab(bbq,NOABORT) {  # finish
     my $each  = $self->{each};
     my $total = $self->{total};
 
-    for my $user (@users) {
-        $cart->add( $user, -$each, "Taken by \$you ($reason)" );
-    }
-
     my $users = join '/', @users;
-    $cart->add( undef, $total, "Taken from $users ($reason)" );
+    my $entry = $cart->add($total, "Taken from $users ($reason)", { is_take => 1 });
+    for my $user (@users) {
+        $entry->add_contra( $user, -$each, "Taken by \$you ($reason)" );
+    }
 
     return ACCEPT;
 }

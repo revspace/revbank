@@ -7,23 +7,9 @@ HELP "deposit <amount>" => "Deposit into an account";
 sub command :Tab(deposit) {
     my ($self, $cart, $command) = @_;
 
-    if ($command eq 'deposit') {
-        return "Amount to deposit into your account", \&amount;
-    }
+    $command eq 'deposit' or return NEXT;
 
-    if ($cart->select_items('is_deposit')) {
-        # No other plugin recognised the input, so it must be a new user.
-        $self->{new_user} = $command;
-
-        my $x = RevBank::Plugin::adduser->can("command")
-            ? "Please use \e[4madduser\e[0m instead."
-            : "Please enable the \e[4madduser\e[0m plugin.";
-        warn "Creating accounts with \e[4mdeposit\e[m is deprecated. $x\n";
-
-        return "Add new account for user '$command'?", \&create;
-    }
-
-    return NEXT;
+    return "Amount to deposit into your account", \&amount;
 }
 
 sub amount :Tab(13.37,42) {
@@ -37,7 +23,7 @@ sub amount :Tab(13.37,42) {
     return $message . "How are we receiving this EUR $amount?", \&how
         if keys %{ $self->{deposit_methods} };
 
-    $cart->add(undef, +$self->{amount}, "Deposit", { is_deposit => 1 });
+    $cart->add(+$self->{amount}, "Deposit", { is_deposit => 1 });
     return ACCEPT;
 }
 
@@ -55,7 +41,7 @@ sub how :Tab(&how_tab) {
         return shift @{ $how->{prompts} }, \&how_prompt;
     }
 
-    $cart->add(undef, +$self->{amount}, $how->{description}, { is_deposit => 1, method => $how->{_key} });
+    $cart->add(+$self->{amount}, $how->{description}, { is_deposit => 1, method => $how->{_key} });
     return ACCEPT;
 }
 
@@ -77,19 +63,6 @@ sub how_prompt {
 
     my $desc = sprintf $how->{description}, @{ $how->{answers} };
 
-    $cart->add(undef, +$self->{amount}, $desc, { is_deposit => 1, method => $how->{_key} });
+    $cart->add(+$self->{amount}, $desc, { is_deposit => 1, method => $how->{_key} });
     return ACCEPT;
 }
-
-sub create :Tab(yes,no) {
-    my ($self, $cart, $yesno) = @_;
-    my $user = $self->{new_user};
-
-    if ($yesno eq "y" or $yesno eq "yes") {
-        RevBank::Users::create( $user );
-        $cart->checkout( $user );
-        return ACCEPT;
-    }
-    return ABORT;
-}
-

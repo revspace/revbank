@@ -31,13 +31,12 @@ sub _read_warnings {
 
 sub command { NEXT }
 
-sub hook_add {
-    my ($class, $cart, $user, $item) = @_;
-    return if defined $user;                   # skip market items
-    return if not exists $item->{product_id};  # skip unlisted, deposit, give, take
+sub hook_add_entry {
+    my ($class, $cart, $entry) = @_;
+    return if not $entry->has_attribute('product_id');  # skip unlisted, deposit, give, take
 
     my @warnings = map {
-        $_->( $item->{product_id}, $item->{description} )
+        $_->( $entry->attribute('product_id'), $entry->{description} )
     } _read_warnings;
 
     return if not @warnings;

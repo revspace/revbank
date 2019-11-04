@@ -49,7 +49,7 @@ sub hook_user_balance {
 
 sub hook_checkout {
     my ($class, $cart, $username, $transaction_id) = @_;
-    _log("CHECKOUT $transaction_id $_") for $cart->as_strings;
+    _log("CHECKOUT $transaction_id $_") for map $_->as_loggable, $cart->entries;
 }
 
 sub hook_register {

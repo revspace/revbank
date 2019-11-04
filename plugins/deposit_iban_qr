@@ -28,9 +28,9 @@ sub command { NEXT }
 sub hook_checkout {
     my ($class, $cart, $user, $transaction_id) = @_;
 
-    my @items = $cart->select_items("is_deposit");
+    my @entries = $cart->entries("is_deposit");
 
-    my $amount = sum map $_->{amount}, grep $_->{method} eq "iban", @items;
+    my $amount = sum map $_->{amount}, grep $_->attribute('method') eq 'iban', @entries;
 
     if (defined $amount && $amount > 0) {
         my $pid = open2 my $out, my $in, qw(qrencode -t ansiutf8 -m 2)

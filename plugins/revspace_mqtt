@@ -7,7 +7,7 @@ sub command { NEXT }
 sub hook_checkout {
     my ($class, $cart, $user, $transaction_id) = @_;
     my $filename = "revbank.sales";
-    my @items = $cart->select_items('product_id') or return;
+    my @entries = $cart->entries('product_id') or return;
     my %already_retained;
 
     my %stats = do {
@@ -17,9 +17,9 @@ sub hook_checkout {
         : ()
     };
 
-    $stats{ $_->{product_id} }++ for @items;
+    $stats{ $_->attribute('product_id') } += $_->quantity for @entries;
 
-    for (@items) {
+    for (@entries) {
         my $product = $_->{product_id};
 
         publish "revspace/bank/sale" => $product;

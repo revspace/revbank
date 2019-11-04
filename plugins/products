@@ -35,7 +35,6 @@ sub command :Tab(edit,&tab) {
     my $price = parse_amount( $product->{price} ) or return NEXT;
 
     $cart->add(
-        undef,
         -$price,
         $product->{description},
         { product_id => $product->{id} }

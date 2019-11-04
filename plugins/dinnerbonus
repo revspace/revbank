@@ -2,28 +2,35 @@
 
 HELP "dinnerbonus" => "Add fee for cooking supplies";
 
+my $bonus = 1.00;
+
 sub command :Tab(kookbonus,dinnerbonus) {
     my ($self, $cart, $command) = @_;
 
-    my $bonus = 1.00;
+    my @users = map $_->{user}, map $_->contras, $cart->entries('is_take');
 
-    $command eq 'kookbonus' or $command eq 'dinnerbonus'
+    (@users and $command eq 'kookpotje')  # common mistake promoted to feature
+        or $command eq 'kookbonus'
+        or $command eq 'dinnerbonus'
         or return NEXT;
 
-    my @users = grep !/^\$you$/, map $_->{user}, $cart->select_items
-        or return REJECT, "$command requires a pending transaction.";
-
-    for my $user (@users) {
-        $cart->add( $user, -$bonus, "Kookbonus by \$you" );
-    }
-
+    @users or return REJECT, "$command requires a pending 'take'.";
     my $users = join '/', @users;
 
-    $cart->add(
-        "kookpotje",
+    my $target = parse_user("kookpotje")
+        or return ABORT, "User 'kookpotje' does not exist";
+
+    my $entry = $cart->add(0, "Kookbonus");
+
+    $entry->add_contra(
+        $target,
         scalar @users * $bonus,
         "Kookbonus from $users by \$you"
     );
+
+    for my $user (@users) {
+        $entry->add_contra( $user, -$bonus, "Kookbonus by \$you" );
+    }
 
     return ACCEPT;
 }

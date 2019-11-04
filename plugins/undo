@@ -19,10 +19,18 @@ sub undo {
 
     open my $in,  '<', $filename or die "$filename: $!";
     open my $out, '>', "$filename.$$" or die "$filename.$$: $!";
+    my $description = "Undo $tid";
+
+    my $entry;
+
     while (defined(my $line = readline $in)) {
         if ($line =~ /^\Q$tid\E\s/) {
             my (undef, $user, $delta) = split " ", $line;
-            $cart->add($user, $delta, "Undo $tid");
+
+            $entry ||= $cart->add(0, $description);
+            $entry->{FORCE} = 1;
+
+            $entry->add_contra($user, $delta, "Undo $tid");
         } else {
             print {$out} $line;
         }
@@ -31,7 +39,7 @@ sub undo {
     close $out or die $!;
     if ($cart->size) {
         rename "$filename.$$", $filename or die $!;
-        $cart->checkout();
+        $cart->checkout('**UNDO**');
     } else {
         return ABORT, "Transaction ID '$tid' not found in undo log.";
     }

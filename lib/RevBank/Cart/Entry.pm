@@ -34,6 +34,8 @@ sub add_contra {
         amount      => $amount,  # should usually have opposite sign (+/-)
         description => $description,
     };
+
+    $self->attribute('changed', 1);
 }
 
 sub has_attribute {
@@ -57,12 +59,13 @@ sub quantity {
     if (defined $new) {
         $new >= 0 or croak "Quantity must be positive";
         $$ref = $new;
+        $self->attribute('changed', 1);
     }
 
     return $$ref;
 }
 
-sub multiple {
+sub multiplied {
     my ($self) = @_;
 
     return $self->{quantity} != 1;
@@ -81,7 +84,7 @@ sub as_printable {
     $self->sanity_check;
 
     my @s;
-    push @s, $self->{quantity} . "x {" if $self->multiple;
+    push @s, $self->{quantity} . "x {" if $self->multiplied;
 
     # Normally, the implied sign is "+", and an "-" is only added for negative
     # numbers. Here, the implied sign is "-", and a "+" is only added for
@@ -102,7 +105,7 @@ sub as_printable {
 
     }
 
-    push @s, "}" if $self->multiple;
+    push @s, "}" if $self->multiplied;
 
     return @s;
 }
@@ -122,10 +125,10 @@ sub as_loggable {
         my $description =
             $quantity == 1
             ? $_->{description}
-            : sprintf("[%fx%.2f]", $quantity, $_->{amount});
+            : sprintf("[%sx %.2f] %s", $quantity, abs($_->{amount}), $_->{description});
 
         push @s, sprintf(
-            "%-12s %4s EUR %5.2f  %s",
+            "%-12s %4s EUR %5.2f  # %s",
             $_->{user},
             ($total > 0 ? 'GAIN' : $total < 0 ? 'LOSE' : ''),
             abs($total),
@@ -143,6 +146,7 @@ sub user {
         croak "User can only be set once" if defined $self->{user};
 
         $self->{user} = $new;
+        $self->attribute('changed', 1);
         $_->{description} =~ s/\$you/$new/g for $self, @{ $self->{contras} };
     }
 

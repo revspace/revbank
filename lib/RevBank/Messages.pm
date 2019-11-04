@@ -24,8 +24,12 @@ sub hook_plugin_fail {
 sub hook_cart_changed {
     my ($class, $cart) = @_;
     $cart->size or return;
+    say "Pending:";
     $cart->display;
-    say "Enter username to pay/finish or 'abort' to abort.\n";
+
+    my $sum = $cart->sum;
+    my $what = $sum > 0 ? "add %.2f" : "pay %.2f";
+    say sprintf "Enter username to $what; type 'abort' to abort.\n", abs $sum;
 }
 
 sub hook_abort {
