@@ -156,13 +156,13 @@ sub sanity_check {
     # not required. However, in a transaction with contras, one should at least
     # not try to issue money that does not exist.
 
-    return 1 if $self->{force};
+    return 1 if $self->{FORCE};
     my @contras = $self->contras or return 1;
 
     my $amount = List::Util::sum(map $_->{amount}, $self, @contras);
 
     if ($amount >= 0.005) {  # meh, floats
-        $self->{force} = 1;
+        $self->{FORCE} = 1;
         croak join("\n",
             "BUG! (probably in $self->{caller})",
             "This adds up to creating money that does not exist:",

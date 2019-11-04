@@ -3,6 +3,7 @@ use strict;
 use Carp ();
 use List::Util ();
 use RevBank::Global;
+use RevBank::Cart::Entry;
 
 # Some code is written with the assumption that the cart will only grow or
 # be emptied. Changing existing stuff or removing items is probably not a
@@ -10,115 +11,124 @@ use RevBank::Global;
 
 sub new {
     my ($class) = @_;
-    return bless { items => {} }, $class;
+    return bless { entries => [] }, $class;
+}
+
+sub _call_old_hooks {
+    my ($self, $hook, $entry) = @_;
+
+    my $data = $entry->{attributes};
+
+    for ($entry, $entry->contras) {
+        my $item = {
+            %$data,
+            amount => $_->{amount},
+            description => $_->{description},
+        };
+
+        RevBank::Plugins::call_hooks($hook, $self, $_->{user}, $item);
+    }
+}
+
+sub add_entry {
+    my ($self, $entry) = @_;
+
+    $self->_call_old_hooks("add", $entry);
+    RevBank::Plugins::call_hooks("add_entry", $self, $entry);
+
+    push @{ $self->{entries} }, $entry;
+    $self->{changed}++;
+    $self->_call_old_hooks("added", $entry);
+    RevBank::Plugins::call_hooks("added_entry", $self, $entry);
+
+    return $entry;
 }
 
 sub add {
-    my ($self, $user, $amount, $description, $data) = @_;
+    if (defined $_[3] and not ref $_[3]) {
+        my ($self, $user, $amount, $description, $data) = @_;
 
-    # Note: 'repeat' plugin is currently dependent on this specific
-    # implementation!
+        Carp::carp("Plugin uses deprecated old-style call to \$cart->add");
 
-    $data ||= {};
-    my $item = {
-        %$data,  # Internal stuff, not logged or printed.
-        amount => $amount,
-        description => $description,
-    };
-    RevBank::Plugins::call_hooks("add", $self, $user, $item);
-    push @{ $self->{items}{ $user || '$you' } }, $item;
-    $self->{changed}++;
-    RevBank::Plugins::call_hooks("added", $self, $user, $item);
+        $data->{COMPATIBILITY} = 1;
+
+        my $entry = RevBank::Cart::Entry->new(
+            defined $user ? 0 : $amount,
+            $description,
+            $data
+        );
+        $entry->add_contra($user, $amount, $description) if defined $user;
+        $entry->{FORCE} = 1;
+
+        return $self->add_entry($entry);
+    }
+
+    if (@_ == 2) {
+        my ($self, $entry) = @_;
+        return $self->add_entry($entry);
+    }
+
+    my ($self, $amount, $description, $data) = @_;
+    return $self->add_entry(RevBank::Cart::Entry->new($amount, $description, $data));
 }
 
 sub delete {
-    my ($self, $user, $index) = @_;
-    splice @{ $self->{items}{ $user } }, $index, 1, ();
+    Carp::croak("\$cart->delete(\$user, \$index) is no longer supported") if @_ > 2;
+
+    my ($self, $entry) = @_;
+    my $entries = $self->{entries};
+
+    my $oldnum = @$entries;
+    @$entries = grep $_ != $entry, @$entries;
     $self->{changed}++;
+
+    return $oldnum - @$entries;
 }
 
 sub empty {
     my ($self) = @_;
-    %$self = (items => {});
+
+    $self->{entries} = [];
     $self->{changed}++;
-}
-
-sub _dump_item {
-    my ($prefix, $user, $amount, $description) = @_;
-    return sprintf(
-        "%s%-12s %4s EUR %5.2f  %s",
-        $prefix,
-        $user,
-        ($amount > 0 ? 'GAIN' : $amount < 0 ? 'LOSE' : ''),
-        abs($amount),
-        $description
-    );
-}
-
-sub as_strings {
-    my ($self, $prefix) = @_;
-    $prefix ||= '    ';
-
-    my @s;
-
-    my $items = $self->{items};
-    for my $user (sort keys %$items) {
-        my @items = @{ $items->{$user} };
-        my $sum = List::Util::sum(map $_->{amount}, @items);
-
-        push @s, _dump_item($prefix, $user, $_->{amount}, "# $_->{description}")
-            for @items;
-        push @s, _dump_item($prefix, $user, $sum, "TOTAL")
-            if @items > 1;
-    }
-
-    return @s;
 }
 
 sub display {
     my ($self, $prefix) = @_;
-    say $_ for $self->as_strings($prefix);
+    $prefix //= "";
+    say "$prefix$_" for map $_->as_printable, @{ $self->{entries} };
+}
+
+sub as_strings {
+    my ($self) = @_;
+    Carp::carp("Plugin uses deprecated \$cart->as_strings");
+
+    return map $_->as_loggable, @{ $self->{entries} };
 }
 
 sub size {
     my ($self) = @_;
-    my $items = $self->{items};
-    return List::Util::sum(map scalar @{ $items->{$_} }, keys %$items) || 0;
-}
-
-sub _set_user {
-    my ($self, $user) = @_;
-    my $items = $self->{items};
-
-    exists $items->{'$you'}
-        or Carp::croak("Error: no cart items for shell user");
-
-    $items->{$user} ||= [];
-
-    push @{ $items->{$user} }, @{ delete $items->{'$you'} };
-
-    for (values %$items) {
-        $_->{description} =~ s/\$you\b/$user/g for @$_;
-    }
+    return scalar @{ $self->{entries} };
 }
 
 sub checkout {
     my ($self, $user) = @_;
 
-    $self->_set_user($user) if $user;
-    my $items = $self->{items};
+    my $entries = $self->{entries};
 
-    exists $items->{'$you'} and die "Incomplete transaction; user not set.";
+    my %deltas;
+    for my $entry (@$entries) {
+        $entry->user($user);
+        $deltas{$_->{user}} += $_->{amount} for $entry, $entry->contras;
+    }
 
     my $transaction_id = time() - 1300000000;
     RevBank::Plugins::call_hooks("checkout", $self, $user, $transaction_id);
 
-    for my $account (keys %$items) {
-        my $sum = List::Util::sum(map $_->{amount}, @{ $items->{$account} });
-        RevBank::Users::update($account, $sum, $transaction_id);
+    for my $account (keys %deltas) {
+        RevBank::Users::update($account, $deltas{$account}, $transaction_id);
     }
 
-    RevBank::Plugins::call_hooks("checkout_done", $self, $user,$transaction_id);
+    RevBank::Plugins::call_hooks("checkout_done", $self, $user, $transaction_id);
 
     $self->empty;
 
@@ -127,14 +137,15 @@ sub checkout {
 
 sub select_items {
     my ($self, $key) = @_;
-    my $items = $self->{items};
+    Carp::carp("Plugin uses deprecated \$cart->select_items");
 
     my @matches;
-    for my $user (keys %$items) {
-        for my $item (@{ $items->{$user} }) {
-            push @matches, { user => $user, %$item }
+    for my $entry (@{ $self->{entries} }) {
+        my %attributes = %{ $entry->{attributes} };
+        for my $item ($entry, $entry->contras) {
+            push @matches, { %attributes, %$item }
                 if @_ == 1  # No key or match given: match everything
-                or @_ == 2 and exists $item->{ $key }   # Just a key
+                or @_ == 2 and $entry->has_attribute($key)   # Just a key
         }
     }
 
@@ -142,8 +153,7 @@ sub select_items {
 }
 
 sub is_multi_user {
-    my ($self) = @_;
-    return keys(%{ $self->{items} }) > 1;
+    Carp::carp("\$cart->is_multi_user is no longer supported, ignoring");
 }
 
 sub changed {
