@@ -6,11 +6,6 @@ revbank - Banking for hackerspace visitors
 
 The following will disappear in a future version:
 
-## Deprecated: `nyan`, `game`
-
-These non-serious, non-banking plugins will be removed. Please remove them
-from `revbank.plugins`.
-
 ## Deprecated: creating new accounts with `deposit`
 
 For a while now, there has been a dedicated plugin, `adduser` to create new
@@ -31,8 +26,7 @@ line (space separated), but that's an unintended feature...
 
 # PLUGINS
 
-Refer to [RevBank::Plugins](https://metacpan.org/pod/RevBank::Plugins) for
-documentation about writing plugins.
+Refer to [RevBank::Plugins](https://metacpan.org/pod/RevBank::Plugins) for documentation about writing plugins.
 
 Plugins themselves may have some documentation in the respective plugin files.
 

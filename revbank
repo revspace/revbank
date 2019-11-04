@@ -258,11 +258,6 @@ revbank - Banking for hackerspace visitors
 
 The following will disappear in a future version:
 
-=head2 Deprecated: C<nyan>, C<game>
-
-These non-serious, non-banking plugins will be removed. Please remove them
-from C<revbank.plugins>.
-
 =head2 Deprecated: creating new accounts with C<deposit>
 
 For a while now, there has been a dedicated plugin, C<adduser> to create new
@@ -286,6 +281,10 @@ line (space separated), but that's an unintended feature...
 Refer to L<RevBank::Plugins> for documentation about writing plugins.
 
 Plugins themselves may have some documentation in the respective plugin files.
+
+Note that plugins that begin with C<revspace_> are revspace specific hacks, and
+were not written with reusability in mind. They will probably not work for your
+setup.
 
 =head1 AUTHOR
 
