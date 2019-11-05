@@ -256,17 +256,56 @@ revbank - Banking for hackerspace visitors
 
 =head1 ANNOUNCEMENTS
 
+The following features were removed:
+
+=over
+
+=item * plugins C<nyan> and C<game>
+
+Please remove these from your C<revbank.plugins> configuration file.
+
+=item * creating new accounts with <Cdeposit>
+
+Use C<adduser> instead.
+
+=item * Method C<< $cart->is_multi_user >>
+
+=item * Method C<< $cart->delete($user, $index) >>
+
+Delete a specific entry, as returned by C<< $cart->entries >>, instead.
+
+=back
+
 The following will disappear in a future version:
 
-=head2 Deprecated: creating new accounts with C<deposit>
+=head2 Hooks C<add> and C<added>
 
-For a while now, there has been a dedicated plugin, C<adduser> to create new
-accounts. The old way of creating new accounts (unknown input after a
-C<deposit> command was assumed to be the name of the a account) did not allow
-for any input validation and would cause trouble if a user name already
-existed.
+Use C<add_entry> and C<added_entry> instead, which gets a RevBank::Cart::Entry
+object, instead.
 
-Please add C<adduser> to C<revbank.plugins>.
+Note that the new "entries", unlike old "items", can have a C<quantity> other
+than 1.
+
+=head2 Method C<< $cart->add(undef, ...) >>
+
+=head2 Method C<< $cart->add($user, ...) >>
+
+The C<add> method now always creates an entry from the perspective of the
+current user, and returns a RevBank::Cart::Entry object to which "contras" can
+be added with C<add_contra>. The contras can be used for counteracting a value
+with an operation on another account.
+
+To upgrade a plugin that does a single C<add> with C<undef> as the first
+argument, simply remove the C<undef, >. When multiple items were added that
+belong together, consider using C<add_contra> for the subsequent lines; see the
+C<take> and C<give> plugins for examples.
+
+=head2 Method C<< $cart->select_items >>
+
+Use C<< entries >> instead, which takes the same kind of argument. Note that
+entries work slightly differently: they can have a quantity and attached contra
+entries. Attributes are now accessed through the C<has_attribute> and
+C<attribute> methods, instead of directly manipulating the hash.
 
 =head1 DESCRIPTION
 

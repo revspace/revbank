@@ -4,17 +4,51 @@ revbank - Banking for hackerspace visitors
 
 # ANNOUNCEMENTS
 
+The following features were removed:
+
+- plugins `nyan` and `game`
+
+    Please remove these from your `revbank.plugins` configuration file.
+
+- creating new accounts with <Cdeposit>
+
+    Use `adduser` instead.
+
+- Method `$cart->is_multi_user`
+- Method `$cart->delete($user, $index)`
+
+    Delete a specific entry, as returned by `$cart->entries`, instead.
+
 The following will disappear in a future version:
 
-## Deprecated: creating new accounts with `deposit`
+## Hooks `add` and `added`
 
-For a while now, there has been a dedicated plugin, `adduser` to create new
-accounts. The old way of creating new accounts (unknown input after a
-`deposit` command was assumed to be the name of the a account) did not allow
-for any input validation and would cause trouble if a user name already
-existed.
+Use `add_entry` and `added_entry` instead, which gets a RevBank::Cart::Entry
+object, instead.
 
-Please add `adduser` to `revbank.plugins`.
+Note that the new "entries", unlike old "items", can have a `quantity` other
+than 1.
+
+## Method `$cart->add(undef, ...)`
+
+## Method `$cart->add($user, ...)`
+
+The `add` method now always creates an entry from the perspective of the
+current user, and returns a RevBank::Cart::Entry object to which "contras" can
+be added with `add_contra`. The contras can be used for counteracting a value
+with an operation on another account.
+
+To upgrade a plugin that does a single `add` with `undef` as the first
+argument, simply remove the `undef, `. When multiple items were added that
+belong together, consider using `add_contra` for the subsequent lines; see the
+`take` and `give` plugins for examples.
+
+## Method `$cart->select_items`
+
+Use `entries` instead, which takes the same kind of argument. Note that
+entries work slightly differently: they can have a quantity and attached contra
+entries. Attributes are now accessed through the `has_attribute` and
+`attribute` methods, instead of directly manipulating the hash.
 
 # DESCRIPTION
 
