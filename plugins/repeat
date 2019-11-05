@@ -45,7 +45,9 @@ sub command {
         $pre = abs $pre;  # withdrawal is negative
 
         return REJECT, $err_limit if $pre > $limit;
-        $cart->add(0, "Next product repeated $pre times", { _repeat => abs $pre });
+        $cart
+            ->add(0, "?  (The next thing you add will be multiplied.)", { _repeat => 1 })
+            ->quantity($pre);
         return ACCEPT;
     }
 
@@ -76,7 +78,7 @@ sub hook_added_entry {
     return if not @planned;
     return ABORT, $err_pfand if $cart->entries('is_pfand');
 
-    my $num = $planned[0]->attribute('_repeat');
+    my $num = $planned[0]->quantity;
 
     $cart->delete($planned[0]);
     $entries[-1]->quantity($num);
