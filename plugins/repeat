@@ -8,16 +8,6 @@ my $err_pfand = "Plugins 'pfand' and 'repeat' cannot be combined.";
 my $limit = 24;
 my $err_limit = "Repetition is limited at $limit items.";
 
-sub _do_repeat {
-    my ($cart, $item, $num) = @_;
-
-    $item->{_repeated} = 1;
-
-    # Strongly dependent on the implementation of RevBank::Cart and the 'add'
-    # method. Bad idea, but meh.
-    $cart->add( @{ $item }{qw/user amount description/}, $item ) for 2..$num;
-}
-
 sub command {
     my ($self, $cart, $command) = @_;
 
@@ -39,8 +29,6 @@ sub command {
         return ACCEPT;
     }
 
-    my $item_replaced;
-
     if (not $pre and not $post) {
         # Lone operator. Convert withdrawal into repetition.
 
@@ -48,7 +36,6 @@ sub command {
             $pre = abs $last->{amount};
             $pre == int $pre or return REJECT, "Repeat only works on integers.";
             $cart->delete($last);
-            $item_replaced = 1;
         } elsif (not $cart->size) {
             return ABORT, "Can't repeat an empty transaction.";
         }
@@ -84,7 +71,6 @@ sub hook_added_entry {
 
     my @entries = $cart->entries;
     my @planned = $cart->entries('_repeat');
-    my @repeated = grep $_->multiplied, $cart->entries;
 
     return ABORT, "Multiple repeats queued; I'm confused." if @planned > 1;
     return if not @planned;
