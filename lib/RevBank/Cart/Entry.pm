@@ -89,7 +89,7 @@ sub as_printable {
     # Normally, the implied sign is "+", and an "-" is only added for negative
     # numbers. Here, the implied sign is "-", and a "+" is only added for
     # positive numbers.
-    push @s, sprintf "  %7.2f %s", abs($self->{amount}), $self->{description};
+    push @s, sprintf "  %6.2f %s", abs($self->{amount}), $self->{description};
 
     # Add the plus before the number instead of whitespace, leaving one space
     # character between the sign and the number to make it stand out more.
@@ -97,7 +97,7 @@ sub as_printable {
 
     for my $c ($self->contras) {
         push @s, sprintf(
-            "   %9.2f %s %s",
+            "  %9.2f %s %s",
             abs($c->{amount}),
             ($c->{amount} > 0 ? "->" : "<-"),
             $c->{user}
