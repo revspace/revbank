@@ -5,31 +5,9 @@ use List::Util ();
 use RevBank::Global;
 use RevBank::Cart::Entry;
 
-# Some code is written with the assumption that the cart will only grow or
-# be emptied. Changing existing stuff or removing items is probably not a
-# good idea, and may lead to inconsistency.
-
 sub new {
     my ($class) = @_;
     return bless { entries => [] }, $class;
-}
-
-sub _call_old_hooks {
-    my ($self, $hook, $entry) = @_;
-
-    my $data = $entry->{attributes};
-
-    for (1 .. $entry->quantity) {
-        for ($entry, $entry->contras) {
-            my $item = {
-                %$data,
-                amount => $_->{amount},
-                description => $_->{description},
-            };
-
-            RevBank::Plugins::call_hooks($hook, $self, $_->{user}, $item);
-        }
-    }
 }
 
 sub add_entry {
@@ -47,29 +25,18 @@ sub add_entry {
 }
 
 sub add {
+    # Deprecated interface: ->add($user, ...)
     if (defined $_[3] and not ref $_[3]) {
-        my ($self, $user, $amount, $description, $data) = @_;
-
-        Carp::carp("Plugin uses deprecated old-style call to \$cart->add");
-
-        $data->{COMPATIBILITY} = 1;
-
-        my $entry = RevBank::Cart::Entry->new(
-            defined $user ? 0 : $amount,
-            $description,
-            $data
-        );
-        $entry->add_contra($user, $amount, $description) if defined $user;
-        $entry->{FORCE} = 1;
-
-        return $self->add_entry($entry);
+        return shift->old_add(@_);
     }
 
+    # ->add($entry)
     if (@_ == 2) {
         my ($self, $entry) = @_;
         return $self->add_entry($entry);
     }
 
+    # ->add($amount, ...)
     my ($self, $amount, $description, $data) = @_;
     return $self->add_entry(RevBank::Cart::Entry->new($amount, $description, $data));
 }
@@ -98,13 +65,6 @@ sub display {
     my ($self, $prefix) = @_;
     $prefix //= "";
     say "$prefix$_" for map $_->as_printable, @{ $self->{entries} };
-}
-
-sub as_strings {
-    my ($self) = @_;
-    Carp::carp("Plugin uses deprecated \$cart->as_strings");
-
-    return map $_->as_loggable, @{ $self->{entries} };
 }
 
 sub size {
@@ -140,6 +100,63 @@ sub checkout {
     sleep 1;  # Ensure new timestamp/id for new transaction
 }
 
+sub entries {
+    my ($self, $attribute) = @_;
+
+    my @entries = @{ $self->{entries} };
+    return grep $_->has_attribute($attribute), @entries if defined $attribute;
+    return @entries;
+}
+
+sub changed {
+    my ($self) = @_;
+
+    my $changed = 0;
+    for my $entry ($self->entries('changed')) {
+        $entry->attribute('changed', undef);
+        $changed = 1;
+    }
+    $changed = 1 if delete $self->{changed};
+    return $changed;
+}
+
+sub sum {
+    my ($self) = @_;
+    return List::Util::sum(map $_->{amount} * $_->quantity, @{ $self->{entries} });
+}
+
+
+### Old stuff, to be deleted in a future version:
+
+sub _call_old_hooks {
+    my ($self, $hook, $entry) = @_;
+
+    my $data = $entry->{attributes};
+
+    for (1 .. $entry->quantity) {
+        for ($entry, $entry->contras) {
+            my $item = {
+                %$data,
+                amount => $_->{amount},
+                description => $_->{description},
+            };
+
+            RevBank::Plugins::call_hooks($hook, $self, $_->{user}, $item);
+        }
+    }
+}
+
+sub as_strings {
+    my ($self) = @_;
+    Carp::carp("Plugin uses deprecated \$cart->as_strings");
+
+    return map $_->as_loggable, @{ $self->{entries} };
+}
+
+sub is_multi_user {
+    Carp::carp("\$cart->is_multi_user is no longer supported, ignoring");
+}
+
 sub select_items {
     my ($self, $key) = @_;
     Carp::carp("Plugin uses deprecated \$cart->select_items");
@@ -159,33 +176,22 @@ sub select_items {
     return @matches;
 }
 
-sub entries {
-    my ($self, $attribute) = @_;
+sub old_add {
+    my ($self, $user, $amount, $description, $data) = @_;
 
-    my @entries = @{ $self->{entries} };
-    return grep $_->has_attribute($attribute), @entries if defined $attribute;
-    return @entries;
-}
+    Carp::carp("Plugin uses deprecated old-style call to \$cart->add");
 
-sub is_multi_user {
-    Carp::carp("\$cart->is_multi_user is no longer supported, ignoring");
-}
+    $data->{COMPATIBILITY} = 1;
 
-sub changed {
-    my ($self) = @_;
+    my $entry = RevBank::Cart::Entry->new(
+        defined $user ? 0 : $amount,
+        $description,
+        $data
+    );
+    $entry->add_contra($user, $amount, $description) if defined $user;
+    $entry->{FORCE} = 1;
 
-    my $changed = 0;
-    for my $entry ($self->entries('changed')) {
-        $entry->attribute('changed', undef);
-        $changed = 1;
-    }
-    $changed = 1 if delete $self->{changed};
-    return $changed;
-}
-
-sub sum {
-    my ($self) = @_;
-    return List::Util::sum(map $_->{amount} * $_->quantity, @{ $self->{entries} });
+    return $self->add_entry($entry);
 }
 
 1;
