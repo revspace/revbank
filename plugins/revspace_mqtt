@@ -20,12 +20,12 @@ sub hook_checkout {
     $stats{ $_->attribute('product_id') } += $_->quantity for @entries;
 
     for (@entries) {
-        my $product = $_->{product_id};
+        my $product = $_->attribute('product_id');
 
         publish "revspace/bank/sale" => $product;
         next if $already_retained{ $product };
 
-        retain "revspace/bank/$product" => $stats{$_->{product_id}};
+        retain "revspace/bank/$product" => $stats{$_->attribute('product_id')};
         $already_retained{ $product } = 1;
     }
 
