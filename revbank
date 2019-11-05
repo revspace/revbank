@@ -50,7 +50,7 @@ sub prompt {
     my ($prompt, $plugins, $completions) = @_;
 
     $prompt =~ s/$/: /;
-    $prompt =~ s/\?: $/? /;
+    $prompt =~ s/([?>]): $/$1 /;
 
     my @matches;
     $readline->Attribs->{completion_entry_function} = sub {
@@ -127,7 +127,7 @@ OUTER: for (;;) {
     }
 
     my $split_input = 1;
-    my $prompt = "Product ID, amount or command";
+    my $prompt = ">";
     my @plugins = RevBank::Plugins->new;
     my $method = "command";
 
