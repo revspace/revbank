@@ -39,7 +39,6 @@ if (@ARGV) {
 $| = 1;
 
 my $readline = Term::ReadLine->new($0);
-$readline->ornaments('me,md,,');
 
 my $select = IO::Select->new;
 $select->add(\*STDIN);
@@ -49,8 +48,14 @@ my $cart = RevBank::Cart->new;
 sub prompt {
     my ($prompt, $plugins, $completions) = @_;
 
-    $prompt =~ s/$/: /;
-    $prompt =~ s/([?>]): $/$1 /;
+    if ($prompt) {
+        $prompt =~ s/$/:/ if $prompt !~ /[?>]$/;
+        $prompt .= " ";
+    } else {
+        # \x01...\x02 = zero width markers for readline
+        # \e[...m     = ansi escape (32 = green, 1 = bright)
+        $prompt = "\x01\e[32;1m\x02>\x01\e[0m\x02 ";
+    }
 
     my @matches;
     $readline->Attribs->{completion_entry_function} = sub {
@@ -127,7 +132,7 @@ OUTER: for (;;) {
     }
 
     my $split_input = 1;
-    my $prompt = ">";
+    my $prompt = "";
     my @plugins = RevBank::Plugins->new;
     my $method = "command";
 
