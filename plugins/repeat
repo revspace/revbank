@@ -74,9 +74,13 @@ sub hook_added_entry {
     my @entries = $cart->entries;
     my @planned = $cart->entries('_repeat');
 
-    return ABORT, "Multiple repeats queued; I'm confused." if @planned > 1;
+
     return if not @planned;
+    return ABORT, "Multiple repeats queued; I'm confused." if @planned > 1;
     return ABORT, $err_pfand if $cart->entries('is_pfand');
+    return if $planned[0] == $entries[-1];
+    return ABORT, "Queued repeat is not the penultimate item; I'm confused"
+        if $entries[-2] != $planned[0];
 
     my $num = $planned[0]->quantity;
 
