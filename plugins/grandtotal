@@ -17,9 +17,9 @@ sub command :Tab(grandtotal) {
         $pos += $credit if $credit > 0;
     }
 
-    printf "Total positive: EUR %8.2f\n", $pos;
-    printf "Total negative: EUR \e[31;1m%8.2f\e[0m\n", $neg;
-    printf "GRAND TOTAL:    EUR \e[1m%8.2f\e[0m\n", $pos + $neg;
+    printf "Total positive: %8.2f\n", $pos;
+    printf "Total negative: \e[31;1m%8.2f\e[0m\n", $neg;
+    printf "GRAND TOTAL:    \e[1m%8.2f\e[0m\n", $pos + $neg;
 
     return ACCEPT;
 }
