@@ -41,7 +41,10 @@ sub add_contra {
 sub has_attribute {
     my ($self, $key) = @_;
 
-    return exists $self->{attributes}->{$key};
+    return (
+        exists      $self->{attributes}->{$key}
+        and defined $self->{attributes}->{$key}
+    );
 }
 
 sub attribute {
