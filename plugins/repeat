@@ -5,7 +5,7 @@ HELP "*<N>, x<N>, <N>x, <N>*" => "Repeat previous/next product N times";
 my $err_stacked = "Stacked repetition is not supported.";
 my $err_pfand = "Plugins 'pfand' and 'repeat' cannot be combined.";
 
-my $limit = 24;
+my $limit = 200;
 my $err_limit = "Repetition is limited at $limit items.";
 
 sub command {
