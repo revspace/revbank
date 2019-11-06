@@ -29,7 +29,7 @@ sub hook_cart_changed {
 
     my $sum = $cart->sum;
     my $what = $sum > 0 ? "add %.2f" : "pay %.2f";
-    say sprintf "Enter username to $what; type 'abort' to abort.\n", abs $sum;
+    say sprintf "Enter username to $what; type 'abort' to abort.", abs $sum;
 }
 
 sub hook_abort {

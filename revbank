@@ -125,11 +125,11 @@ RevBank::Plugins->load;
 call_hooks("startup");
 
 OUTER: for (;;) {
-    print "\n" if not @words;
-
     if (not @words) {
         call_hooks("cart_changed", $cart) if $cart->changed;
     }
+
+    print "\n" if not @words;
 
     my $split_input = 1;
     my $prompt = "";
