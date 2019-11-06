@@ -127,8 +127,8 @@ call_hooks("startup");
 OUTER: for (;;) {
     print "\n" if not @words;
 
-    if (not @words and $cart->changed) {
-        call_hooks("cart_changed", $cart);
+    if (not @words) {
+        call_hooks("cart_changed", $cart) if $cart->changed;
     }
 
     my $split_input = 1;

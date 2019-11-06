@@ -24,6 +24,10 @@ sub command :Tab(list,ls,shame,USERS) {
 sub hook_checkout {
     my ($class, $cart, $user, $transaction_id) = @_;
 
+    if ($cart->changed) {
+        say "Done:";
+        $cart->display;
+    }
     say "Transaction ID: $transaction_id";
 }
 

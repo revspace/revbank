@@ -147,7 +147,6 @@ sub user {
         croak "User can only be set once" if defined $self->{user};
 
         $self->{user} = $new;
-        $self->attribute('changed', 1);
         $_->{description} =~ s/\$you/$new/g for $self, @{ $self->{contras} };
     }
 
