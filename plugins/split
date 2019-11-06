@@ -36,8 +36,8 @@ sub arg :Tab(USERS) {
         my $total = sprintf "%.2f", @$users * $each;
         my $desc = join " + ", map $_->{description}, _select_split($cart);
 
-        my $users = join '/', @$users;
-        my $entry = $cart->add($total, "Taken from $users (Split: $desc)" );
+        my $joined = join '/', @$users;
+        my $entry = $cart->add($total, "Taken from $joined (Split: $desc)" );
 
         for my $user (@$users) {
             $entry->add_contra( $user, -$each, "Taken by \$you (Split: $desc)" );
