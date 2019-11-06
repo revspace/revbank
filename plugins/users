@@ -24,12 +24,7 @@ sub command :Tab(list,ls,shame,USERS) {
 sub hook_checkout {
     my ($class, $cart, $user, $transaction_id) = @_;
 
-    my $line = "-" x 40;
-
-    say "/$line";
-    say "| Final (transaction ID = $transaction_id):";
-    $cart->display("| ");
-    say "\\$line";
+    say "Transaction ID: $transaction_id";
 }
 
 sub list {
