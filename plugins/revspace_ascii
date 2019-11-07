@@ -1,0 +1,10 @@
+# Hack to work around serial barcode scanner which adds garbage (mostly
+# /^[\xFD-\xFF]+/), by stripping everything except printable ASCII, since our
+# old IBM terminal doesn't handle non-ascii that well anyway.
+
+# For this plugin to be useful, it needs to be the FIRST in "revbank.plugins".
+
+sub command {
+    $_[2] =~ s/[^\x20-\x7E]//g;  # input is actually a mutable string
+    return NEXT;
+}
