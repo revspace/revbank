@@ -60,6 +60,7 @@ sub prompt {
     my @matches;
     $readline->Attribs->{completion_entry_function} = sub {
         my ($word, $state) = @_;
+        return undef if $word eq "";
         @matches = grep /^\Q$word\E/i, @$completions if $state == 0;
         return shift @matches;
     };
