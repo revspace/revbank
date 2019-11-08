@@ -1,0 +1,17 @@
+#!perl
+
+sub command { NEXT }
+
+*hook_plugin_fail = *hook_retry = *hook_reject = *hook_invalid_input = sub {
+    call_hooks('beep');
+    undef;
+};
+
+sub hook_abort {
+    my ($self, $cart, $reason) = @_;
+    return if not $reason or not @$reason;
+    return if "@$reason" eq '^C';
+
+    call_hooks('beep');
+    undef;
+}

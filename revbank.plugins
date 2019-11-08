@@ -3,6 +3,7 @@
 # First, plugins with no commands, or very specific commands
 
 log        # first, so that the registrations of other plugins are logged
+beep
 sigint
 restart
 help

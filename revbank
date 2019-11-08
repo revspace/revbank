@@ -139,7 +139,7 @@ OUTER: for (;;) {
         print @_, " " if @_;
         @words = ();
         @retry = ();
-        call_hooks "abort", $cart;
+        call_hooks "abort", $cart, \@_;
         $cart->empty;
         { no warnings; redo OUTER; }
     }
