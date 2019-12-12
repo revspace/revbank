@@ -34,10 +34,20 @@ sub command :Tab(edit,&tab) {
 
     my $price = parse_amount( $product->{price} ) or return NEXT;
 
+    my @existing = grep {
+        $_->attribute('plugin') eq $self->id and
+        $_->attribute('product_id') eq $product->{id}
+    } $cart->entries('plugin');
+
+    if (@existing) {
+        $existing[0]->quantity($existing[0]->quantity + 1);
+        return ACCEPT;
+    }
+
     $cart->add(
         -$price,
         $product->{description},
-        { product_id => $product->{id} }
+        { product_id => $product->{id}, plugin => $self->id }
     );
     return ACCEPT;
 }
