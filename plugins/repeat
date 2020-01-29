@@ -22,7 +22,7 @@ sub command {
 
     if ($post) {
         return REJECT, $err_limit if $post > $limit;
-        return ABORT, "Can't repeat an empty transaction." if not $cart->size;
+        return ABORT, "Can't modify an empty transaction." if not $cart->size;
         return REJECT, $err_stacked if $last->multiplied;
 
         $last->quantity($post);
@@ -32,12 +32,12 @@ sub command {
     if (not $pre and not $post) {
         # Lone operator. Convert withdrawal into repetition.
 
+        return ABORT, "Can't modify an empty transaction." if not $cart->size;
+
         if ($last->has_attribute('is_withdrawal')) {
             $pre = abs $last->{amount};
             $pre == int $pre or return REJECT, "Repeat only works on integers.";
             $cart->delete($last);
-        } elsif (not $cart->size) {
-            return ABORT, "Can't repeat an empty transaction.";
         }
     }
 
