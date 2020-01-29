@@ -38,8 +38,8 @@ sub hook_checkout_done {
         _box(
             "Hoi $user,",
             "",
-            "Je staat al sinds $1 negatief, dus meer dan 2 weken.",
-            "Je mag rood staan, maar niet langdurig. Wil je je saldo even aanvullen?",
+            "Je staat al sinds $1 negatief, dus meer dan 2 weken. Deelnemers",
+            "mogen rood staan, maar niet langdurig. Wil je je saldo even aanvullen?",
             "",
             "Bedankt!",
             "-- Het bestuur",
