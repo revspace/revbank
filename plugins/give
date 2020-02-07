@@ -7,16 +7,16 @@ sub command :Tab(give) {
 
     return NEXT if $command ne 'give';
 
-    return "Benificiary", \&benificiary;
+    return "Beneficiary", \&beneficiary;
 }
 
-sub benificiary :Tab(USERS) {
+sub beneficiary :Tab(USERS) {
     my ($self, $cart, $input) = @_;
 
-    $self->{benificiary} = parse_user($input)
+    $self->{beneficiary} = parse_user($input)
         or return REJECT, "$input: No such user.";
 
-    return "Amount to give to $self->{benificiary}", \&amount;
+    return "Amount to give to $self->{beneficiary}", \&amount;
 }
 
 sub amount {
@@ -28,22 +28,22 @@ sub amount {
     return sprintf(
         "Why are you giving %.2f to %s, or enter your username to end",
         $self->{amount},
-        $self->{benificiary}
+        $self->{beneficiary}
     ), \&reason;
 }
 
 sub reason :Tab(whatevah) {
     my ($self, $cart, $input) = @_;
 
-    my $benificiary = $self->{benificiary};
+    my $beneficiary = $self->{beneficiary};
     my $amount = $self->{amount};
 
     my $user = parse_user($input);
     my $reason = $user ? "" : " ($input)";
 
     $cart
-        ->add(-$amount, "Given to $benificiary" . $reason)
-        ->add_contra($benificiary, +$amount, "Received from \$you" . $reason);
+        ->add(-$amount, "Given to $beneficiary" . $reason)
+        ->add_contra($beneficiary, +$amount, "Received from \$you" . $reason);
 
     $cart->checkout($user) if $user;
 

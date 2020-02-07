@@ -21,7 +21,7 @@ use IPC::Open2 qw(open2);
 use List::Util qw(sum);
 
 my $iban = "NL99ABCD1234567890";
-my $benificiary = "Account Name";
+my $beneficiary = "Account Name";
 
 sub command { NEXT }
 
@@ -40,7 +40,7 @@ sub hook_checkout {
             "\n",
             "BCD", "002", 1, "SCT",
             "",
-            $benificiary,
+            $beneficiary,
             $iban,
             "EUR" . $amount,      # Amount
             "",
