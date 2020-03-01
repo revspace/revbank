@@ -46,7 +46,7 @@ sub command {
 
         return REJECT, $err_limit if $pre > $limit;
         $cart
-            ->add(0, "?  (The next thing you add will be multiplied.)", { _repeat => 1 })
+            ->add(0, "?  (The next thing you add will be multiplied.)", { _repeat => 1, refuse_checkout => 1 })
             ->quantity($pre);
         return ACCEPT;
     }

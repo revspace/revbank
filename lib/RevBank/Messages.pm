@@ -27,9 +27,11 @@ sub hook_cart_changed {
     say "Pending:";
     $cart->display;
 
-    my $sum = $cart->sum;
-    my $what = $sum > 0 ? "add %.2f" : "pay %.2f";
-    say sprintf "Enter username to $what; type 'abort' to abort.", abs $sum;
+    if (not $cart->entries('refuse_checkout')) {
+        my $sum = $cart->sum;
+        my $what = $sum > 0 ? "add %.2f" : "pay %.2f";
+        say sprintf "Enter username to $what; type 'abort' to abort.", abs $sum;
+    }
 }
 
 sub hook_abort {

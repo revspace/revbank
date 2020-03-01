@@ -75,6 +75,12 @@ sub size {
 sub checkout {
     my ($self, $user) = @_;
 
+    if ($self->entries('refuse_checkout')) {
+        warn "Refusing to finalize deficient transaction.\n";
+        $self->display;
+        return;
+    }
+
     my $entries = $self->{entries};
 
     my %deltas;
@@ -98,6 +104,7 @@ sub checkout {
     $self->empty;
 
     sleep 1;  # Ensure new timestamp/id for new transaction
+    return 1;
 }
 
 sub entries {
