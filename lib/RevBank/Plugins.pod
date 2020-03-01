@@ -164,7 +164,7 @@ Be careful to avoid infinite loops if you add new stuff.
 
 Called when the transaction is finalized, before accounts are updated.
 
-=item hook_checkout $class, $cart, $user, $transaction_id
+=item hook_checkout_done $class, $cart, $user, $transaction_id
 
 Called when the transaction is finalized, after accounts were updated.
 
