@@ -10,7 +10,7 @@ The following features were removed:
 
     Please remove these from your `revbank.plugins` configuration file.
 
-- creating new accounts with <Cdeposit>
+- creating new accounts with `deposit`
 
     Use `adduser` instead.
 

@@ -269,7 +269,7 @@ The following features were removed:
 
 Please remove these from your C<revbank.plugins> configuration file.
 
-=item * creating new accounts with <Cdeposit>
+=item * creating new accounts with C<deposit>
 
 Use C<adduser> instead.
 
