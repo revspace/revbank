@@ -185,7 +185,6 @@ OUTER: for (;;) {
             length $input or redo PROMPT;
 
             @words = ($split_input ? split(" ", $input) : $input);
-            $split_input = 0;  # Only split 'outer' input.
         }
 
         WORD: for (;;) {
@@ -194,6 +193,7 @@ OUTER: for (;;) {
 
             my $word = shift @words;
             push @retry, $word;
+            $split_input = 0;  # Only split 'outer' input.
 
             PLUGIN: for my $plugin (@plugins) {
                 my ($rv, @rvargs) = eval { $plugin->$method($cart, $word) };
