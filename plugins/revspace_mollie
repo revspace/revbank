@@ -1,0 +1,62 @@
+#!perl
+use LWP::UserAgent;
+use JSON;
+
+my $ua = LWP::UserAgent->new(agent => "revbank");
+my $backend_url = "https://deposit.revspace.nl/mollie.php";
+
+sub backend_call {
+    my ($hash) = @_;
+    my $response = $ua->post($backend_url, $hash);
+    $response->is_success
+        or die "HTTP request failed (" . $response->status_line . ")\n";
+
+    my $result = eval { decode_json $response->decoded_content };
+    defined $result and ref($result) eq "HASH"
+        or die "Invalid JSON from HTTP request\n";
+
+    return $result;
+}
+
+sub command {
+    my ($self, $cart, $command) = @_;
+
+    # currently 10 characters after the underscore, but it's not documented.
+    my ($id) = $command =~ /^(tr_[A-Za-z0-9]{10,12})$/ or return NEXT;
+
+    my $result = eval { backend_call { id => $id } };
+    $@ and return REJECT, "API call failed: $@";
+
+    $result->{ok} or return REJECT, "Voucher rejected: $result->{message}.";
+
+    my $description = "Deposit (online)";
+    my $amount = $result->{amount};
+
+    if ($result->{test_amount}) {
+        $description .= " TEST MODE ($result->{test_amount})";
+    }
+
+    $cart->add(
+        +$amount,
+        $description,
+        { is_deposit => 1, method => 'online', mollie_id => $id, no_repeat => 1 }
+    );
+    return ACCEPT;
+}
+
+sub hook_abort {
+    my ($class, $cart, $reason) = @_;
+    # Opportunistic; ignore failures. Can't do anything about it anyway.
+
+    my @ids = map $_->attribute('mollie_id'), $cart->entries('mollie_id');
+    eval { print "Reactivating $_.\n"; backend_call { id => $_, action => "abort" } }
+        for @ids;
+}
+
+sub hook_checkout {
+    my ($class, $cart, $user, $transaction_id) = @_;
+    # Opportunistic; ignore failures. Can't do anything about it anyway.
+
+    my @ids = map $_->attribute('mollie_id'), $cart->entries('mollie_id');
+    eval { backend_call { id => $_, action => "finalize" } } for @ids;
+}
