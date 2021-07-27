@@ -29,7 +29,7 @@ sub command {
 
     $result->{ok} or return REJECT, "Voucher rejected: $result->{message}.";
 
-    my $description = "Deposit (online)";
+    my $description = "Deposit (online; $id)";
     my $amount = $result->{amount};
 
     if ($result->{test_amount}) {
