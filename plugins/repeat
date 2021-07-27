@@ -4,6 +4,7 @@ HELP "*<N>, x<N>, <N>x, <N>*" => "Repeat previous/next product N times";
 
 my $err_stacked = "Stacked repetition is not supported.";
 my $err_pfand = "Plugins 'pfand' and 'repeat' cannot be combined.";
+my $err_nope = "Entry does not support repetition.";
 
 my $limit = 200;
 my $err_limit = "Repetition is limited at $limit items.";
@@ -24,6 +25,7 @@ sub command {
         return REJECT, $err_limit if $post > $limit;
         return ABORT, "Can't modify an empty transaction." if not $cart->size;
         return REJECT, $err_stacked if $last->multiplied;
+        return REJECT, $err_nope if $last->attribute('no_repeat');
 
         $last->quantity($post);
         return ACCEPT;
@@ -52,6 +54,7 @@ sub command {
     }
 
     return REJECT, $err_stacked if $last->multiplied;
+    return REJECT, $err_nope if $last->attribute('no_repeat');
     return "Multiply previous product by", \&repeat;
 }
 
@@ -83,6 +86,10 @@ sub hook_added_entry {
         if $entries[-2] != $planned[0];
 
     my $num = $planned[0]->quantity;
+    if ($entries[-1]->attribute('no_repeat')) {
+        print $err_nope, "\n";
+        $num = 1;
+    }
 
     $cart->delete($planned[0]);
     $entries[-1]->quantity($num);
