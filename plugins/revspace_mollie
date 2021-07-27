@@ -7,6 +7,8 @@ my $backend_url = "https://deposit.revspace.nl/mollie.php";
 
 sub backend_call {
     my ($hash) = @_;
+    #$hash->{test} = 1;  # use mollie test environment
+
     my $response = $ua->post($backend_url, $hash);
     $response->is_success
         or die "HTTP request failed (" . $response->status_line . ")\n";
