@@ -1,0 +1,10 @@
+#!perl
+
+sub command {
+    my ($self, $cart, $command) = @_;
+    if ($command =~ m[^https?://]) {
+        print "This is not a browser...";
+        return ACCEPT;
+    }
+    return NEXT;
+}
