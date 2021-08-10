@@ -5,6 +5,7 @@ HELP "*<N>, x<N>, <N>x, <N>*" => "Repeat previous/next product N times";
 my $err_stacked = "Stacked repetition is not supported.";
 my $err_pfand = "Plugins 'pfand' and 'repeat' cannot be combined.";
 my $err_nope = "Entry does not support repetition.";
+my $err_postfix = "Addition/substraction is only supported the other way around.";
 
 my $limit = 200;
 my $err_limit = "Repetition is limited at $limit items.";
@@ -14,42 +15,69 @@ sub command {
 
     return ABORT, $err_pfand if $cart->entries('is_pfand');
 
-    my ($pre, $post) = $command =~ /^(\d+)?[x*](\d+)?$/
+    my ($lhs, $op, $rhs) = $command =~ /^(\d+)?([x*+-])(\d+)?$/
         or return NEXT;
 
     my $last = ($cart->entries)[-1];
 
-    return NEXT if $pre and $post;  # 123x123 -> invalid syntax
+    return NEXT if $lhs and $rhs;  # 123x123 -> invalid syntax
 
-    if ($post) {
-        return REJECT, $err_limit if $post > $limit;
+    if ($rhs) {
         return ABORT, "Can't modify an empty transaction." if not $cart->size;
-        return REJECT, $err_stacked if $last->multiplied;
         return REJECT, $err_nope if $last->attribute('no_repeat');
+        return REJECT, $err_limit if $rhs > $limit;
 
-        $last->quantity($post);
+        if ($op eq '+') {
+            my $new = $last->quantity + $rhs;
+            return REJECT, $err_limit if $new > $limit;
+
+            $last->quantity($new);
+            return ACCEPT;
+        }
+        if ($op eq '-') {
+            my $new = $last->quantity - $rhs;
+            if ($new > 0) {
+                $last->quantity($new);
+            } else {
+                $cart->delete($last);
+                print "Deleted.\n";
+            }
+            return ACCEPT;
+        }
+        # $op is not + or -, so it must be * (or x).
+
+        return REJECT, $err_stacked if $last->multiplied;
+
+        $last->quantity($rhs);
         return ACCEPT;
     }
 
-    if (not $pre and not $post) {
+    if (not $lhs and not $rhs) {
         # Lone operator. Convert withdrawal into repetition.
 
         return ABORT, "Can't modify an empty transaction." if not $cart->size;
 
+        if ($op eq '+' or $op eq '-') {
+            $self->{op} = $op;
+            return "$op how many?",  \&plusminus;
+        }
+
         if ($last->has_attribute('is_withdrawal')) {
-            $pre = abs $last->{amount};
-            $pre == int $pre or return REJECT, "Repeat only works on integers.";
+            $lhs = abs $last->{amount};
+            $lhs == int $lhs or return REJECT, "Repeat only works on integers.";
             $cart->delete($last);
         }
     }
 
-    if ($pre) {
-        $pre = abs $pre;  # withdrawal is negative
+    if ($lhs) {
+        return REJECT, $err_postfix if $op eq '+' or $op eq '-';
 
-        return REJECT, $err_limit if $pre > $limit;
+        $lhs = abs $lhs;  # withdrawal is negative
+
+        return REJECT, $err_limit if $lhs > $limit;
         $cart
             ->add(0, "?  (The next thing you add will be multiplied.)", { _repeat => 1, refuse_checkout => 1 })
-            ->quantity($pre);
+            ->quantity($lhs);
         return ACCEPT;
     }
 
@@ -67,6 +95,27 @@ sub repeat {
     return REJECT, $err_limit if $arg > $limit;
 
     ($cart->entries)[-1]->quantity($arg);
+    return ACCEPT;
+}
+
+sub plusminus {
+    my ($self, $cart, $arg) = @_;
+
+    $arg =~ /^\d+$/ and $arg > 0
+        or return REJECT, "Invalid value.";
+
+    my $last = ($cart->entries)[-1];
+    my $new = $last->quantity;
+    $new += $arg if $self->{op} eq '+';
+    $new -= $arg if $self->{op} eq '-';
+
+    return REJECT, $err_limit if $new > $limit;
+    if ($new < 0) {
+        $cart->delete($last);
+        print "Deleted.\n";
+    } else {
+        ($cart->entries)[-1]->quantity($new);
+    }
     return ACCEPT;
 }
 
