@@ -23,6 +23,7 @@ beep_terminal
 
 # Then, plugins that apply heuristics
 
+repeat
 products   # matches product IDs (barcodes)
 market     # also matches product IDs
 withdraw   # matches amounts
@@ -30,4 +31,3 @@ users      # matches usernames
 deposit    # wants to be after 'users'
 #deposit_methods  # Extra options for 'deposit'. Edit/configure first!
 #deposit_iban_qr  # QR code display, edit/configure first! (needs qrencode(1))
-repeat
