@@ -1,11 +1,22 @@
-### THIS IS THE EXAMPLE FILE; DON'T ADD PRODUCTS, BUT MAKE A NEW FILE ###
-
-
 # Empty lines and lines beginning with # are ignored.
 
 # All other lines should have three fields, whitespace separated. The first two
 # fields are barcode/productID and price, the third field is the description.
 # Only the last field may have whitespace.
+
+# TODO: add regular drinks.
+
+# FABLAB-Services
+FLSprusa0          0.00    1 minuut printen op de Prusa I3
+FLSulti0           0.00    1 minuut printen op de Ultimaker
+FLSlaser0          0.00    1 minuut laseren op de Lasersnijder
+FLSbrm0            0.00    1 minuut draaitijd van de BRM lasersnijder
+FLSdraaibank       0.00    1 minuut draaitijd van de CNC Draaibank
+FLSwaterjet        0.00    1 minuut draaitijd van de waterjet
+
+##
+## some default products (derived from origin repo)
+##
 
 # Free stuff
 649241869825    0.00    Free disgusting stuff (LS)

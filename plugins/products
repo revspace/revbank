@@ -32,7 +32,7 @@ sub command :Tab(edit,&tab) {
 
     my $product = _read_products->{ $command } or return NEXT;
 
-    my $price = parse_amount( $product->{price} ) or return NEXT;
+    my $price = parse_amount( $product->{price} );
 
     my @existing = grep {
         $_->attribute('plugin') eq $self->id and

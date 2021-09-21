@@ -1,5 +1,16 @@
 #                               Price =
 # Seller   Barcode          Seller + Space  Description
 
-Juerd      sku81873           6.00    2.00  Cijfertjes/ledjes/knopjes-module
-
+#Juerd      sku81873           6.00    2.00  Cijfertjes/ledjes/knopjes-module
+FABLAB     FLPLAGlitter       0.30    0.00  PLA-glitter materiaal per gram (Prusa/Ultimaker)
+FABLAB     FLPLASatin         0.30    0.00  PLA-satin materiaal per gram (Ultimaker)
+FABLAB     FLNylon            0.50    0.00  Nylon materiaal per gram (Ultimaker)
+FABLAB     FLABS              0.30    0.00  ABS materiaal per gram (Ultimaker)
+FABLAB     FLPVA              0.55    0.00  PVA materiaal per gram (Ultimaker)
+FABLAB     FLPETG             0.30    0.00  PETG materiaal per gram (Ultimaker)
+FABLAB     FLrusberken        1.75    0.00  Russisch Berken B/BB kwaliteit– 3mm – 30 bij 50 cm
+FABLAB     FLInterPop30       2.20    0.00  Interplex Populieren B/BBkwaliteit – 4mm – 30 bij 50 cm
+FABLAB     FLInterPop90       15.00   0.00  Interplex Populieren B/BBkwaliteit – 4mm – 90 bij 125 cm
+FABLAB     FLPaper160grm2     0.10    0.00  Gekleurd karton/stevig papier160 gram/m2 A4 per vel
+FABLAB     FLPlexi30x40       4.55    0.00  Plexiglas gegoten glashelder 3mm – 30 bij 40 cm
+FABLAB     FLPlexi120x60      29.35   0.00  Plexiglas gegoten glashelder 3mm – 120 bij 60 cm

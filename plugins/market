@@ -33,8 +33,8 @@ sub command :Tab(market,&tab) {
     my $product = _read_market->{ $command } or return NEXT;
 
     my $username = parse_user(  $product->{ user })   or return NEXT;
-    my $seller   = parse_amount($product->{ seller }) or return NEXT;
-    my $space    = parse_amount($product->{ space })  or return NEXT;
+    my $seller   = parse_amount($product->{ seller });
+    my $space    = parse_amount($product->{ space });
     my $description = $product->{description};
 
     my @existing = grep {
