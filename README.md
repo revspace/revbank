@@ -2,7 +2,7 @@
 
 ## Upgrading
 
-When upgrading from a previous version, please refer to the file `UPGRADING.md`
+When upgrading from a previous version, please refer to the file [UPGRADING.md](UPGRADING.md)
 because there might be incompatible changes that require your attention.
 
 ## Installing
@@ -15,6 +15,16 @@ Generic: cpan Term::ReadLine::Gnu
 ```
 
 2. Clone the repository, run revbank :)
+
+## Using revbank
+
+Type `help`.
+
+Even more helpful text is available on the [the RevBank page on the RevSpace wiki](https://revspace.nl/RevBank).
+
+## Writing plugins
+
+Read [RevBank::Plugins](lib/RevBank/Plugins.pod) and [RevBank::Amount](lib/RevBank/Amount.pod).
 
 ## Exiting revbank
 
