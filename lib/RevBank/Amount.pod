@@ -4,6 +4,8 @@ RevBank::Amount - Fixed point 2-decimal numeric values that DWYM
 
 =head1 SYNOPSIS
 
+	$amount = parse_amount("1.23");  # in plugins, best to use this
+
     $amount = RevBank::Amount->new(30);               # 0.30
     $amount = RevBank::Amount->parse_string("0.30");  # 0.30
 
@@ -50,6 +52,16 @@ do that), strange things can happen. Also, "-0.00" is annoying...
 
 Note: this class does not play nice with other classes that use operator
 overloading.
+
+=head2 Functions
+
+=head3 parse_amount
+
+Provided by RevBank::Global, and available in plugins. Unlike the
+method C<< RevBank::Amount->parse_string >>, the function C<parse_amount> will
+not allow negative numbers, which is typically a good idea to maintain sanity.
+When writing plugins, you should strongly consider providing two different
+commands instead of allowing negative numbers.
 
 =head2 Constructors
 
