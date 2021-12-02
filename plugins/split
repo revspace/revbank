@@ -21,7 +21,7 @@ sub command :Tab(take,steal,split) {
 
     return REJECT, "Nothing to split. Add products first." if not $sum;
 
-    printf "Splitting %.2f over \$you and others.\n", $sum;
+    print "Splitting $sum over \$you and others.\n";
     return "User to take from (not yourself)", \&arg;
 }
 
@@ -32,8 +32,8 @@ sub arg :Tab(USERS) {
 
     if (@$users and $arg eq $self->{split_finish}) {
         my $amount = $self->{split_amount};
-        my $each  = sprintf "%.2f", $amount / (@$users + 1);
-        my $total = sprintf "%.2f", @$users * $each;
+        my $each  = RevBank::Amount->new_from_float($amount->float / (@$users + 1));
+        my $total = @$users * $each;
         my $desc = join " + ", map $_->{description}, _select_split($cart);
 
         my $joined = join '/', @$users;
@@ -49,9 +49,9 @@ sub arg :Tab(USERS) {
     my $user = parse_user($arg) or return REJECT, "$arg: No such user.";
     push @$users, $user;
 
-    my $each = sprintf "%.2f", $self->{split_amount} / (@$users + 1);
-    $self->{split_finish} = $each;
+    my $each = RevBank::Amount->new_from_float($self->{split_amount}->float / (@$users + 1));
+    $self->{split_finish} = $each->string;
 
-    return "User to take from (not yourself) or $each to finish", \&arg;
+    return "User to take from (not yourself) or $self->{split_finish} to finish", \&arg;
 }
 

@@ -29,8 +29,9 @@ sub hook_cart_changed {
 
     if (not $cart->entries('refuse_checkout')) {
         my $sum = $cart->sum;
-        my $what = $sum > 0 ? "add %.2f" : "pay %.2f";
-        say sprintf "Enter username to $what; type 'abort' to abort.", abs $sum;
+        my $what = $sum > 0 ? "add" : "pay";
+        my $abs = $sum->abs;
+        say "Enter username to $what $abs; type 'abort' to abort.";
     }
 }
 
@@ -53,9 +54,10 @@ sub hook_user_balance {
     my ($class, $username, $old, $delta, $new) = @_;
     my $sign = $delta >= 0 ? '+' : '-';
     my $rood = $new < 0 ? '31;' : '';
-    printf "New balance for %s: %+.2f %s %.2f = \e[${rood}1m%+.2f\e[0m %s\n",
-        $username, $old, $sign, abs($delta), $new,
-        ($new < -13.37 ? "\e[5;1m(!!)\e[0m" : "");
+    my $abs = abs($delta);
+    my $warn = $new < -13.37 ? " \e[5;1m(!!)\e[0m" : "";
+    $_ = $_->string("+") for $old, $new;
+    printf "New balance for $username: $old $sign $abs = \e[${rood}1m$new\e[0m$warn\n",
 }
 
 sub hook_user_created {

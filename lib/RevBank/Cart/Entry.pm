@@ -11,6 +11,8 @@ sub new {
     @_ >= 3 or croak "Not enough arguments for RevBank::Cart::Entry->new";
     $attributes //= {};
 
+    $amount = RevBank::Amount->parse_string($amount) if not ref $amount;
+
     my $self = {
         quantity    => 1,
         amount      => $amount,  # negative = pay, positive = add money
@@ -26,6 +28,8 @@ sub new {
 
 sub add_contra {
     my ($self, $user, $amount, $description) = @_;
+
+    $amount = RevBank::Amount->parse_string($amount) if not ref $amount;
 
     $description =~ s/\$you/$self->{user}/g if defined $self->{user};
 
@@ -92,17 +96,13 @@ sub as_printable {
     # Normally, the implied sign is "+", and an "-" is only added for negative
     # numbers. Here, the implied sign is "-", and a "+" is only added for
     # positive numbers.
-    push @s, sprintf "  %6.2f %s", abs($self->{amount}), $self->{description};
-
-    # Add the plus before the number instead of whitespace, leaving one space
-    # character between the sign and the number to make it stand out more.
-    $s[-1] =~ s/\s(?=\s\d)/+/ if $self->{amount} > 0;
+    push @s, sprintf "  %6s %s", $self->{amount}->string_flipped, $self->{description};
 
     for my $c ($self->contras) {
         push @s, sprintf(
-            "  %9.2f %s %s",
-            abs($c->{amount}),
-            ($c->{amount} > 0 ? "->" : "<-"),
+            "  %9s %s %s",
+            $c->{amount}->abs->string,
+            ($c->{amount}->cents > 0 ? "->" : "<-"),
             $c->{user}
         );
 
@@ -128,10 +128,10 @@ sub as_loggable {
         my $description =
             $quantity == 1
             ? $_->{description}
-            : sprintf("%s [%sx %.2f]", $_->{description}, $quantity, abs($_->{amount}));
+            : sprintf("%s [%sx %s]", $_->{description}, $quantity, abs($_->{amount}));
 
         push @s, sprintf(
-            "%-12s %4s %3d %5.2f  # %s",
+            "%-12s %4s %3d %5s  # %s",
             $_->{user},
             ($total > 0 ? 'GAIN' : $total < 0 ? 'LOSE' : ''),
             $quantity,
@@ -166,20 +166,20 @@ sub sanity_check {
     return 1 if $self->{FORCE};
     my @contras = $self->contras or return 1;
 
-    my $amount = List::Util::sum(map $_->{amount}, $self, @contras);
+    my $sum = List::Util::sum(map $_->{amount}->cents, $self, @contras);
 
-    if ($amount >= 0.005) {  # meh, floats
+    if ($sum > 0) {
         $self->{FORCE} = 1;
         croak join("\n",
             "BUG! (probably in $self->{caller})",
             "This adds up to creating money that does not exist:",
             $self->as_printable,
             (
-                $amount == 2 * $self->{amount}
+                $sum == 2 * $self->{amount}->cents
                 ? "Hint: contras for positive value should be negative values."
                 : ()
             ),
-            sprintf("Cowardly refusing to create %.2f out of thin air", $amount)
+            sprintf("Cowardly refusing to create $sum out of thin air")
         );
     }
 

@@ -26,7 +26,8 @@ sub command :Tab(pfand) {
 
 sub product :Tab(&tab) {
     my ($self, $cart, $product) = @_;
-    my $pfand = _read_pfand->{ $product };
+    my $pfand = parse_amount(_read_pfand->{ $product })
+        or return REJECT, "Invalid pfand amount for $product";
 
     if ($pfand) {
         $cart->add(+$pfand, "Pfand zurueck", { is_return => 1 });

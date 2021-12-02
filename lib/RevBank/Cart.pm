@@ -87,6 +87,7 @@ sub checkout {
     for my $entry (@$entries) {
         $entry->user($user);
 
+        $deltas{$entry->{user}} //= RevBank::Amount->new(0);
         $deltas{$_->{user}} += $_->{amount} * $entry->quantity
             for $entry, $entry->contras;
     }

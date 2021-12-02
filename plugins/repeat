@@ -63,7 +63,7 @@ sub command {
         }
 
         if ($last->has_attribute('is_withdrawal')) {
-            $lhs = abs $last->{amount};
+            $lhs = $last->{amount}->abs->float;
             $lhs == int $lhs or return REJECT, "Repeat only works on integers.";
             $cart->delete($last);
         }

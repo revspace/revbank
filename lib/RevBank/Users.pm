@@ -45,7 +45,10 @@ sub update {
     while (defined (my $line = readline $in)) {
         my @a = split " ", $line;
         if (lc $a[0] eq lc $username) {
-            $old = $a[1];
+            $old = RevBank::Amount->parse_string($a[1]);
+            die "Fatal error: invalid balance in revbank:accounts:$.\n"
+                if not defined $old;
+
             $new = $old + $delta;
 
             my $since = $a[3] // "";
@@ -53,7 +56,7 @@ sub update {
             $since = "-\@" . now() if $new  < 0 and (!$since or $old >= 0);
             $since = "0\@" . now() if $new == 0 and (!$since or $old != 0);
 
-            printf {$out} "%-16s %+9.2f %s %s\n", (
+            printf {$out} "%-16s %9s %s %s\n", (
                 $username, $new, now(), $since
             ) or die $!;
         } else {

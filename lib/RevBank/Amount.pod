@@ -1,0 +1,104 @@
+=head1 NAME
+
+RevBank::Amount - Fixed point 2-decimal numeric values that DWYM
+
+=head1 SYNOPSIS
+
+    $amount = RevBank::Amount->new(30);               # 0.30
+    $amount = RevBank::Amount->parse_string("0.30");  # 0.30
+
+    $amount->cents   # 30
+    $amount->string  # "0.30"
+
+    $a2 = $amount + "1.23"
+
+    # Not recommended:
+    $a2 = $amount + $float     # may emit warning
+    $a2 = $amount / $anything  # emits warning
+    $a2 = $amount * 1.21       # emits warning
+
+    # If you have to use floats, do so explicitly:
+    $amount = RevBank::Amount->new_from_float(.3);
+    $amount = RevBank::Amount->new_from_float(0.30);
+    $amount = RevBank::Amount->new_from_float(0.425);  # rounds to .42, no warning
+    $amount->float
+
+    $a2 = $amount->new_from_float($amount->float * 1.21);  # no warning
+
+=head1 DESCRIPTION
+
+This class implements numeric values at two decimal digits precision,
+with transparent rounding to whole cents. Regular numeric operations are
+supported through operator overloading, and instances stringify as
+formatted numbers. Non-integer arithmetic is done using floating point
+operations, after which the result is converted back into a fixed point
+object.
+
+Using floating point for financial applications is generally a bad idea,
+but RevBank was originally built with floats, and now we're stuck having
+to keep supporting them at least a bit, for backwards compatibility with
+existing plugins. For new code, it is recommended to use integer
+arithmetic on the number of cents only.
+
+When rounding early enough, using floating point numbers isn't much of a
+problem when working with 2 decimals in amounts of money that are
+customary in day to day usage by people. Every number is sufficiently
+accurately representable as an IEEE single, and Perl's own
+stringification of floating points takes care of the most annoying
+differences. But if you don't round (and earlier RevBank didn't always
+do that), strange things can happen. Also, "-0.00" is annoying...
+
+Note: this class does not play nice with other classes that use operator
+overloading.
+
+=head2 Constructors
+
+=head3 new
+
+Construct from a number of cents. If the number is not an integer, it
+will be rounded without warning, is a possibly surprising way.
+
+=head3 new_from_float
+
+Construct from a number. The number will be rounded to two decimals
+without warning, in a possibly surprising way.
+
+=head3 parse_string
+
+Construct from a string. Either C<,> or C<.> is accepted as a decimal
+point; no other separators (like thousands separators) are accepted. The
+string may optionally be prefixed with a sign, either C<+> or C<->.
+Numbers with more than two digits after the decimal point are rejected.
+Whitespace is ignored at either end of the string, but invalid within a
+number or between the sign and the number.
+
+Returns undef when the given string is not valid.
+
+=head2 Instance methods
+
+=head3 cents
+
+Returns an integer that accurately represents the amount in cents.
+
+=head3 float
+
+Returns the floating point number that is the closest to the actual
+amount. Note: not all numbers can be accurately represented as a
+floating point number, which is the reason this class exists...
+
+=head3 string
+
+Returns a formatted number. Negative numbers get a sign in front, while
+zero and positive numbers do not.
+
+=head2 Overloading
+
+Overloaded operations may throw an exception when the operand doesn't
+stringify to something that is accepted by C<parse_string>, e.g. C<<
+$amount + 1.001 >> won't work because 0.001 has too many digits after
+the decimal point.
+
+When working with values that aren't safe, hard-coded literals, always
+turn them into RevBank::Amount objects first, which takes care of te
+necessary rounding: C<< $amount + RevBank::Amount->new_from_float(1.001)
+>>.

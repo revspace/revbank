@@ -41,9 +41,9 @@ sub hook_user_created {
 
 sub hook_user_balance {
     my ($class, $user, $old, $delta, $new, $transaction_id) = @_;
-    $_ = sprintf "%+.02f", $_ for $old, $delta, $new;
     my $lost = $delta < 0 ? "lost" : "got";
-    $delta = abs($delta);
+    $delta = $delta->abs;
+    $_ = $_->string("+") for $old, $new;
     _log("BALANCE $transaction_id $user had $old, $lost $delta, now has $new");
 }
 

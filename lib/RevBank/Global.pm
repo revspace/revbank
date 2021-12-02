@@ -1,6 +1,7 @@
 package RevBank::Global;
 use strict;
 use POSIX qw(strftime);
+use RevBank::Amount;
 
 sub import {
     require RevBank::Plugins;
@@ -17,15 +18,15 @@ sub import {
         my ($amount) = @_;
         defined $amount or return undef;
         length  $amount or return undef;
-        $amount =~ /^(-)?[0-9]*(?:[,.][0-9]{1,2})?$/ or return undef;
-        if ($1) {
+
+        $amount = RevBank::Amount->parse_string($amount) // return undef;
+        if ($amount->cents < 0) {
             die "For our sanity, no negative amounts, please :).\n";
         }
-        $amount =~ s/,/./g;
-        if ($amount > 999) {
+        if ($amount->cents > 99900) {
             die "That's way too much money, or an unknown barcode.\n";
         }
-        return 0 + $amount;
+        return $amount;
     };
     *{"$caller\::call_hooks"} = \&RevBank::Plugins::call_hooks;
     *{"$caller\::say"} = sub {

@@ -20,8 +20,8 @@ sub arg :Tab(USERS) {
     my $amount = parse_amount($arg);
 
     if (@users and $amount) {
-        my $each  = sprintf "%.2f", $amount / @users;
-        my $total = sprintf "%.2f", @users * $each;
+        my $each  = RevBank::Amount->new_from_float($amount->float / @users);
+        my $total = $each * @users;
 
         if ($total != $amount) {
             print "Adjusted total amount to $total because of rounding.\n";
@@ -32,8 +32,7 @@ sub arg :Tab(USERS) {
 
         my $them = @users == 1 ? $users[0] : 'each';
 
-        return sprintf("Why are you taking %.2f from %s?", $each, $them),
-            \&reason;
+        return "Why are you taking $each from $them", \&reason;
     }
 
     my $user = parse_user($arg);
