@@ -8,9 +8,7 @@ my $bold = "\e[1m";
 my $underline = "\e[4m";
 my $off = "\e[0m";
 
-sub command :Tab(help,wtf,omgwtfbbq) {
-    my ($self, $cart, $command) = @_;
-
+sub command :Tab(help,wtf,omgwtfbbq) ($self, $cart, $command, @) {
     return NEXT if $command !~ /^(?:help|wtf|omgwtfbbq)$/;
 
     # GNU less(1) and more(1) are a bad choice to present to total newbies who

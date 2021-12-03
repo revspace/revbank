@@ -2,28 +2,27 @@
 
 my $timeout = 10;
 
-sub hook_prompt_idle {
-    my ($class, $cart, $plugin, $seconds, $readline) = @_;
-    if ($seconds >= $timeout and $cart->size and not $plugin) {
-        call_hooks("beep");
+sub hook_prompt_idle($class, $cart, $plugin, $seconds, $readline, @) {
+    return unless $seconds >= $timeout and $cart->size and not $plugin;
 
-        return if $seconds > $timeout;  # text only once
+    call_hooks("beep");
 
-        my $text = $readline->copy_text;
-        my $point = $readline->{point};
+    return if $seconds > $timeout;  # text only once
 
-        $readline->save_prompt;
-        $readline->replace_line("");
-        $readline->redisplay;
+    my $text = $readline->copy_text;
+    my $point = $readline->{point};
 
-        my $help = $cart->entries('refuse_checkout')
-            ? "Enter 'abort' to abort."
-            : "Enter username to pay/finish or 'abort' to abort.";
-        print "\e[33;2;1mTransaction incomplete.\e[0m $help\n";
+    $readline->save_prompt;
+    $readline->replace_line("");
+    $readline->redisplay;
 
-        $readline->restore_prompt;
-        $readline->replace_line($text);
-        $readline->{point} = $point;
-        $readline->redisplay;
-    }
+    my $help = $cart->entries('refuse_checkout')
+        ? "Enter 'abort' to abort."
+        : "Enter username to pay/finish or 'abort' to abort.";
+    print "\e[33;2;1mTransaction incomplete.\e[0m $help\n";
+
+    $readline->restore_prompt;
+    $readline->replace_line($text);
+    $readline->{point} = $point;
+    $readline->redisplay;
 }

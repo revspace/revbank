@@ -1,11 +1,16 @@
 package RevBank::Users;
-use strict;
+
+use v5.28;
+use warnings;
+use feature qw(signatures);
+no warnings qw(experimental::signatures);
+
 use RevBank::Global;
 use RevBank::Plugins;
 
 my $filename = "revbank.accounts";
 
-sub _read {
+sub _read() {
     my @users;
     open my $fh, $filename or die $!;
     /\S/ and push @users, [split " "] while readline $fh;
@@ -13,22 +18,19 @@ sub _read {
     return { map { lc($_->[0]) => $_ } @users };
 }
 
-sub names {
+sub names() {
     return map $_->[0], values %{ _read() };
 }
 
-sub balance {
-    my ($name) = @_;
-    return _read()->{ lc $name }->[1];
+sub balance($username) {
+    return _read()->{ lc $username }->[1];
 }
 
-sub since {
-    my ($name) = @_;
-    return _read()->{ lc $name }->[3];
+sub since($username) {
+    return _read()->{ lc $username }->[3];
 }
 
-sub create {
-    my ($username) = @_;
+sub create($username) {
     open my $fh, '>>', $filename or die $!;
     my $now = now();
     print {$fh} "$username 0.00 $now\n" or die $!;
@@ -36,8 +38,7 @@ sub create {
     RevBank::Plugins::call_hooks("user_created", $username);
 }
 
-sub update {
-    my ($username, $delta, $transaction_id) = @_;
+sub update($username, $delta, $transaction_id) {
     open my $in,  'revbank.accounts' or die $!;
     open my $out, ">.revbank.$$" or die $!;
     my $old;
@@ -75,8 +76,7 @@ sub update {
     );
 }
 
-sub parse_user {
-    my ($username) = @_;
+sub parse_user($username) {
     my $users = _read();
     return undef if not exists $users->{ lc $username };
     return $users->{ lc $username }->[0];

@@ -7,17 +7,13 @@
 
 
 
-sub command :Tab(barcode) {
-    my ($self, $cart, $command) = @_;
-
+sub command :Tab(barcode) ($self, $cart, $command, @) {
     return NEXT if $command ne "barcode";
 
     return "Barcode data", \&data;
 }
 
-sub data {
-    my ($self, $cart, $input) = @_;
-
+sub data($self, $cart, $input, @) {
     $cart->add(
         -0.07,
         "Barcode <$input>",
@@ -27,9 +23,7 @@ sub data {
     return ACCEPT;
 }
 
-sub hook_checkout {
-    my ($class, $cart, $username, $transaction_id) = @_;
-
+sub hook_checkout($class, $cart, $username, $transaction_id, @) {
     my @barcodes;
     for my $entry ($cart->entries('is_barcode')) {
         push @barcodes, ($entry->attribute('barcode_data')) x $entry->quantity;

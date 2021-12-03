@@ -5,8 +5,7 @@ use JSON;
 my $ua = LWP::UserAgent->new(agent => "revbank");
 my $backend_url = "https://deposit.revspace.nl/mollie.php";
 
-sub backend_call {
-    my ($hash) = @_;
+sub backend_call($hash) {
     #$hash->{test} = 1;  # use mollie test environment
 
     my $response = $ua->post($backend_url, $hash);
@@ -20,9 +19,7 @@ sub backend_call {
     return $result;
 }
 
-sub command {
-    my ($self, $cart, $command) = @_;
-
+sub command($self, $cart, $command, @) {
     # currently 10 characters after the underscore, but it's not documented.
     my ($id) = $command =~ /^(tr_[A-Za-z0-9]{10,12})$/ or return NEXT;
 
@@ -46,8 +43,7 @@ sub command {
     return ACCEPT;
 }
 
-sub hook_abort {
-    my ($class, $cart, $reason) = @_;
+sub hook_abort($class, $cart, $reason, @) {
     # Opportunistic; ignore failures. Can't do anything about it anyway.
 
     my @ids = map $_->attribute('mollie_id'), $cart->entries('mollie_id');
@@ -55,8 +51,7 @@ sub hook_abort {
         for @ids;
 }
 
-sub hook_checkout {
-    my ($class, $cart, $user, $transaction_id) = @_;
+sub hook_checkout($class, $cart, $user, $transaction_id, @) {
     # Opportunistic; ignore failures. Can't do anything about it anyway.
 
     my @ids = map $_->attribute('mollie_id'), $cart->entries('mollie_id');

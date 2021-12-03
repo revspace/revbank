@@ -5,7 +5,7 @@ HELP "edit" => "Edit product list";
 
 my $filename = 'revbank.products';
 
-sub _read_products {
+sub _read_products() {
     open my $fh, '<', $filename or die "$filename: $!";
     my %products;
     while (readline $fh) {
@@ -22,9 +22,7 @@ sub _read_products {
     return \%products;
 }
 
-sub command :Tab(edit,&tab) {
-    my ($self, $cart, $command) = @_;
-
+sub command :Tab(edit,&tab) ($self, $cart, $command, @) {
     if ($command eq 'edit') {
         system $ENV{EDITOR} || 'vi', $filename;
         return ACCEPT;

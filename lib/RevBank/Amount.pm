@@ -1,7 +1,10 @@
 package RevBank::Amount;
+
 use v5.28;
 use warnings;
-use experimental qw(signatures);
+use feature qw(signatures);
+no warnings qw(experimental::signatures);
+
 use Carp qw(carp croak);
 use Scalar::Util;
 use POSIX qw(lround);

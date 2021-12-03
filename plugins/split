@@ -4,14 +4,11 @@ use List::Util ();
 
 HELP "split <account>..." => "Split the bill with others";
 
-sub _select_split {
-    my ($cart) = @_;
+sub _select_split($cart) {
     grep $_->{amount} < 0, $cart->entries
 }
 
-sub command :Tab(take,steal,split) {
-    my ($self, $cart, $command) = @_;
-
+sub command :Tab(take,steal,split) ($self, $cart, $command, @) {
     $command eq 'split' or return NEXT;
 
     $self->{users} = [];
@@ -25,9 +22,7 @@ sub command :Tab(take,steal,split) {
     return "User to take from (not yourself)", \&arg;
 }
 
-sub arg :Tab(USERS) {
-    my ($self, $cart, $arg) = @_;
-
+sub arg :Tab(USERS) ($self, $cart, $arg, @) {
     my $users = $self->{users};
 
     if (@$users and $arg eq $self->{split_finish}) {

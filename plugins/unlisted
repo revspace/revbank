@@ -2,16 +2,14 @@
 
 HELP "unlisted" => "Buy unlisted product (manual entry)";
 
-sub command :Tab(unlisted,donate) {
-    my ($self, $cart, $command) = @_;
+sub command :Tab(unlisted,donate) ($self, $cart, $command, @) {
     $command eq 'unlisted' or $command eq 'donate' or return NEXT;
     $self->{command} = $command;
 
     return "Amount to deduct from your account", \&amount;
 }
 
-sub amount {
-    my ($self, $cart, $arg) = @_;
+sub amount($self, $cart, $arg, @) {
     $self->{amount} = parse_amount($arg) or return REJECT, "Invalid amount.";
 
     if ($self->{command} eq 'donate') {
@@ -22,8 +20,7 @@ sub amount {
     return "Please provide a short description", \&description;
 }
 
-sub description {
-    my ($self, $cart, $desc) = @_;
+sub description($self, $cart, $desc, @) {
     $cart->add(-$self->{amount}, $desc);
     return ACCEPT;
 }

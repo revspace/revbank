@@ -1,16 +1,14 @@
-use strict;
-
 package RevBank::Cart::Entry;
+
+use v5.28;
+use warnings;
+use feature qw(signatures);
+no warnings qw(experimental::signatures);
 
 use Carp qw(carp croak);
 use List::Util ();
 
-sub new {
-    my ($class, $amount, $description, $attributes) = @_;
-
-    @_ >= 3 or croak "Not enough arguments for RevBank::Cart::Entry->new";
-    $attributes //= {};
-
+sub new($class, $amount, $description, $attributes = {}) {
     $amount = RevBank::Amount->parse_string($amount) if not ref $amount;
 
     my $self = {
@@ -26,9 +24,7 @@ sub new {
     return bless $self, $class;
 }
 
-sub add_contra {
-    my ($self, $user, $amount, $description) = @_;
-
+sub add_contra($self, $user, $amount, $description) {
     $amount = RevBank::Amount->parse_string($amount) if not ref $amount;
 
     $description =~ s/\$you/$self->{user}/g if defined $self->{user};
@@ -42,26 +38,20 @@ sub add_contra {
     $self->attribute('changed', 1);
 }
 
-sub has_attribute {
-    my ($self, $key) = @_;
-
+sub has_attribute($self, $key) {
     return (
         exists      $self->{attributes}->{$key}
         and defined $self->{attributes}->{$key}
     );
 }
 
-sub attribute {
-    my ($self, $key, $new) = @_;
-
+sub attribute($self, $key, $new = undef) {
     my $ref = \$self->{attributes}->{$key};
     $$ref = $new if @_ > 2;
     return $$ref;
 }
 
-sub quantity {
-    my ($self, $new) = @_;
-
+sub quantity($self, $new = undef) {
     my $ref = \$self->{quantity};
     if (defined $new) {
         $new >= 0 or croak "Quantity must be positive";
@@ -72,22 +62,16 @@ sub quantity {
     return $$ref;
 }
 
-sub multiplied {
-    my ($self) = @_;
-
+sub multiplied($self) {
     return $self->{quantity} != 1;
 }
 
-sub contras {
-    my ($self) = @_;
-
+sub contras($self) {
     # Shallow copy suffices for now, because there is no depth.
     return map +{ %$_ }, @{ $self->{contras} };
 }
 
-sub as_printable {
-    my ($self) = @_;
-
+sub as_printable($self) {
     $self->sanity_check;
 
     my @s;
@@ -113,9 +97,7 @@ sub as_printable {
     return @s;
 }
 
-sub as_loggable {
-    my ($self) = @_;
-
+sub as_loggable($self) {
     croak "Loggable called before set_user" if not defined $self->{user};
     $self->sanity_check;
 
@@ -143,9 +125,7 @@ sub as_loggable {
     return @s;
 }
 
-sub user {
-    my ($self, $new) = @_;
-
+sub user($self, $new = undef) {
     if (defined $new) {
         croak "User can only be set once" if defined $self->{user};
 
@@ -156,9 +136,7 @@ sub user {
     return $self->{user};
 }
 
-sub sanity_check {
-    my ($self) = @_;
-
+sub sanity_check($self) {
     # Turnover and journals are implicit contras, so (for now) a zero sum is
     # not required. However, in a transaction with contras, one should at least
     # not try to issue money that does not exist.

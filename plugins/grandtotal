@@ -2,9 +2,7 @@
 
 HELP "grandtotal" => "Summary of all accounts";
 
-sub command :Tab(grandtotal) {
-    my ($self, $cart, $command) = @_;
-
+sub command :Tab(grandtotal) ($self, $cart, $command, @) {
     return NEXT if $command ne 'grandtotal';
 
     my $pos = 0;

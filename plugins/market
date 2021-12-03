@@ -4,7 +4,7 @@ HELP "market" => "Edit market list";
 
 my $filename = 'revbank.market';
 
-sub _read_market {
+sub _read_market() {
     open my $fh, '<', $filename or die "$filename: $!";
     my %market;
     while (readline $fh) {
@@ -22,9 +22,7 @@ sub _read_market {
     return \%market;
 }
 
-sub command :Tab(market,&tab) {
-    my ($self, $cart, $command) = @_;
-
+sub command :Tab(market,&tab) ($self, $cart, $command, @) {
     if ($command eq 'market') {
         system $ENV{EDITOR} || 'vi', $filename;
         return ACCEPT;

@@ -1,5 +1,10 @@
 package RevBank::Plugins;
-use strict;
+
+use v5.28;
+use warnings;
+use feature qw(signatures);
+no warnings qw(experimental::signatures);
+
 use RevBank::Eval;
 use RevBank::Plugin;
 use RevBank::Global;
@@ -8,17 +13,16 @@ our @EXPORT = qw(call_hooks load_plugins);
 
 my @plugins;
 
-sub _read_file {
-    local (@ARGV) = @_;
+sub _read_file($fn) {
+    local @ARGV = ($fn);
     readline *ARGV;
 }
 
-sub call_hooks {
-    my $hook = shift;
+sub call_hooks($hook, @args) {
     my $method = "hook_$hook";
     for my $class (@plugins) {
          if ($class->can($method)) {
-            my ($rv, $message) = $class->$method(@_);
+            my ($rv, $message) = $class->$method(@args);
 
             if (defined $rv and ref $rv) {
                 main::abort($message) if $rv == ABORT;
@@ -28,12 +32,12 @@ sub call_hooks {
     }
 };
 
-sub register {
-    call_hooks("register", $_) for @_;
-    push @plugins, @_;
+sub register(@new_plugins) {
+    call_hooks("register", $_) for @new_plugins;
+    push @plugins, @new_plugins;
 }
 
-sub load {
+sub load($class) {
     my @config = _read_file('revbank.plugins');
     chomp @config;
     s/#.*//g for @config;
@@ -48,12 +52,13 @@ sub load {
         }
         RevBank::Eval::clean_eval(qq[
             use strict;
+            use feature qw(signatures);
+            no warnings 'experimental::signatures';
             package $package;
             BEGIN { RevBank::Global->import; }
             our \@ISA = qw(RevBank::Plugin);
             our \%ATTR;
-            sub MODIFY_CODE_ATTRIBUTES {
-                my (\$class, \$sub, \@attrs) = \@_;
+            sub MODIFY_CODE_ATTRIBUTES(\$class, \$sub, \@attrs) {
                 \$ATTR{ \$sub } = "\@attrs";
                 return;
             }
@@ -79,7 +84,7 @@ sub load {
     }
 }
 
-sub new {
+sub new($class) {
     return map $_->new, @plugins;
 }
 

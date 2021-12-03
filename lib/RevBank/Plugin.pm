@@ -1,12 +1,16 @@
 package RevBank::Plugin;
-use strict;
+
+use v5.28;
+use warnings;
+use feature qw(signatures);
+no warnings qw(experimental::signatures);
+
 require RevBank::Global;
 
-sub new {
-    my ($class) = @_;
+sub new($class) {
     return bless { }, $class;
 }
-sub command {
+sub command($self, $cart, $command, @) {
     return RevBank::Global::NEXT();
 }
 

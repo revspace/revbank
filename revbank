@@ -1,6 +1,10 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
-use strict;
+use v5.28;
+use warnings;
+use feature qw(signatures);
+no warnings "experimental::signatures";
+
 use attributes;
 use IO::Select;
 use List::Util ();
@@ -45,9 +49,7 @@ $select->add(\*STDIN);
 
 my $cart = RevBank::Cart->new;
 
-sub prompt {
-    my ($prompt, $plugins, $completions) = @_;
-
+sub prompt($prompt, $plugins, $completions) {
     if ($prompt) {
         $prompt =~ s/$/:/ if $prompt !~ /[?>]$/;
         $prompt .= " ";

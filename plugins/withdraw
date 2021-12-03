@@ -2,9 +2,7 @@
 
 HELP "<amount>" => "Withdraw or enter price manually";
 
-sub command {
-    my ($self, $cart, $command) = @_;
-
+sub command($self, $cart, $command, @) {
     my $amount = parse_amount($command);
     defined $amount or return NEXT;
 

@@ -2,9 +2,7 @@
 
 HELP "adduser <name>" => "Create an account";
 
-sub command :Tab(adduser) {
-    my ($self, $cart, $command) = @_;
-
+sub command :Tab(adduser) ($self, $cart, $command, @) {
     $command eq 'adduser' or return NEXT;
 
     if ($cart->size) {
@@ -14,9 +12,7 @@ sub command :Tab(adduser) {
     return "Name for the new account", \&username;
 }
 
-sub username {
-    my ($self, $cart, $name) = @_;
-
+sub username($self, $cart, $name, @) {
     return REJECT, "Sorry, whitespace is not allowed."
         if $name =~ /\s/;
 

@@ -1,8 +1,6 @@
 #!perl
 
-sub hook_deposit_methods {
-    my ($class, $message, $hash) = @_;
-
+sub hook_deposit_methods($class, $message, $hash, @) {
     $$message =  <<"END";
 
 Please type one of the following:

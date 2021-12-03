@@ -1,5 +1,10 @@
 package RevBank::Global;
-use strict;
+
+use v5.28;
+use warnings;
+use feature qw(signatures);
+no warnings qw(experimental::signatures);
+
 use POSIX qw(strftime);
 use RevBank::Amount;
 
@@ -14,8 +19,7 @@ sub import {
     *{"$caller\::NEXT"}   = sub () { \4 };
     *{"$caller\::DONE"}   = sub () { \5 };
     *{"$caller\::parse_user"} = \&RevBank::Users::parse_user;
-    *{"$caller\::parse_amount"} = sub {
-        my ($amount) = @_;
+    *{"$caller\::parse_amount"} = sub ($amount) {
         defined $amount or return undef;
         length  $amount or return undef;
 
@@ -32,7 +36,7 @@ sub import {
     *{"$caller\::say"} = sub {
         print @_, "\n";
     };
-    *{"$caller\::now"} = sub {
+    *{"$caller\::now"} = sub () {
         return strftime '%Y-%m-%d_%H:%M:%S', localtime;
     };
 

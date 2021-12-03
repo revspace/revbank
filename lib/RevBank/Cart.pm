@@ -1,50 +1,41 @@
 package RevBank::Cart;
-use strict;
+
+use v5.28;
+use warnings;
+use feature qw(signatures);
+no warnings qw(experimental::signatures);
+
 use Carp ();
 use List::Util ();
 use RevBank::Global;
 use RevBank::Cart::Entry;
 
-sub new {
-    my ($class) = @_;
+sub new($class) {
     return bless { entries => [] }, $class;
 }
 
-sub add_entry {
-    my ($self, $entry) = @_;
-
-    $self->_call_old_hooks("add", $entry);
+sub add_entry($self, $entry) {
     RevBank::Plugins::call_hooks("add_entry", $self, $entry);
 
     push @{ $self->{entries} }, $entry;
     $self->{changed}++;
-    $self->_call_old_hooks("added", $entry);
     RevBank::Plugins::call_hooks("added_entry", $self, $entry);
 
     return $entry;
 }
 
-sub add {
-    # Deprecated interface: ->add($user, ...)
-    if (defined $_[3] and not ref $_[3]) {
-        return shift->old_add(@_);
-    }
+sub add($self, $amount, $description, $data = {}) {
+    Carp::croak "Unitialized amount; possibly a deprecated call style (\$cart->add(undef, ...))"
+        if not defined $amount;
+    Carp::croak "Non-hash data argument; possibly a deprecated call style (\$cart->add(\$user, ...)"
+        if @_ == 4 and not ref $data;
+    Carp::croak "Missing description; possibly a deprecated call style (\$cart->add(\$entry); use add_entry instead)"
+        if not defined $description;
 
-    # ->add($entry)
-    if (@_ == 2) {
-        my ($self, $entry) = @_;
-        return $self->add_entry($entry);
-    }
-
-    # ->add($amount, ...)
-    my ($self, $amount, $description, $data) = @_;
     return $self->add_entry(RevBank::Cart::Entry->new($amount, $description, $data));
 }
 
-sub delete {
-    Carp::croak("\$cart->delete(\$user, \$index) is no longer supported") if @_ > 2;
-
-    my ($self, $entry) = @_;
+sub delete($self, $entry) {
     my $entries = $self->{entries};
 
     my $oldnum = @$entries;
@@ -54,27 +45,20 @@ sub delete {
     return $oldnum - @$entries;
 }
 
-sub empty {
-    my ($self) = @_;
-
+sub empty($self) {
     $self->{entries} = [];
     $self->{changed}++;
 }
 
-sub display {
-    my ($self, $prefix) = @_;
-    $prefix //= "";
+sub display($self, $prefix = "") {
     say "$prefix$_" for map $_->as_printable, @{ $self->{entries} };
 }
 
-sub size {
-    my ($self) = @_;
+sub size($self) {
     return scalar @{ $self->{entries} };
 }
 
-sub checkout {
-    my ($self, $user) = @_;
-
+sub checkout($self, $user) {
     if ($self->entries('refuse_checkout')) {
         warn "Refusing to finalize deficient transaction.\n";
         $self->display;
@@ -108,17 +92,13 @@ sub checkout {
     return 1;
 }
 
-sub entries {
-    my ($self, $attribute) = @_;
-
+sub entries($self, $attribute = undef) {
     my @entries = @{ $self->{entries} };
     return grep $_->has_attribute($attribute), @entries if defined $attribute;
     return @entries;
 }
 
-sub changed {
-    my ($self) = @_;
-
+sub changed($self) {
     my $changed = 0;
     for my $entry ($self->entries('changed')) {
         $entry->attribute('changed', undef);
@@ -128,78 +108,8 @@ sub changed {
     return $changed;
 }
 
-sub sum {
-    my ($self) = @_;
+sub sum($self) {
     return List::Util::sum(map $_->{amount} * $_->quantity, @{ $self->{entries} });
-}
-
-
-### Old stuff, to be deleted in a future version:
-
-sub _call_old_hooks {
-    my ($self, $hook, $entry) = @_;
-
-    my $data = $entry->{attributes};
-
-    for (1 .. $entry->quantity) {
-        for ($entry, $entry->contras) {
-            my $item = {
-                %$data,
-                amount => $_->{amount},
-                description => $_->{description},
-            };
-
-            RevBank::Plugins::call_hooks($hook, $self, $_->{user}, $item);
-        }
-    }
-}
-
-sub as_strings {
-    my ($self) = @_;
-    Carp::carp("Plugin uses deprecated \$cart->as_strings");
-
-    return map $_->as_loggable, @{ $self->{entries} };
-}
-
-sub is_multi_user {
-    Carp::carp("\$cart->is_multi_user is no longer supported, ignoring");
-}
-
-sub select_items {
-    my ($self, $key) = @_;
-    Carp::carp("Plugin uses deprecated \$cart->select_items");
-
-    my @matches;
-    for my $entry (@{ $self->{entries} }) {
-        my %attributes = %{ $entry->{attributes} };
-        for (1 .. $entry->quantity) {
-            for my $item ($entry, $entry->contras) {
-                push @matches, { %attributes, %$item }
-                    if @_ == 1  # No key or match given: match everything
-                    or @_ == 2 and $entry->has_attribute($key)   # Just a key
-            }
-        }
-    }
-
-    return @matches;
-}
-
-sub old_add {
-    my ($self, $user, $amount, $description, $data) = @_;
-
-    Carp::carp("Plugin uses deprecated old-style call to \$cart->add");
-
-    $data->{COMPATIBILITY} = 1;
-
-    my $entry = RevBank::Cart::Entry->new(
-        defined $user ? 0 : $amount,
-        $description,
-        $data
-    );
-    $entry->add_contra($user, $amount, $description) if defined $user;
-    $entry->{FORCE} = 1;
-
-    return $self->add_entry($entry);
 }
 
 1;

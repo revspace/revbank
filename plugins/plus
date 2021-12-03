@@ -6,9 +6,7 @@ my $limit = 200;
 my $err_limit = "Repetition is limited at $limit items.";
 my $err_pfand = "Plugins 'pfand' and 'repeat' cannot be combined.";
 
-sub command {
-    my ($self, $cart, $command) = @_;
-
+sub command($self, $cart, $command, @) {
     return ABORT, $err_pfand if $cart->entries('is_pfand');
 
     my ($post) = $command =~ /^\+(\d+)?$/
@@ -30,9 +28,7 @@ sub command {
     return "Add to previous product", \&add;
 }
 
-sub add {
-    my ($self, $cart, $arg) = @_;
-
+sub add($self, $cart, $arg, @) {
     $arg =~ /^\d+$/ and $arg > 0
         or return REJECT, "Invalid value.";
 

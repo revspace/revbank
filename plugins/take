@@ -2,9 +2,7 @@
 
 HELP "take <account>... <amount> <reason>" => "Transfer money from them to you";
 
-sub command :Tab(take,steal) {
-    my ($self, $cart, $command) = @_;
-
+sub command :Tab(take,steal) ($self, $cart, $command, @) {
     $command eq 'take' or $command eq 'steal'
         or return NEXT;
 
@@ -13,9 +11,7 @@ sub command :Tab(take,steal) {
     return "User to take from", \&arg;
 }
 
-sub arg :Tab(USERS) {
-    my ($self, $cart, $arg) = @_;
-
+sub arg :Tab(USERS) ($self, $cart, $arg, @) {
     my @users = @{ $self->{users} };
     my $amount = parse_amount($arg);
 
@@ -46,9 +42,8 @@ sub arg :Tab(USERS) {
     return "User to take from, or total amount to finish", \&arg;
 }
 
-sub reason :Tab(bbq,NOABORT) {  # finish
-    my ($self, $cart, $reason) = @_;
-
+# finish
+sub reason :Tab(bbq,NOABORT) ($self, $cart, $reason, @) { 
     return REJECT, "'$reason' is a username, not a description :)."
         if parse_user($reason);
     return REJECT, "'$reason' is an amount, not a description :)."

@@ -4,9 +4,7 @@ HELP "undo <transactionID>" => "Undo a transaction";
 
 my $filename = ".revbank.undo";
 
-sub command :Tab(undo) {
-    my ($self, $cart, $command) = @_;
-
+sub command :Tab(undo) ($self, $cart, $command,  @) {
     $command eq 'undo' or return NEXT;
 
     $cart->size and return ABORT, "Undo is not available mid-transaction.";
@@ -14,9 +12,7 @@ sub command :Tab(undo) {
     return "Transaction ID", \&undo;
 }
 
-sub undo {
-    my ($self, $cart, $tid) = @_;
-
+sub undo($self, $cart, $tid, @) {
     open my $in,  '<', $filename or die "$filename: $!";
     open my $out, '>', "$filename.$$" or die "$filename.$$: $!";
     my $description = "Undo $tid";
@@ -47,9 +43,7 @@ sub undo {
     return ACCEPT;
 }
 
-sub hook_user_balance {
-    my ($class, $username, $old, $delta, $new, $transaction_id) = @_;
-
+sub hook_user_balance($class, $username, $old, $delta, $new, $transaction_id, @) {
     open my $fh, '>>', $filename or die "$filename: $!";
     print {$fh} join " ", $transaction_id, $username, -$delta, now(), "\n";
     close $fh or die "$filename: $!";

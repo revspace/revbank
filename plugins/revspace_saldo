@@ -2,17 +2,15 @@
 
 use POSIX qw(strftime);
 
-sub _box {
+sub _box(@lines) {
     print(
         "#" x 79, "\n",
-        (map { sprintf("## %-73s ##\n", $_) } @_),
+        (map { sprintf("## %-73s ##\n", $_) } @lines),
         "#" x 79, "\n"
     );
 }
 
-sub hook_checkout_done {
-    my ($class, $cart, $user, $transaction_id) = @_;
-
+sub hook_checkout_done($class, $cart, $user, $transaction_id, @) {
     defined $user or return;  # hacks like 'undo' don't have an acting user
 
     my $balance = RevBank::Users::balance($user) or return;

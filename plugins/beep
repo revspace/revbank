@@ -5,8 +5,7 @@
     undef;
 };
 
-sub hook_abort {
-    my ($self, $cart, $reason) = @_;
+sub hook_abort($class, $cart, $reason, @) {
     return if not $reason or not @$reason;
     return if "@$reason" eq '^C';
 

@@ -10,9 +10,7 @@ my $err_postfix = "Addition/substraction is only supported the other way around.
 my $limit = 200;
 my $err_limit = "Repetition is limited at $limit items.";
 
-sub command {
-    my ($self, $cart, $command) = @_;
-
+sub command($self, $cart, $command, @) {
     return ABORT, $err_pfand if $cart->entries('is_pfand');
 
     my ($lhs, $op, $rhs) = $command =~ /^(\d+)?([x*+-])(\d+)?$/
@@ -86,9 +84,7 @@ sub command {
     return "Multiply previous product by", \&repeat;
 }
 
-sub repeat {
-    my ($self, $cart, $arg) = @_;
-
+sub repeat($self, $cart, $arg, @) {
     $arg =~ /^\d+$/ and $arg > 0
         or return REJECT, "Invalid value.";
 
@@ -98,9 +94,7 @@ sub repeat {
     return ACCEPT;
 }
 
-sub plusminus {
-    my ($self, $cart, $arg) = @_;
-
+sub plusminus($self, $cart, $arg, @) {
     $arg =~ /^\d+$/ and $arg > 0
         or return REJECT, "Invalid value.";
 
@@ -119,8 +113,7 @@ sub plusminus {
     return ACCEPT;
 }
 
-sub hook_added_entry {
-    my ($self, $cart, $entry) = @_;
+sub hook_added_entry($class, $cart, $entry, @) {
     $cart->size >= 2 or return;
 
     my @entries = $cart->entries;

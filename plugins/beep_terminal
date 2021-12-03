@@ -5,8 +5,6 @@
 # Don't just edit this plugin. Instead, COPY this file and add yours to
 # revbank.plugins
 
-sub hook_beep {
-    my ($class) = @_;
-
+sub hook_beep($class, @) {
     print "\a";
 }

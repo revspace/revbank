@@ -5,7 +5,7 @@
 
 use Time::HiRes qw(sleep);
 
-sub _read_warnings {
+sub _read_warnings() {
     open my $fh, 'revbank.warnings' or die $!;
     return map {
         my ($regex, $products, $text) = m[^
@@ -29,8 +29,7 @@ sub _read_warnings {
     } grep /\S/, grep !/^\s*#/, readline $fh;
 }
 
-sub hook_add_entry {
-    my ($class, $cart, $entry) = @_;
+sub hook_add_entry($class, $cart, $entry, @) {
     return if not $entry->has_attribute('product_id');  # skip unlisted, deposit, give, take
 
     my @warnings = map {

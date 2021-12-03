@@ -4,9 +4,7 @@ HELP "<account>" => "[Pay with your account and] show balance";
 HELP "list" => "List accounts and balances";
 HELP "shame" => "Display Hall of Shame (negative balances)";
 
-sub command :Tab(list,ls,shame,USERS) {
-    my ($self, $cart, $command) = @_;
-
+sub command :Tab(list,ls,shame,USERS) ($self, $cart, $command, @) {
     return $self->list  if $command eq 'list';
     return $self->list  if $command eq 'ls';
     return $self->shame if $command eq 'shame';
@@ -21,9 +19,7 @@ sub command :Tab(list,ls,shame,USERS) {
     return ACCEPT;
 }
 
-sub hook_checkout {
-    my ($class, $cart, $user, $transaction_id) = @_;
-
+sub hook_checkout($class, $cart, $user, $transaction_id, @) {
     if ($cart->changed) {
         say "Done:";
         $cart->display;
@@ -31,26 +27,24 @@ sub hook_checkout {
     say "Transaction ID: $transaction_id";
 }
 
-sub list {
+sub list($self) {
     system "sort -f revbank.accounts | grep -v ^# | perl -pe's/( -[\\d.]+)/\\e[31;1m\$1\\e[0m/' | more";
     return ACCEPT;
 }
 
-sub shame {
+sub shame($self) {
     system "sort -k2 -n revbank.accounts | grep -v ^# | grep -- ' -' | perl -pe's/( -[\\d.]+)/\\e[31;1m\$1\\e[0m/' | more";
     return ACCEPT;
 }
 
-sub recent {
-    my ($n, $u) = @_;
+sub _recent($n, $u) {
     $n += 0;
     print "Last $n transactions for $u:\n";
     system "perl -lane'lc(\$F[3]) eq lc(qq[\Q$u\E]) or next; s/CHECKOUT\\s+\\S+\\s+\\S+\\s+// or next; s/  #// or next; s/_/ /; print' .revbank.log | tail -n$n";
 }
 
-sub balance {
-    my ($self, $u) = @_;
-    recent(10, $u);
+sub balance($self, $u) {
+    _recent(10, $u);
     printf "Balance for $u is \e[1m%+.2f\e[0m\n", RevBank::Users::balance($u);
     say "NB: Products/amounts/commands FIRST, username LAST.";
     return ABORT;

@@ -45,12 +45,12 @@ There is no protection against infinite loops. Be careful!
     because that's canonicalised.
 
     Don't do this:
-        $cart->add($u, $a, "Bad example");
+        $entry->add_contra($u, $a, "Bad example");
 
     But do this:
         $u = parse_user($u)   or return REJECT, "$u: No such user.";
         $a = parse_amount($a) or return REJECT, "$a: Invalid amount.";
-        $cart->add($u, $a, 'Good, except that $a is special in Perl :)');
+        $entry->add_contra($u, $a, 'Good, except that $a is special in Perl :)');
 
 There are two kinds of plugin methods: input methods and hooks. A plugin may
 define one C<command> input method, and can have any number of hooks.
@@ -118,31 +118,34 @@ Hooks are called as class methods. The return value MUST be either C<ABORT>,
 which causes the ongoing transaction to be aborted, or a non-reference, which
 will be ignored.
 
+Hooks SHOULD have a dummy C<@> parameter at the end of their signatures,
+so they don't break when more information is added 
+
 The following hooks are available, with their respective arguments:
 
 =over 10
 
-=item hook_register $class, $plugin
+=item hook_register($class, $plugin, @)
 
 Called when a new plugin is registered.
 
-=item hook_abort $class, $cart
+=item hook_abort($class, $cart, @)
 
 Called when a transaction is being aborted, right before the shopping cart is
 emptied.
 
-=item hook_prompt $class, $cart, $prompt
+=item hook_prompt($class, $cart, $prompt, @)
 
 Called just before the user is prompted for input interactively. The prompt
 MAY be altered by the plugin.
 
-=item hook_input $class, $cart, $input, $split_input
+=item hook_input($class, $cart, $input, $split_input, @)
 
 Called when user input was given. C<$split_input> is a boolean that is true
 if the input will be split on whitespace, rather than treated as a whole.
 The input MAY be altered by the plugin.
 
-=item hook_add $class, $cart, $user, $item
+=item hook_add($class, $cart, $user, $item, @)
 
 Called when something is added to the cart. Of course, like in C<< $cart->add
 >>, C<$user> will be undef if the product is added for the current user.
@@ -153,32 +156,32 @@ item going into the cart!
 
 Be careful to avoid infinite loops if you add new stuff.
 
-=item hook_checkout $class, $cart, $user, $transaction_id
+=item hook_checkout($class, $cart, $user, $transaction_id, @)
 
 Called when the transaction is finalized, before accounts are updated.
 
-=item hook_checkout_done $class, $cart, $user, $transaction_id
+=item hook_checkout_done($class, $cart, $user, $transaction_id, @)
 
 Called when the transaction is finalized, after accounts were updated.
 
-=item hook_reject $class, $plugin, $reason, $abort
+=item hook_reject($class, $plugin, $reason, $abort, @)
 
 Called when input is rejected by a plugin. C<$abort> is true when the
 transaction will be aborted because of the rejection.
 
-=item hook_invalid_input $class, $cart, $word
+=item hook_invalid_input($class, $cart, $word, @)
 
 Called when input was not recognised by any of the plugins.
 
-=item hook_plugin_fail $class, $plugin, $error
+=item hook_plugin_fail($class, $plugin, $error, @)
 
 Called when a plugin fails.
 
-=item hook_user_created $class, $username
+=item hook_user_created($class, $username, @)
 
 Called when a new user account was created.
 
-=item hook_user_balance $class, $username, $old, $delta, $new, $transaction_id
+=item hook_user_balance($class, $username, $old, $delta, $new, $transaction_id, @)
 
 Called when a user account is updated.
 
@@ -189,7 +192,7 @@ C<RevBank::Messages>. Such a hack might look like:
 
     undef &RevBank::Messages::hook_abort;
 
-    sub hook_abort {
+    sub hook_abort($class, $cart, @) {
         print "This message is much better!\n"
     }
 

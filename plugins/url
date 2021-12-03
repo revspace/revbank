@@ -1,7 +1,6 @@
 #!perl
 
-sub command {
-    my ($self, $cart, $command) = @_;
+sub command($self, $cart, $command, @) {
     if ($command =~ m[^https?://]) {
         print "This is not a browser...";
         return ACCEPT;

@@ -4,17 +4,13 @@
 
 HELP "deposit <amount>" => "Deposit into an account";
 
-sub command :Tab(deposit) {
-    my ($self, $cart, $command) = @_;
-
+sub command :Tab(deposit) ($self, $cart, $command, @) {
     $command eq 'deposit' or return NEXT;
 
     return "Amount to deposit into your account", \&amount;
 }
 
-sub amount :Tab(13.37,42) {
-    my ($self, $cart, $amount) = @_;
-
+sub amount :Tab(13.37,42) ($self, $cart, $amount, @) {
     $self->{amount} = parse_amount($amount)
         or return REJECT, "Invalid amount";
 
@@ -27,9 +23,7 @@ sub amount :Tab(13.37,42) {
     return ACCEPT;
 }
 
-sub how :Tab(&how_tab) {
-    my ($self, $cart, $input) = @_;
-
+sub how :Tab(&how_tab) ($self, $cart, $input, @) {
     my %methods = %{ $self->{deposit_methods} };
 
     my $how = $self->{how} = $methods{$input}
@@ -45,14 +39,11 @@ sub how :Tab(&how_tab) {
     return ACCEPT;
 }
 
-sub how_tab {
-    my ($self) = @_;
+sub how_tab($self, @) {
     return keys %{ $self->{deposit_methods} };
 }
 
-sub how_prompt {
-    my ($self, $cart, $input) = @_;
-
+sub how_prompt($self, $cart, $input, @) {
     my $how = $self->{how};
 
     push @{ $how->{answers} }, $input;
