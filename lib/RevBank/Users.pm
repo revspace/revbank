@@ -57,7 +57,7 @@ sub update {
             $since = "0\@" . now() if $new == 0 and (!$since or $old != 0);
 
             printf {$out} "%-16s %9s %s %s\n", (
-                $username, $new, now(), $since
+                $username, $new->string("+"), now(), $since
             ) or die $!;
         } else {
             print {$out} $line or die $!;
