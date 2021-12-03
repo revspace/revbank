@@ -1,7 +1,5 @@
 #!perl
 
-sub command { NEXT }
-
 $SIG{INT} = sub {
     $::ABORT_HACK = "^C";
 

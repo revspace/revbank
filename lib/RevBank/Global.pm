@@ -38,6 +38,8 @@ sub import {
 
 }
 
+__PACKAGE__->import;
+
 1;
 __END__
 

@@ -1,5 +1,3 @@
-sub command { NEXT }
-
 # Terminal hacks
 
 # Reset terminal on startup

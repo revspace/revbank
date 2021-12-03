@@ -2,8 +2,6 @@
 
 use Net::MQTT::Simple "mosquitto.space.revspace.nl";
 
-sub command { NEXT }
-
 sub hook_checkout {
     my ($class, $cart, $user, $transaction_id) = @_;
     my $filename = "revbank.sales";

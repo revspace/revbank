@@ -1,7 +1,5 @@
 #!perl
 
-sub command { NEXT }
-
 # So you want a different beep mechanism...
 #
 # Don't just edit this plugin. Instead, COPY this file and add yours to

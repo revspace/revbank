@@ -1,7 +1,5 @@
 #!perl
 
-sub command { NEXT }
-
 sub hook_user_balance {
     my ($class, $username, $old, $delta, $new, $transaction_id) = @_;
     my $msg = "$transaction_id ($username)";

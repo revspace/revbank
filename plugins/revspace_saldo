@@ -2,8 +2,6 @@
 
 use POSIX qw(strftime);
 
-sub command { NEXT }
-
 sub _box {
     print(
         "#" x 79, "\n",

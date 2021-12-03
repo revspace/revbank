@@ -29,8 +29,6 @@ sub _read_warnings {
     } grep /\S/, grep !/^\s*#/, readline $fh;
 }
 
-sub command { NEXT }
-
 sub hook_add_entry {
     my ($class, $cart, $entry) = @_;
     return if not $entry->has_attribute('product_id');  # skip unlisted, deposit, give, take

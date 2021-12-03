@@ -23,8 +23,6 @@ use List::Util qw(sum);
 my $iban = "NL99ABCD1234567890";
 my $beneficiary = "Account Name";
 
-sub command { NEXT }
-
 sub hook_checkout {
     my ($class, $cart, $user, $transaction_id) = @_;
 

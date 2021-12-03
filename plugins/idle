@@ -2,8 +2,6 @@
 
 my $timeout = 10;
 
-sub command { NEXT }
-
 sub hook_prompt_idle {
     my ($class, $cart, $plugin, $seconds, $readline) = @_;
     if ($seconds >= $timeout and $cart->size and not $plugin) {

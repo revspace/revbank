@@ -52,9 +52,8 @@ There is no protection against infinite loops. Be careful!
         $a = parse_amount($a) or return REJECT, "$a: Invalid amount.";
         $cart->add($u, $a, 'Good, except that $a is special in Perl :)');
 
-There are two kinds of plugin methods: input methods and hooks. A plugin MUST
-define one C<command> input method (but it MAY be a no-op), and can have any
-number of hooks.
+There are two kinds of plugin methods: input methods and hooks. A plugin may
+define one C<command> input method, and can have any number of hooks.
 
 =head2 Input methods
 

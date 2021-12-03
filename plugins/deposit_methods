@@ -1,7 +1,5 @@
 #!perl
 
-sub command { NEXT }
-
 sub hook_deposit_methods {
     my ($class, $message, $hash) = @_;
 
