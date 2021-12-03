@@ -114,15 +114,9 @@ cart, re-evaluate your assumptions when upgrading!
 
 Hooks SHOULD NOT prompt for input or execute programs that do so.
 
-A plugin that exists only for its hooks, MUST still provide a C<command> method.
-The suggested implementation for a no-op C<command> method is:
-
-    sub command {
-        return NEXT;
-    }
-
-Hooks are called as class methods. The return value is ignored. Hooks MUST NOT
-interfere with the transaction flow (e.g. abort it).
+Hooks are called as class methods. The return value MUST be either C<ABORT>,
+which causes the ongoing transaction to be aborted, or a non-reference, which
+will be ignored.
 
 The following hooks are available, with their respective arguments:
 
