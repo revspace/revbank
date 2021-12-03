@@ -52,9 +52,12 @@ sub update {
             $new = $old + $delta;
 
             my $since = $a[3] // "";
-            $since = "+\@" . now() if $new  > 0 and (!$since or $old <= 0);
-            $since = "-\@" . now() if $new  < 0 and (!$since or $old >= 0);
-            $since = "0\@" . now() if $new == 0 and (!$since or $old != 0);
+
+            my $newc = $new->cents;
+            my $oldc = $old->cents;
+            $since = "+\@" . now() if $newc  > 0 and (!$since or $oldc <= 0);
+            $since = "-\@" . now() if $newc  < 0 and (!$since or $oldc >= 0);
+            $since = "0\@" . now() if $newc == 0 and (!$since or $oldc != 0);
 
             printf {$out} "%-16s %9s %s %s\n", (
                 $username, $new->string("+"), now(), $since

@@ -28,9 +28,9 @@ sub hook_cart_changed {
     $cart->display;
 
     if (not $cart->entries('refuse_checkout')) {
-        my $sum = $cart->sum;
-        my $what = $sum > 0 ? "add" : "pay";
-        my $abs = $sum->abs;
+        my $sum  = $cart->sum;
+        my $what = $sum->cents > 0 ? "add" : "pay";
+        my $abs  = $sum->abs;
         say "Enter username to $what $abs; type 'abort' to abort.";
     }
 }
@@ -52,10 +52,11 @@ sub hook_reject {
 
 sub hook_user_balance {
     my ($class, $username, $old, $delta, $new) = @_;
-    my $sign = $delta >= 0 ? '+' : '-';
-    my $rood = $new < 0 ? '31;' : '';
-    my $abs = abs($delta);
-    my $warn = $new < -13.37 ? " \e[5;1m(!!)\e[0m" : "";
+    my $sign = $delta->cents >= 0 ? '+' : '-';
+    my $rood = $new->cents < 0 ? '31;' : '';
+    my $abs  = $delta->abs;
+    my $warn = $new->cents < -1337 ? " \e[5;1m(!!)\e[0m" : "";
+
     $_ = $_->string("+") for $old, $new;
     printf "New balance for $username: $old $sign $abs = \e[${rood}1m$new\e[0m$warn\n",
 }

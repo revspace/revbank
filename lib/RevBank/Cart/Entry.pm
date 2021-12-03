@@ -128,14 +128,14 @@ sub as_loggable {
         my $description =
             $quantity == 1
             ? $_->{description}
-            : sprintf("%s [%sx %s]", $_->{description}, $quantity, abs($_->{amount}));
+            : sprintf("%s [%sx %s]", $_->{description}, $quantity, $_->{amount}->abs);
 
         push @s, sprintf(
             "%-12s %4s %3d %5s  # %s",
             $_->{user},
-            ($total > 0 ? 'GAIN' : $total < 0 ? 'LOSE' : ''),
+            ($total->cents > 0 ? 'GAIN' : $total->cents < 0 ? 'LOSE' : ''),
             $quantity,
-            abs($total),
+            $total->abs,
             $description
         );
     }
