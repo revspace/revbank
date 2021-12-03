@@ -1,6 +1,6 @@
 #!perl
 
-sub command :Tab(tail) ($self, $cart, $command, @) = @_;
+sub command :Tab(tail) ($self, $cart, $command, @) {
     return NEXT if $command ne 'tail';
 
     my $n = (`tput lines 2>/dev/null` || 13) - 3;
