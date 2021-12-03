@@ -80,11 +80,11 @@ sub as_printable($self) {
     # Normally, the implied sign is "+", and an "-" is only added for negative
     # numbers. Here, the implied sign is "-", and a "+" is only added for
     # positive numbers.
-    push @s, sprintf "  %6s %s", $self->{amount}->string_flipped, $self->{description};
+    push @s, sprintf "%8s %s", $self->{amount}->string_flipped, $self->{description};
 
     for my $c ($self->contras) {
         push @s, sprintf(
-            "  %9s %s %s",
+            "%11s %s %s",
             $c->{amount}->abs->string,
             ($c->{amount}->cents > 0 ? "->" : "<-"),
             $c->{user}
