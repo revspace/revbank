@@ -15,6 +15,9 @@ output. Regular print (without specified filehandle) will be suppressed.
 
 Note that one command line may result in several separate transactions.
 
+Note that plugins don't know it's non-interactive, and will often emit
+RETRY instead of REJECT.
+
 Note that this plugin will always be highly experimental; re-evaluate your
 assumptions when upgrading. :)
 
