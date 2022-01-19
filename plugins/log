@@ -43,7 +43,3 @@ sub hook_user_balance($class, $user, $old, $delta, $new, $transaction_id, @) {
 sub hook_checkout($class, $cart, $username, $transaction_id, @) {
     _log("CHECKOUT $transaction_id $_") for map $_->as_loggable, $cart->entries;
 }
-
-sub hook_register($class, $plugin, @) {
-    _log("REGISTER $plugin");
-}
