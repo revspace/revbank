@@ -1,3 +1,18 @@
+# (2022-06-04) RevBank 3.3
+
+Raw amounts without a command are no longer supported. There was already an
+explicit command for unlisted products, `unlisted`, and for withdrawals there
+is now the new command `withdraw`. An explanatory message guides users who
+use the old style towards the new commands.
+
+This change makes it possible for treasurers to more accurately deduce the
+intention of a revbank transaction.
+
+When upgrading, make sure the `unlisted` plugin is installed in
+`revbank.plugins`. Without it, the instruction text presented when someone
+enters an amount is wrong and the functionality for paying for unlisted
+products is lost.
+
 # (2021-12-02) RevBank 3.2
 
 ## Update your custom plugins!

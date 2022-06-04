@@ -1,12 +1,24 @@
 #!perl
 
-HELP "<amount>" => "Withdraw or enter price manually";
+HELP "withdraw <amount>" => "Withdraw from your account";
 
-sub command($self, $cart, $command, @) {
-    my $amount = parse_amount($command);
-    defined $amount or return NEXT;
+sub command :Tab(withdraw) ($self, $cart, $command, @) {
+    if (defined parse_amount($command)) {
+        warn "Note: raw amounts for withdrawal or unlisted products are no longer supported.\n\n";
+        warn "Please use the 'withdraw' command to take money out of your revbank account, or\n";
+        warn "the 'unlisted' command to pay for an unlisted product.\n\n";
+    }
 
-    $cart->add(-$amount, "Withdrawal or unlisted product",
+    $command eq 'withdraw' or return NEXT;
+
+    return "Amount to withdraw from your account", \&amount;
+}
+
+sub amount($self, $cart, $arg, @) { 
+    my $amount = parse_amount($arg);
+    defined $amount or return REJECT, "Invalid amount";
+
+    $cart->add(-$amount, "Withdrawal",
         { is_withdrawal => 1 });
 
     return ACCEPT;

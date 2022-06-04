@@ -6,7 +6,7 @@ sub command :Tab(unlisted,donate) ($self, $cart, $command, @) {
     $command eq 'unlisted' or $command eq 'donate' or return NEXT;
     $self->{command} = $command;
 
-    return "Amount to deduct from your account", \&amount;
+    return "Price", \&amount;
 }
 
 sub amount($self, $cart, $arg, @) {
@@ -21,7 +21,7 @@ sub amount($self, $cart, $arg, @) {
 }
 
 sub description($self, $cart, $desc, @) {
-    $cart->add(-$self->{amount}, $desc);
+    $cart->add(-$self->{amount}, "Unlisted: $desc");
     return ACCEPT;
 }
 

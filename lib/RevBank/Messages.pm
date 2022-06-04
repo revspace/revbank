@@ -33,9 +33,10 @@ sub hook_cart_changed($class, $cart, @) {
 
     if (not $cart->entries('refuse_checkout')) {
         my $sum  = $cart->sum;
-        my $what = $sum->cents > 0 ? "add" : "pay";
+        my $what = $sum->cents > 0 ? "add" : $cart->entries('is_withdrawal') ? "deduct" : "pay";
+        my $dir  = $sum->cents > 0 ? "to" : "from";
         my $abs  = $sum->abs;
-        say "Enter username to $what $abs; type 'abort' to abort.";
+        say "Enter username to $what $abs $dir your account; type 'abort' to abort.";
     }
 }
 
