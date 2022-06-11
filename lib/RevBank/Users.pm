@@ -36,13 +36,14 @@ sub create($username) {
     print {$fh} "$username 0.00 $now\n" or die $!;
     close $fh or die $!;
     RevBank::Plugins::call_hooks("user_created", $username);
+    return $username;
 }
 
 sub update($username, $delta, $transaction_id) {
     open my $in,  'revbank.accounts' or die $!;
     open my $out, ">.revbank.$$" or die $!;
-    my $old;
-    my $new;
+    my $old = RevBank::Amount->new(0);
+    my $new = RevBank::Amount->new(0);
     while (defined (my $line = readline $in)) {
         my @a = split " ", $line;
         if (lc $a[0] eq lc $username) {
@@ -80,6 +81,10 @@ sub parse_user($username) {
     my $users = _read();
     return undef if not exists $users->{ lc $username };
     return $users->{ lc $username }->[0];
+}
+
+sub is_hidden($username) {
+    return $username =~ /^[-+]/;
 }
 
 1;

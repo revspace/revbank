@@ -5,8 +5,7 @@ HELP1 "cash" => "Checkout without a user account";
 sub command :Tab(cash) ($self, $cart, $command, @) {
     return NEXT if $command ne 'cash';
 
-    call_hooks("checkout", $cart, 'cash', 0);  # Fake checkout
-    $cart->empty;
+    $cart->checkout('-cash');
 
     return ACCEPT;
 }

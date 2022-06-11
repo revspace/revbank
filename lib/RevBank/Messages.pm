@@ -13,7 +13,9 @@ use base 'RevBank::Plugin';
 
 BEGIN {
     RevBank::Plugins::register("RevBank::Messages");
+    *hidden = \&RevBank::Users::is_hidden;
 }
+
 
 sub command { return NEXT; }
 sub id { 'built in messages' }
@@ -53,6 +55,8 @@ sub hook_reject($class, $plugin, $reason, $abort, @) {
 }
 
 sub hook_user_balance($class, $username, $old, $delta, $new, @) {
+    return if hidden $username;
+
     my $sign = $delta->cents >= 0 ? '+' : '-';
     my $rood = $new->cents < 0 ? '31;' : '';
     my $abs  = $delta->abs;
@@ -63,6 +67,8 @@ sub hook_user_balance($class, $username, $old, $delta, $new, @) {
 }
 
 sub hook_user_created($class, $username, @) {
+    return if hidden $username;
+
     say "New account '$username' created.";
 }
 

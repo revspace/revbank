@@ -8,6 +8,7 @@ no warnings qw(experimental::signatures);
 use Carp ();
 use List::Util ();
 use RevBank::Global;
+use RevBank::Users;
 use RevBank::Cart::Entry;
 
 sub new($class) {
@@ -63,6 +64,12 @@ sub checkout($self, $user) {
         warn "Refusing to finalize deficient transaction.\n";
         $self->display;
         return;
+    }
+
+    if ($user =~ /^[-+]/) {
+        # Hidden internal accounts
+        my $canonical = RevBank::Users::parse_user($user);
+        $user = $canonical // RevBank::Users::create($user);
     }
 
     my $entries = $self->{entries};
