@@ -1,19 +1,37 @@
 # (2022-06-11) RevBank 3.4
 
 RevBank now has built-in hidden accounts and balanced transactions. These
-accounts will be made automatically, and hidden from the user interface. Apart
-from that, they function as normal accounts (for now).
+accounts will be made automatically, and hidden from the user interface.
+
+## Update external scripts
 
 If you have scripts that parse `.revbank.log` or `revbank.products`, you may
 want to ignore all accounts that start with `-` or `+`.
+
+## User account names that are now invalid
 
 In the hopefully very unlikely event that you have existing user accounts that
 start with `-` or `+`, those will have to be renamed manually, as such accounts
 are no longer accessible.
 
+## Updating custom plugins (optional for now)
+
 For your custom plugins, you may want to add `->add_contra` calls to every
 `$cart->add` call that does not already have them. Unbalanced transactions will
 probably be deprecated in a future version.
+
+## New feature: cashbox tracking
+
+The new `cash` plugin will display messages about how much the cash box should
+hold, whenever someone withdraws or does a cash deposit. For that to make
+sense, this requires the `deposit_methods` plugin to be enabled, and to have
+a `"cash"` deposit method.
+
+When adding the `cash` plugin in `revbank.plugins`, make sure it is listed
+_before_ `stock` if you have that one too. And you probably want to enable
+the `skim` plugin too, which introduces the (hidden) commands `skim` and
+`unskim` which can be used to keep the cash box data synchronised when someone
+(probably a board member) skims it.
 
 # (2022-06-04) RevBank 3.3
 
