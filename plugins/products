@@ -1,7 +1,7 @@
 #!perl
 
-HELP "<productID>" => "Look up products from database";
-HELP "edit" => "Edit product list";
+HELP1 "<productID>" => "Add a product to pending transaction";
+HELP  "edit" => "Edit product list";
 
 my $filename = 'revbank.products';
 

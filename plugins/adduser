@@ -1,6 +1,6 @@
 #!perl
 
-HELP "adduser <name>" => "Create an account";
+HELP1 "adduser <name>" => "Create an account";
 
 sub command :Tab(adduser) ($self, $cart, $command, @) {
     $command eq 'adduser' or return NEXT;

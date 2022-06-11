@@ -1,6 +1,7 @@
 #!perl
 
-HELP "*<N>, x<N>, <N>x, <N>*" => "Repeat previous/next product N times";
+HELP "*<N>, x<N>, <N>x, <N>*" => "Set quantity of previous/next product";
+HELP "-<N>, +<N>" => "Decrease/increase quantity of previous product";
 
 my $err_stacked = "Stacked repetition is not supported.";
 my $err_pfand = "Plugins 'pfand' and 'repeat' cannot be combined.";

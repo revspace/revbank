@@ -1,6 +1,6 @@
 #!perl
 
-HELP "cash" => "Checkout without a user account";
+HELP1 "cash" => "Checkout without a user account";
 
 sub command :Tab(cash) ($self, $cart, $command, @) {
     return NEXT if $command ne 'cash';

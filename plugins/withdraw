@@ -1,6 +1,6 @@
 #!perl
 
-HELP "withdraw <amount>" => "Withdraw from your account";
+HELP1 "withdraw <amount>" => "Withdraw from your account";
 
 sub command :Tab(withdraw) ($self, $cart, $command, @) {
     if (defined parse_amount($command)) {

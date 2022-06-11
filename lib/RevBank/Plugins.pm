@@ -65,6 +65,9 @@ sub load($class) {
             sub FETCH_CODE_ATTRIBUTES {
                 return \$ATTR{ +pop };
             }
+            sub HELP1 {
+                \$::HELP1{ +shift } = +pop;
+            }
             sub HELP {
                 \$::HELP{ +shift } = +pop;
             }

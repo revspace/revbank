@@ -1,6 +1,6 @@
 #!perl
 
-HELP "unlisted" => "Buy unlisted product (manual entry)";
+HELP1 "unlisted" => "Buy unlisted product (manual entry)";
 
 sub command :Tab(unlisted,donate) ($self, $cart, $command, @) {
     $command eq 'unlisted' or $command eq 'donate' or return NEXT;

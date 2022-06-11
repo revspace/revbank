@@ -1,8 +1,8 @@
 #!perl
 
-HELP "<account>" => "[Pay with your account and] show balance";
-HELP "list" => "List accounts and balances";
-HELP "shame" => "Display Hall of Shame (negative balances)";
+HELP1 "<account>" => "[Pay with your account and] show balance";
+HELP  "list" => "List accounts and balances";
+HELP  "shame" => "Display Hall of Shame (negative balances)";
 
 sub command :Tab(list,ls,shame,USERS) ($self, $cart, $command, @) {
     return $self->list  if $command eq 'list';

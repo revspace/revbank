@@ -1,6 +1,6 @@
 #!perl
 
-HELP "help" => "The stuff you're looking at right now :)";
+HELP1 "help2" => "Advanced usage instructions";
 
 use List::Util qw(max);
 
@@ -8,28 +8,17 @@ my $bold = "\e[1m";
 my $underline = "\e[4m";
 my $off = "\e[0m";
 
-sub command :Tab(help,wtf,omgwtfbbq) ($self, $cart, $command, @) {
-    return NEXT if $command !~ /^(?:help|wtf|omgwtfbbq)$/;
+sub command :Tab(help,help2,wtf,omgwtfbbq) ($self, $cart, $command, @) {
+    return NEXT if $command !~ /^(?:help2?|wtf|omgwtfbbq)$/;
 
-    # GNU less(1) and more(1) are a bad choice to present to total newbies who
-    # might have no interest in learning to use these surprisingly powerful
-    # tools, so I will not accepting patches to use either of those, or to use
-    # the PAGER environment variable (because that will typically be set to
-    # either one of those by default). For example, typing "v" will excute
-    # vi...
-    # On the other hand, busybox(1) has a "more" applet that gives the user
-    # clear instructions and seems mostly harmless too.
-    my $pipe;
-    my $oldhandle = select;
-    if (open $pipe, "|-", "busybox", "more") {
-        select $pipe;
-    }
+    my $help2 = $command =~ /help2/;
+    my $hash = $help2 ? \%::HELP : \%::HELP1;
 
     say "\n${bold}Valid commands:${off}";
 
-    my $width = max(map length s/[<>]//rg, keys %::HELP);
+    my $width = max(map length s/[<>]//rg, keys %$hash);
 
-    for my $command (sort keys %::HELP) {
+    for my $command (sort keys %$hash) {
         my $display = $command;
 
         my $length = length $display =~ s/[<>]//rg;
@@ -40,18 +29,19 @@ sub command :Tab(help,wtf,omgwtfbbq) ($self, $cart, $command, @) {
         # Because of markup codes, a simple %-42s doesn't work.
         $display .= " " x ($width - $length);
 
-        say sprintf "  %s %s", $display, $::HELP{$command};
+        say sprintf "  %s  %s", $display, $hash->{$command};
     }
+
+    my $advanced = $help2
+        ? "${bold}Advanced usage:${off} pass space separated arguments to parameters"
+        : "";  # Line intentionally left blank
 
     print <<"END";
 
 ${bold}Simple usage:  ${off} press <Enter> after a command for follow-up prompts
-${bold}Advanced usage:${off} pass space separated arguments to parameters
+$advanced
 Complete each transaction with ${underline}account${off} (i.e. enter your name).
 END
-
-    select $oldhandle;
-    close $pipe;
 
     return ACCEPT;
 }
