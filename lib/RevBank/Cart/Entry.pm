@@ -6,6 +6,7 @@ use feature qw(signatures);
 no warnings qw(experimental::signatures);
 
 use Carp qw(carp croak);
+use RevBank::Users;
 use List::Util ();
 
 sub new($class, $amount, $description, $attributes = {}) {
@@ -83,6 +84,8 @@ sub as_printable($self) {
     push @s, sprintf "%8s %s", $self->{amount}->string_flipped, $self->{description};
 
     for my $c ($self->contras) {
+        next if RevBank::Users::is_hidden($c->{user});
+
         push @s, sprintf(
             "%11s %s %s",
             $c->{amount}->abs->string,
