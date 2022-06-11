@@ -38,6 +38,8 @@ sub add_contra($self, $user, $amount, $description) {
     };
 
     $self->attribute('changed', 1);
+
+    return $self;  # for method chaining
 }
 
 sub has_attribute($self, $key) {

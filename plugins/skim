@@ -1,0 +1,35 @@
+#!perl
+
+# Note: this plugin only makes sense if you have proper cashbox tracking,
+# which requires the "deposit_methods" plugin for differentiating between
+# bank transfers and cash deposits.
+#
+# If you ONLY allow cash deposits, and are not using the "deposit_methods"
+# plugin, you could alternatively hack the "deposit" plugin to use the "-cash"
+# contra instead of the "-deposits/other" contra.
+
+sub command :Tab(skim,unskim) ($self, $cart, $command, @) {
+    $command eq 'skim' or $command eq 'unskim' or return NEXT;
+
+    $self->{command} = $command;
+
+    printf "There should be (at least) %s in the cashbox.\n",
+        -RevBank::Users::balance("-cash");
+
+    return "Amount to $command", \&amount;
+}
+
+sub amount($self, $cart, $arg, @) { 
+    warn "Use 'unskim' to return (part of) a previously skimmed amount.\n"
+        if $arg =~ /^-/;
+
+    my $amount = parse_amount($arg) or return REJECT, "Invalid amount";
+    $amount = -$amount if $self->{command} eq 'unskim';
+
+    my $entry = $cart
+        ->add(0, "Skimmed $amount", { is_withdrawal => 1 })
+        ->add_contra("-cash", +$amount, "Skimmed by \$you")
+        ->add_contra("-cash/skimmed", -$amount, "Skimmed by \$you");
+
+    return ACCEPT;
+}
