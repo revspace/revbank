@@ -19,7 +19,10 @@ sub amount :Tab(13.37,42) ($self, $cart, $amount, @) {
     return $message . "How are we receiving this $amount?", \&how
         if keys %{ $self->{deposit_methods} };
 
-    $cart->add(+$self->{amount}, "Deposit", { is_deposit => 1 });
+    $cart
+        ->add(+$self->{amount}, "Deposit", { is_deposit => 1 })
+        ->add_contra("-deposits/other", -$self->{amount}, "Deposited by \$you");
+
     return ACCEPT;
 }
 
@@ -35,7 +38,15 @@ sub how :Tab(&how_tab) ($self, $cart, $input, @) {
         return shift @{ $how->{prompts} }, \&how_prompt;
     }
 
-    $cart->add(+$self->{amount}, $how->{description}, { is_deposit => 1, method => $how->{_key} });
+    my $contra = 
+          $how->{_key} eq 'cash'      ? '-cash'
+        : $how->{_key} eq 'reimburse' ? '-expenses/reimbursed'
+        :                               "-deposits/$how->{_key}";
+
+    $cart
+        ->add(+$self->{amount}, $how->{description}, { is_deposit => 1, method => $how->{_key} })
+        ->add_contra($contra, -$self->{amount}, "$how->{description} by \$you");
+
     return ACCEPT;
 }
 
@@ -53,7 +64,11 @@ sub how_prompt($self, $cart, $input, @) {
     }
 
     my $desc = sprintf $how->{description}, @{ $how->{answers} };
+    my $contra = $how->{_key} eq 'cash' ? '-cash' : "-deposits/$how->{_key}";
 
-    $cart->add(+$self->{amount}, $desc, { is_deposit => 1, method => $how->{_key} });
+    $cart
+        ->add(+$self->{amount}, $desc, { is_deposit => 1, method => $how->{_key} })
+        ->add_contra($contra, -$self->{amount}, "$desc by \$you");
+
     return ACCEPT;
 }

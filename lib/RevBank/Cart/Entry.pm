@@ -27,6 +27,7 @@ sub new($class, $amount, $description, $attributes = {}) {
 
 sub add_contra($self, $user, $amount, $description) {
     $amount = RevBank::Amount->parse_string($amount) if not ref $amount;
+    $user = RevBank::Users::assert_user($user);
 
     $description =~ s/\$you/$self->{user}/g if defined $self->{user};
 
@@ -84,7 +85,7 @@ sub as_printable($self) {
     push @s, sprintf "%8s %s", $self->{amount}->string_flipped, $self->{description};
 
     for my $c ($self->contras) {
-        next if RevBank::Users::is_hidden($c->{user});
+        next if RevBank::Users::is_hidden($c->{user}) and not $ENV{REVBANK_DEBUG};
 
         push @s, sprintf(
             "%11s %s %s",

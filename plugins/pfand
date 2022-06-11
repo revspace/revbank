@@ -27,7 +27,9 @@ sub product :Tab(&tab) ($self, $cart, $product, @) {
         or return REJECT, "Invalid pfand amount for $product";
 
     if ($pfand) {
-        $cart->add(+$pfand, "Pfand zurueck", { is_return => 1 });
+        $cart
+            ->add(+$pfand, "Pfand zurueck", { is_return => 1 })
+            ->add_contra("-pfand", -$pfand, "Pfand fuer \$you");
     } else {
         say "$product: Kein Pfand";
     }
@@ -44,7 +46,9 @@ sub hook_add_entry ($class, $cart, $entry, @) {
 
     my $pfand = _read_pfand->{ $entry->attribute('product_id') } or return;
 
-    $cart->add(-$pfand, "Pfand", { is_pfand => 1 });
+    $cart
+        ->add(-$pfand, "Pfand", { is_pfand => 1 })
+        ->add_contra("-pfand", +$pfand, "Pfand von \$you");
 
     return;
 }

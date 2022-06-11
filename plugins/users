@@ -28,12 +28,12 @@ sub hook_checkout($class, $cart, $user, $transaction_id, @) {
 }
 
 sub list($self) {
-    system "sort -f revbank.accounts | grep -v ^# | perl -pe's/( -[\\d.]+)/\\e[31;1m\$1\\e[0m/' | more";
+    system "sort -f revbank.accounts | grep -v ^# | perl -ne's/( -[\\d.]+)/\\e[31;1m\$1\\e[0m/; print if not /^[-+]/' | more";
     return ACCEPT;
 }
 
 sub shame($self) {
-    system "sort -k2 -n revbank.accounts | grep -v ^# | grep -- ' -' | perl -pe's/( -[\\d.]+)/\\e[31;1m\$1\\e[0m/' | more";
+    system "sort -k2 -n revbank.accounts | grep -v ^# | grep -- ' -' | perl -ne's/( -[\\d.]+)/\\e[31;1m\$1\\e[0m/; print if not /^[-+]/' | more";
     return ACCEPT;
 }
 

@@ -35,11 +35,17 @@ sub command($self, $cart, $command, @) {
         $description .= " TEST MODE ($result->{test_amount})";
     }
 
-    $cart->add(
-        +$amount,
-        $description,
-        { is_deposit => 1, method => 'online', mollie_id => $id, no_repeat => 1 }
-    );
+    $cart
+        ->add(
+            +$amount,
+            $description,
+            { is_deposit => 1, method => 'online', mollie_id => $id, no_repeat => 1 }
+        )
+        ->add_contra(
+            "-deposits/online",
+            -$amount,
+            "$description by \$you"
+        );
     return ACCEPT;
 }
 

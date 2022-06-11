@@ -55,7 +55,7 @@ sub hook_reject($class, $plugin, $reason, $abort, @) {
 }
 
 sub hook_user_balance($class, $username, $old, $delta, $new, @) {
-    return if hidden $username;
+    return if hidden $username and not $ENV{REVBANK_DEBUG};
 
     my $sign = $delta->cents >= 0 ? '+' : '-';
     my $rood = $new->cents < 0 ? '31;' : '';
@@ -67,7 +67,7 @@ sub hook_user_balance($class, $username, $old, $delta, $new, @) {
 }
 
 sub hook_user_created($class, $username, @) {
-    return if hidden $username;
+    return if hidden $username and not $ENV{REVBANK_DEBUG};
 
     say "New account '$username' created.";
 }

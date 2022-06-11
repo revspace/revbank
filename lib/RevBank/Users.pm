@@ -7,6 +7,7 @@ no warnings qw(experimental::signatures);
 
 use RevBank::Global;
 use RevBank::Plugins;
+use Carp ();
 
 my $filename = "revbank.accounts";
 
@@ -77,14 +78,28 @@ sub update($username, $delta, $transaction_id) {
     );
 }
 
-sub parse_user($username) {
-    my $users = _read();
-    return undef if not exists $users->{ lc $username };
-    return $users->{ lc $username }->[0];
-}
-
 sub is_hidden($username) {
     return $username =~ /^[-+]/;
+}
+
+sub parse_user($username) {
+    return undef if is_hidden($username);
+
+    my $users = _read();
+    return exists $users->{ lc $username }
+        ? $users->{ lc $username }->[0]
+        : undef;
+}
+
+sub assert_user($username) {
+    my $users = _read();
+
+    return exists $users->{ lc $username }
+        ? $users->{ lc $username }->[0]
+        : (is_hidden($username)
+            ? create($username)
+            : Carp::croak("Account '$username' does not exist")
+        );
 }
 
 1;

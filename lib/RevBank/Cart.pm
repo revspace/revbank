@@ -66,11 +66,7 @@ sub checkout($self, $user) {
         return;
     }
 
-    if ($user =~ /^[-+]/) {
-        # Hidden internal accounts
-        my $canonical = RevBank::Users::parse_user($user);
-        $user = $canonical // RevBank::Users::create($user);
-    }
+    $user = RevBank::Users::assert_user($user);
 
     my $entries = $self->{entries};
 

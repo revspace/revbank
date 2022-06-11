@@ -14,11 +14,19 @@ sub command :Tab(barcode) ($self, $cart, $command, @) {
 }
 
 sub data($self, $cart, $input, @) {
-    $cart->add(
-        -0.07,
-        "Barcode <$input>",
-        { is_barcode => 1, barcode_data => $input }
-    );
+    my $price = 0.07;
+
+    $cart
+        ->add(
+            -$price,
+            "Barcode <$input>",
+            { is_barcode => 1, barcode_data => $input }
+        )
+        ->add_contra(
+            "+sales/barcodes",
+            +$price,
+            "\$you bought barcode <$input>"
+        );
 
     return ACCEPT;
 }

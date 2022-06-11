@@ -9,7 +9,9 @@ my %bounties = (
 
 sub command :Tab(BOUNTY1,BOUNTY2,BOUNTY3,BOUNTY4) ($self, $cart, $command, @) {
     if ($command =~ /BOUNTY(\d+)/) {
-        $cart->add(+$bounties{$1}[0], $bounties{$1}[1]);
+        $cart
+            ->add(+$bounties{$1}[0], $bounties{$1}[1])
+            ->add_contra("-expenses/bounties", -$bounties{$1}[0], "$command by \$you");
         return ACCEPT;
     }
 

@@ -1,3 +1,20 @@
+# (2022-06-11) RevBank 3.4
+
+RevBank now has built-in hidden accounts and balanced transactions. These
+accounts will be made automatically, and hidden from the user interface. Apart
+from that, they function as normal accounts (for now).
+
+If you have scripts that parse `.revbank.log` or `revbank.products`, you may
+want to ignore all accounts that start with `-` or `+`.
+
+In the hopefully very unlikely event that you have existing user accounts that
+start with `-` or `+`, those will have to be renamed manually, as such accounts
+are no longer accessible.
+
+For your custom plugins, you may want to add `->add_contra` calls to every
+`$cart->add` call that does not already have them. Unbalanced transactions will
+probably be deprecated in a future version.
+
 # (2022-06-04) RevBank 3.3
 
 Raw amounts without a command are no longer supported. There was already an
