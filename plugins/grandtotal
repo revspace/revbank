@@ -10,7 +10,10 @@ sub command :Tab(grandtotal) ($self, $cart, $command, @) {
 
     open my $fh, "<", "revbank.accounts";
     while (defined(my $line = readline $fh)) {
-        my $credit = (split " ", $line)[1];
+        my ($username, $balance) = split " ", $line;
+        next if RevBank::Users::is_hidden($username);
+
+        my $credit = $balance;
         $neg += $credit if $credit < 0;
         $pos += $credit if $credit > 0;
     }
