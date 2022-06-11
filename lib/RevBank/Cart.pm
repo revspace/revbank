@@ -82,7 +82,9 @@ sub checkout($self, $user) {
     my $transaction_id = time() - 1300000000;
     RevBank::Plugins::call_hooks("checkout", $self, $user, $transaction_id);
 
-    for my $account (keys %deltas) {
+    for my $account (reverse sort keys %deltas) {
+        # The reverse sort is a lazy way to make the "-" accounts come last,
+        # which looks nicer with the "cash" plugin.
         RevBank::Users::update($account, $deltas{$account}, $transaction_id)
             if $deltas{$account} != 0;
     }

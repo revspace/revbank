@@ -1,13 +1,24 @@
 #!perl
 
-HELP1 "cash" => "Checkout without a user account";
+{
+    # If you want to keep track of stock, you need a way for people to
+    # register cash payments. The 'cash' plugin takes care of that, but
+    # that also assumes deposit_methods. So here's a minimal fallback
+    # implementation for the 'cash' command.
 
-sub command :Tab(cash) ($self, $cart, $command, @) {
-    return NEXT if $command ne 'cash';
+    # If you use the 'cash' plugin, make sure it is loaded *before*
+    # the 'stock' plugin in 'revbank.plugins'.
 
-    $cart->checkout('-cash');
+    HELP1 "cash" => "Checkout without a user account";
 
-    return ACCEPT;
+    sub command :Tab(cash) ($self, $cart, $command, @) {
+        return NEXT if $command ne 'cash';
+        return NEXT if not $cart->size;
+
+        $cart->checkout('-cash');
+
+        return ACCEPT;
+    }
 }
 
 sub hook_checkout($class, $cart, $user, $transaction_id, @) {

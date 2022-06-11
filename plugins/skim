@@ -13,8 +13,7 @@ sub command :Tab(skim,unskim) ($self, $cart, $command, @) {
 
     $self->{command} = $command;
 
-    printf "There should be (at least) %s in the cashbox.\n",
-        -RevBank::Users::balance("-cash");
+    call_hooks("cash");
 
     return "Amount to $command", \&amount;
 }

@@ -1,0 +1,42 @@
+#!perl
+
+# Use this plugin for cashbox contents tracking. For it to make sense,
+# you will also need the "deposit_methods" plugin to let users distinguish
+# between cash deposits and other deposit methods.
+
+# This plugin should be loaded *before* the 'stock' plugin in
+# the 'revbank.plugins' configuration file.
+
+HELP1 "cash" => "Checkout without a user account";
+
+sub command :Tab(cash) ($self, $cart, $command, @) {
+    return NEXT if $command ne 'cash';
+
+    if ($cart->size) {
+        $cart->checkout('-cash');
+    } else {
+        call_hooks 'cash';
+    }
+
+    return ACCEPT;
+}
+
+sub hook_cash($class, @) {
+    printf "There should currently be (at least) %s in the cash box.\n",
+        -RevBank::Users::balance("-cash");
+}
+
+sub hook_user_balance($class, $username, $old, $delta, $new, @) {
+    return if $username ne '-cash' or $delta->cents == 0;
+
+    # "-" accounts need to be inverted to display the intuitive value.
+    my $actual_delta = -$delta;
+    my $actual_new   = -$new;
+
+    printf "\nProceed to %s %s %s the cash box;\n  it should then have (at least) %s%s.\n",
+        ($actual_delta->cents < 0 ? "remove" : "put"),
+        abs($delta),
+        ($actual_delta->cents < 0 ? "from" : "into"),
+        $actual_new,
+        ($actual_delta->cents < 0 ? " remaining" : " in it");
+}

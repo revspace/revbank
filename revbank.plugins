@@ -14,6 +14,8 @@ grandtotal
 take
 split
 #pfand      # makes little sense in a self service environment
+#cash       # cash tracking also requires deposit_methods to make sense
+#skim       # cash tracking also requires deposit_methods to make sense
 stock
 unlisted
 #warnings
@@ -30,5 +32,4 @@ withdraw   # matches amounts
 users      # matches usernames
 deposit    # wants to be after 'users'
 #deposit_methods  # Extra options for 'deposit'. Edit/configure first!
-#skim      # only makes sense if you also use deposit_methods
 #deposit_iban_qr  # QR code display, edit/configure first! (needs qrencode(1))
