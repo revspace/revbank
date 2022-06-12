@@ -72,6 +72,8 @@ sub checkout($self, $user) {
 
     my %deltas;
     for my $entry (@$entries) {
+        $entry->sanity_check;
+
         $entry->user($user);
 
         $deltas{$entry->{user}} //= RevBank::Amount->new(0);

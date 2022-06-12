@@ -19,7 +19,8 @@ sub new($class, $amount, $description, $attributes = {}) {
         attributes  => { %$attributes },
         user        => undef,
         contras     => [],
-        caller      => (caller 1)[3],
+        caller      => List::Util::first(sub { !/^RevBank::Cart/ }, map { (caller $_)[3] } 1..10)
+                       || (caller 1)[3],
     };
 
     return bless $self, $class;
@@ -76,8 +77,6 @@ sub contras($self) {
 }
 
 sub as_printable($self) {
-    $self->sanity_check;
-
     my @s;
     push @s, $self->{quantity} . "x {" if $self->multiplied;
 
@@ -105,7 +104,6 @@ sub as_printable($self) {
 
 sub as_loggable($self) {
     croak "Loggable called before set_user" if not defined $self->{user};
-    $self->sanity_check;
 
     my $quantity = $self->{quantity};
 
@@ -143,28 +141,47 @@ sub user($self, $new = undef) {
 }
 
 sub sanity_check($self) {
-    # Turnover and journals are implicit contras, so (for now) a zero sum is
-    # not required. However, in a transaction with contras, one should at least
-    # not try to issue money that does not exist.
+    # Turnover and journals were implicit contras in previous versions of
+    # revbank, but old plugins may need upgrading to the new dual-entry system,
+    # so (for now) a zero sum is not required.
 
-    return 1 if $self->{FORCE};
-    my @contras = $self->contras or return 1;
+    my @contras = $self->contras;
 
-    my $sum = List::Util::sum(map $_->{amount}->cents, $self, @contras);
+    my $sum = RevBank::Amount->new(
+        List::Util::sum(map $_->{amount}->cents, $self, @contras)
+    );
 
-    if ($sum > 0) {
-        $self->{FORCE} = 1;
-        croak join("\n",
+    # Although unbalanced transactiens are still allowed, a transaction with
+    # contras should at least not try to issue money that does not exist.
+    if ($sum > 0 and @contras and not $self->{FORCE_UNBALANCED}) {
+        local $ENV{REVBANK_DEBUG} = 1;
+        my $message = join("\n",
             "BUG! (probably in $self->{caller})",
             "This adds up to creating money that does not exist:",
             $self->as_printable,
             (
-                $sum == 2 * $self->{amount}->cents
-                ? "Hint: contras for positive value should be negative values."
+                $sum == 2 * $self->{amount}
+                ? "Hint for the developer: contras for positive value should be negative values and vice versa."
                 : ()
             ),
-            sprintf("Cowardly refusing to create $sum out of thin air")
+            "Cowardly refusing to create $sum out of thin air"
         );
+        RevBank::Plugins::call_hooks("log_error", "UNBALANCED ENTRY $message");
+        croak $message;
+    }
+
+    if ($sum != 0) {
+        local $ENV{REVBANK_DEBUG} = 1;
+        my $forced = $self->{FORCE_UNBALANCED} ? " (FORCED)" : "";
+        RevBank::Plugins::call_hooks(
+            "log_warning",
+            "UNBALANCED ENTRY$forced in $self->{caller}: " . (
+                @contras
+                ? "sum of entry with contras ($sum) != 0.00"
+                : "transaction has no contras"
+            ) . ". This will probably be a fatal error in a future version of revbank.\n"
+            . "The unbalanced entry is:\n" . join("\n", $self->as_printable)
+        )
     }
 
     return 1;
