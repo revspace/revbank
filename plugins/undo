@@ -4,15 +4,41 @@ HELP1 "undo <transactionID>" => "Undo a transaction";
 
 my $filename = ".revbank.undo";
 
+my @TAB;
+
 sub command :Tab(undo) ($self, $cart, $command,  @) {
     $command eq 'undo' or return NEXT;
 
     $cart->size and return ABORT, "Undo is not available mid-transaction.";
 
+    my @log;
+    open my $in, '<', $filename or die "$filename: $!";
+    while (defined(my $line = readline $in)) {
+        my ($tid, $user, $delta, $dt) = split " ", $line;
+        if (@log and $log[-1]{tid} eq $tid) {
+            push @{ $log[-1]{deltas} }, [ $user, $delta ];
+        } else {
+            push @log, { tid => $tid, dt => $dt, deltas => [ [ $user, $delta ] ] };
+        }
+    }
+
+    @TAB = ();
+
+    my $max = @log < 15 ? @log : 15;
+    for my $txn (@log[-$max .. -1]) {
+        print "ID: $txn->{tid}  $txn->{dt} ", (
+            join ", ", map { sprintf "%s:%+.2f", @$_ } @{ $txn->{deltas} }
+        ), "\n";
+
+        push @TAB, $txn->{tid};
+    }
+
     return "Transaction ID", \&undo;
 }
 
-sub undo($self, $cart, $tid, @) {
+sub tab { @TAB }
+
+sub undo :Tab(&tab) ($self, $cart, $tid, @) {
     open my $in,  '<', $filename or die "$filename: $!";
     open my $out, '>', "$filename.$$" or die "$filename.$$: $!";
     my $description = "Undo $tid";
