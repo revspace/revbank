@@ -45,7 +45,7 @@ sub _recent($n, $u) {
 
 sub balance($self, $u) {
     _recent(10, $u);
-    printf "Balance for $u is \e[1m%+.2f\e[0m\n", RevBank::Users::balance($u);
+    printf "Balance for $u is \e[1m%s\e[0m\n", RevBank::Users::balance($u)->string("+");
     say "NB: Products/amounts/commands FIRST, username LAST.";
     return ABORT;
 }

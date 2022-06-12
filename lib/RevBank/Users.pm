@@ -24,7 +24,7 @@ sub names() {
 }
 
 sub balance($username) {
-    return RevBank::Amount->new_from_float( _read()->{ lc $username }->[1] );
+    return RevBank::Amount->parse_string( _read()->{ lc $username }->[1] );
 }
 
 sub since($username) {
