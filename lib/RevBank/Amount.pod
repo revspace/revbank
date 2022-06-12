@@ -111,6 +111,6 @@ $amount + 1.001 >> won't work because 0.001 has too many digits after
 the decimal point.
 
 When working with values that aren't safe, hard-coded literals, always
-turn them into RevBank::Amount objects first, which takes care of te
+turn them into RevBank::Amount objects first, which takes care of the
 necessary rounding: C<< $amount + RevBank::Amount->new_from_float(1.001)
 >>.
