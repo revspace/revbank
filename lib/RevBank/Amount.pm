@@ -75,7 +75,7 @@ sub new_from_float($class, $num) {
 }
 
 sub parse_string($class, $str) {
-    $str =~ /\S/ or return undef;
+    defined $str and $str =~ /\S/ or return undef;
 
     my ($neg, $int, $cents)
         = $str =~ /^\s*(?:\+|(-)?)([0-9]+)?(?:[,.]([0-9]{1,2}))?\s*$/
