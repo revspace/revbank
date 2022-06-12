@@ -35,7 +35,7 @@ sub undo($self, $cart, $tid, @) {
     close $out or die $!;
     if ($cart->size) {
         rename "$filename.$$", $filename or die $!;
-        $cart->checkout('**UNDO**');
+        $cart->checkout('-undo');
     } else {
         return ABORT, "Transaction ID '$tid' not found in undo log.";
     }
