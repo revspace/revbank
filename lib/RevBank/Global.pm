@@ -28,7 +28,7 @@ sub import {
             die "For our sanity, no negative amounts, please :).\n";
         }
         if ($amount->cents > 99900) {
-            die "That's way too much money, or an unknown barcode.\n";
+            die "That's way too much money.\n";
         }
         return $amount;
     };
