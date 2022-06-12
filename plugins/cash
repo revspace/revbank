@@ -23,7 +23,7 @@ sub command :Tab(cash) ($self, $cart, $command, @) {
 
 sub hook_cash($class, @) {
     printf "There should currently be (at least) %s in the cash box.\n",
-        -RevBank::Users::balance("-cash");
+        -RevBank::Users::balance("-cash") || "0.00";
 }
 
 sub hook_user_balance($class, $username, $old, $delta, $new, @) {
