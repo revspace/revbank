@@ -7,7 +7,7 @@ sub command :Tab(tail) ($self, $cart, $command, @) {
     my $c = (`tput cols 2>/dev/null` || 80) + 0;
 
     # ew :)
-    system "perl -lane's/CHECKOUT\\s+\\S+\\s+// or next; s/  #// or next; s/_/ /; print' .revbank.log | tail -n$n | perl -ple'\$_ = substr \$_, 0, $c'";
+    system "perl -lane's/CHECKOUT\\s+\\S+\\s+// or next; /\\s[-+][a-z]/i and next; s/  #// or next; s/_/ /; print' .revbank.log | tail -n$n | perl -ple'\$_ = substr \$_, 0, $c'";
 
     return ACCEPT;
 }
