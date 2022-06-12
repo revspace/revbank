@@ -13,6 +13,12 @@ sub command :Tab(cash) ($self, $cart, $command, @) {
     return NEXT if $command ne 'cash';
 
     if ($cart->size) {
+        return REJECT, "Can't use cash checkout on a deposit transaction."
+            if $cart->entries('is_deposit');
+
+        return REJECT, "Can't use cash checkout on a withdraw transaction."
+            if $cart->entries('is_withdrawal');
+
         $cart->checkout('-cash');
     } else {
         call_hooks 'cash';
