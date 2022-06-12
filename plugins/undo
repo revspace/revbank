@@ -38,6 +38,8 @@ sub command :Tab(undo) ($self, $cart, $command,  @) {
 
 sub tab { @TAB }
 
+my $doing_undo = 0;  # Ugly but works, just like the rest of this plugin
+
 sub undo :Tab(&tab) ($self, $cart, $tid, @) {
     open my $in,  '<', $filename or die "$filename: $!";
     open my $out, '>', "$filename.$$" or die "$filename.$$: $!";
@@ -61,7 +63,9 @@ sub undo :Tab(&tab) ($self, $cart, $tid, @) {
     close $out or die $!;
     if ($cart->size) {
         rename "$filename.$$", $filename or die $!;
+        $doing_undo = 1;  # don't allow undoing undos
         $cart->checkout('-undo');
+        $doing_undo = 0;
     } else {
         return ABORT, "Transaction ID '$tid' not found in undo log.";
     }
@@ -70,6 +74,8 @@ sub undo :Tab(&tab) ($self, $cart, $tid, @) {
 }
 
 sub hook_user_balance($class, $username, $old, $delta, $new, $transaction_id, @) {
+    return if $doing_undo;  # don't allow undoing undos
+
     open my $fh, '>>', $filename or die "$filename: $!";
     print {$fh} join " ", $transaction_id, $username, -$delta, now(), "\n";
     close $fh or die "$filename: $!";
