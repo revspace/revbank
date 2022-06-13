@@ -53,6 +53,10 @@ sub command :Tab(market,&tab) ($self, $cart, $command, @) {
         $username,
         $seller,
         "\$you bought $description"
+    )->add_contra(
+        "+sales/market",
+        $space,
+        "\$you bought $description from $username"
     );
 
     return ACCEPT;
