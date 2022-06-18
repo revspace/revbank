@@ -1,0 +1,41 @@
+#!perl
+
+# This is basically like 'withdraw', but for non-cash (e.g. iban)
+
+my @TAB;
+
+sub command :Tab(undeposit) ($self, $cart, $command, @) {
+    $command eq 'undeposit' or return NEXT;
+
+    warn "\n\n\n";
+    warn "\e[1mNote: this function is for internal use by board members ONLY.\e[0m\n";
+    warn "\n\n\n";
+    warn "Enter 'abort' to abort.\n";
+
+    @TAB = grep /^[-+]deposit/, RevBank::Users::names
+        or return REJECT, "No contras available.";
+    print "Available contras:\n", map "  $_\n", sort(@TAB);
+
+    return "Contra", \&contra;
+}
+
+sub tab { @TAB }
+
+sub contra :Tab(&tab) ($self, $cart, $arg, @) { 
+    return REJECT, "Invalid contra." unless grep $_ eq $arg, @TAB;
+
+    $self->{contra} = $arg;
+
+    return "Amount to withdraw", \&amount;
+}
+
+sub amount($self, $cart, $arg, @) { 
+    my $amount = parse_amount($arg);
+    defined $amount or return REJECT, "Invalid amount";
+
+    $cart
+        ->add(-$amount, "Undeposit", { is_withdrawal => 1 })
+        ->add_contra($self->{contra}, +$amount, "Undeposited by \$you");
+
+    return ACCEPT;
+}
