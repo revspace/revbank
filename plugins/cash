@@ -22,6 +22,8 @@ sub command :Tab(cash) ($self, $cart, $command, @) {
         $cart->checkout('-cash');
     } else {
         call_hooks 'cash';
+
+        return "Please count the money to verify. How much is there, exactly?", \&check;
     }
 
     return ACCEPT;
@@ -32,8 +34,11 @@ sub hook_cash($class, @) {
         -RevBank::Users::balance("-cash") || "0.00";
 }
 
+our $suppress = 0;
+
 sub hook_user_balance($class, $username, $old, $delta, $new, @) {
     return if $username ne '-cash' or $delta->cents == 0;
+    return if $suppress;
 
     # "-" accounts need to be inverted to display the intuitive value.
     my $actual_delta = -$delta;
@@ -45,4 +50,51 @@ sub hook_user_balance($class, $username, $old, $delta, $new, @) {
         ($actual_delta->cents < 0 ? "from" : "into"),
         $actual_new,
         ($actual_delta->cents < 0 ? " remaining" : " in it");
+}
+
+my $confirm_prompt = "Type 'fix pls' to apply a permanent correction, or 'abort' to abort";
+
+sub check($self, $cart, $arg, @) {
+    my $should = -RevBank::Users::balance("-cash") || parse_amount(0);
+    my $have = parse_amount($arg);
+    return REJECT, "Invalid amount" if not defined $have;
+
+    if ($have == $should) {
+        print "Thank you for checking!\n";
+        return ACCEPT;
+    }
+
+    my $surplus = $have - $should;
+    $self->{surplus} = $surplus;
+
+    my $what = $surplus < 0 ? "shortage" : "overage";
+    $self->{what} = $what;
+
+    my $abs = abs $surplus;
+    my $suffix =
+        $surplus <= -100 ? "??!! WTF?! Really?!"
+        : $surplus <= -20 ? "! :("
+        : $surplus <= -10 ? "!"
+        : $surplus >= +20 ? "?!"
+        : ".";
+
+    my $an = $what =~ /^o/ ? "an" : "a";
+    print "\nThank you for checking! That's $an $what of $abs$suffix\n";
+    return $confirm_prompt, \&confirm;
+}
+
+sub confirm($self, $cart, $arg, @) {
+    return $confirm_prompt, \&confirm unless $arg eq "fix pls";
+
+    $cart
+        ->add($self->{surplus}, "Cash $self->{what}")
+        ->add_contra("-cash", -$self->{surplus}, "Cash $self->{what}");
+
+    local $suppress = 1;
+    $cart->checkout('-expenses/discrepancies');
+
+    printf "\nDiscrepancy recorded; corrected cash box amount is %s.\n",
+        -RevBank::Users::balance("-cash") || "0.00";
+
+    return ACCEPT;
 }
