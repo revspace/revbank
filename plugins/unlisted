@@ -6,7 +6,8 @@ sub command :Tab(unlisted,donate) ($self, $cart, $command, @) {
     $command eq 'unlisted' or $command eq 'donate' or return NEXT;
     $self->{command} = $command;
 
-    return "Price", \&amount;
+    my $prompt = $command eq 'donate' ? 'Amount' : 'Price';
+    return $prompt, \&amount;
 }
 
 sub amount($self, $cart, $arg, @) {
