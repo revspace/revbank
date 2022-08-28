@@ -11,7 +11,7 @@ sub command :Tab(deposit) ($self, $cart, $command, @) {
 }
 
 sub amount :Tab(13.37,42) ($self, $cart, $amount, @) {
-    $self->{amount} = parse_amount($amount)
+    $self->{amount} = $amount = parse_amount($amount)
         or return REJECT, "Invalid amount";
 
     call_hooks("deposit_methods", \my $message, $self->{deposit_methods} = {});
@@ -20,8 +20,8 @@ sub amount :Tab(13.37,42) ($self, $cart, $amount, @) {
         if keys %{ $self->{deposit_methods} };
 
     $cart
-        ->add(+$self->{amount}, "Deposit", { is_deposit => 1 })
-        ->add_contra("-deposits/other", -$self->{amount}, "Deposited by \$you");
+        ->add(+$amount, "Deposit", { is_deposit => 1 })
+        ->add_contra("-deposits/other", -$amount, "Deposited by \$you");
 
     return ACCEPT;
 }
