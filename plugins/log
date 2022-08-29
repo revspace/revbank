@@ -5,9 +5,7 @@ my $filename = ".revbank.log";
 sub _log($tag, @message) {
     @message = ("") if not @message;
 
-    open my $fh, '>>', $filename or warn "$filename: $!";
-    print $fh map(s/^/now() . " $tag "/rgme, @message), "\n";
-    close $fh or warn "$filename: $!";
+    append $filename, map(s/^/now() . " $tag "/rgme, @message), "\n";
 }
 
 my %buffer;

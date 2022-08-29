@@ -9,11 +9,10 @@ my @TAB;
 sub command :Tab(undo) ($self, $cart, $command,  @) {
     $command eq 'undo' or return NEXT;
 
-    $cart->size and return ABORT, "Undo is not available mid-transaction.";
+    $cart->size and return REJECT, "Undo is not available mid-transaction.";
 
     my @log;
-    open my $in, '<', $filename or die "$filename: $!";
-    while (defined(my $line = readline $in)) {
+    for my $line (slurp $filename) {
         my ($tid, $user, $delta, $dt) = split " ", $line;
         if (@log and $log[-1]{tid} eq $tid) {
             push @{ $log[-1]{deltas} }, [ $user, $delta ];
@@ -41,42 +40,39 @@ sub tab { @TAB }
 my $doing_undo = 0;  # Ugly but works, just like the rest of this plugin
 
 sub undo :Tab(&tab) ($self, $cart, $tid, @) {
-    open my $in,  '<', $filename or die "$filename: $!";
-    open my $out, '>', "$filename.$$" or die "$filename.$$: $!";
     my $description = "Undo $tid";
-
     my $entry;
+    my $found = 0;
 
-    while (defined(my $line = readline $in)) {
-        if ($line =~ /^\Q$tid\E\s/) {
-            my (undef, $user, $delta) = split " ", $line;
+    with_lock {
+        rewrite $filename, sub($line) {
+            if ($line =~ /^\Q$tid\E\s/) {
+                my (undef, $user, $delta) = split " ", $line;
 
-            $entry ||= $cart->add(0, $description);
-            $entry->{FORCE_UNBALANCED} = 1;
+                $entry ||= $cart->add(0, $description);
+                $entry->{FORCE_UNBALANCED} = 1;
 
-            $entry->add_contra($user, $delta, "Undo $tid");
-        } else {
-            print {$out} $line;
+                $entry->add_contra($user, $delta, "Undo $tid");
+                return undef;  # remove line
+            } else {
+                return $line;
+            }
+        };
+
+        if ($cart->size) {
+            $found = 1;
+            $doing_undo = 1;  # don't allow undoing undos
+            $cart->checkout('-undo');
+            $doing_undo = 0;
         }
-    }
-    close $in;
-    close $out or die $!;
-    if ($cart->size) {
-        rename "$filename.$$", $filename or die $!;
-        $doing_undo = 1;  # don't allow undoing undos
-        $cart->checkout('-undo');
-        $doing_undo = 0;
-    } else {
-        return ABORT, "Transaction ID '$tid' not found in undo log.";
-    }
+    };
 
-    return ACCEPT;
+    return ACCEPT if $found;
+    return ABORT, "Transaction ID '$tid' not found in undo log.";
 }
 
 sub hook_user_balance($class, $username, $old, $delta, $new, $transaction_id, @) {
     return if $doing_undo;  # don't allow undoing undos
 
-    open my $fh, '>>', $filename or die "$filename: $!";
-    print {$fh} join " ", $transaction_id, $username, -$delta, now(), "\n";
-    close $fh or die "$filename: $!";
+    append $filename, join(" ", $transaction_id, $username, -$delta, now()), "\n";
 }

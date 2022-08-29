@@ -13,9 +13,7 @@ my $filename = "revbank.accounts";
 
 sub _read() {
     my @users;
-    open my $fh, $filename or die $!;
-    /\S/ and push @users, [split " "] while readline $fh;
-    close $fh;
+    /\S/ and push @users, [split " "] for slurp $filename;
     return { map { lc($_->[0]) => $_ } @users };
 }
 
@@ -32,20 +30,17 @@ sub since($username) {
 }
 
 sub create($username) {
-    open my $fh, '>>', $filename or die $!;
     my $now = now();
-    print {$fh} "$username 0.00 $now\n" or die $!;
-    close $fh or die $!;
+    append $filename, "$username 0.00 $now\n";
     RevBank::Plugins::call_hooks("user_created", $username);
     return $username;
 }
 
 sub update($username, $delta, $transaction_id) {
-    open my $in,  'revbank.accounts' or die $!;
-    open my $out, ">.revbank.$$" or die $!;
     my $old = RevBank::Amount->new(0);
     my $new = RevBank::Amount->new(0);
-    while (defined (my $line = readline $in)) {
+
+    rewrite $filename, sub($line) {
         my @a = split " ", $line;
         if (lc $a[0] eq lc $username) {
             $old = RevBank::Amount->parse_string($a[1]);
@@ -62,16 +57,13 @@ sub update($username, $delta, $transaction_id) {
             $since = "-\@" . now() if $newc  < 0 and (!$since or $oldc >= 0);
             $since = "0\@" . now() if $newc == 0 and (!$since or $oldc != 0);
 
-            printf {$out} "%-16s %9s %s %s\n", (
+            return sprintf "%-16s %9s %s %s\n", (
                 $username, $new->string("+"), now(), $since
-            ) or die $!;
+            );
         } else {
-            print {$out} $line or die $!;
+            return $line;
         }
-    }
-    close $out or die $!;
-    close $in;
-    rename ".revbank.$$", "revbank.accounts" or die $!;
+    };
 
     RevBank::Plugins::call_hooks(
         "user_balance", $username, $old, $delta, $new, $transaction_id

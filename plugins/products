@@ -6,9 +6,8 @@ HELP  "edit" => "Edit product list";
 my $filename = 'revbank.products';
 
 sub _read_products() {
-    open my $fh, '<', $filename or die "$filename: $!";
     my %products;
-    while (readline $fh) {
+    for (slurp $filename) {
         /^\s*#/ and next;
         /\S/ or next;
         chomp;

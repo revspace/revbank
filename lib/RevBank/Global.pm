@@ -7,18 +7,24 @@ no warnings qw(experimental::signatures);
 
 use POSIX qw(strftime);
 use RevBank::Amount;
+use RevBank::FileIO;
 
 sub import {
     require RevBank::Plugins;
     require RevBank::Users;
     no strict 'refs';
     my $caller = caller;
-    *{"$caller\::ACCEPT"} = sub () { \1 };
-    *{"$caller\::ABORT"}  = sub () { \2 };
-    *{"$caller\::REJECT"} = sub () { \3 };
-    *{"$caller\::NEXT"}   = sub () { \4 };
-    *{"$caller\::DONE"}   = sub () { \5 };
-    *{"$caller\::parse_user"} = \&RevBank::Users::parse_user;
+    *{"$caller\::ACCEPT"}       = sub () { \1 };
+    *{"$caller\::ABORT"}        = sub () { \2 };
+    *{"$caller\::REJECT"}       = sub () { \3 };
+    *{"$caller\::NEXT"}         = sub () { \4 };
+    *{"$caller\::DONE"}         = sub () { \5 };
+    *{"$caller\::slurp"}        = \&RevBank::FileIO::slurp;
+    *{"$caller\::spurt"}        = \&RevBank::FileIO::spurt;
+    *{"$caller\::rewrite"}      = \&RevBank::FileIO::rewrite;
+    *{"$caller\::append"}       = \&RevBank::FileIO::append;
+    *{"$caller\::with_lock"}    = \&RevBank::FileIO::with_lock;
+    *{"$caller\::parse_user"}   = \&RevBank::Users::parse_user;
     *{"$caller\::parse_amount"} = sub ($amount) {
         defined $amount or return undef;
         length  $amount or return undef;

@@ -8,8 +8,7 @@ sub command :Tab(grandtotal) ($self, $cart, $command, @) {
     my $pos = 0;
     my $neg = 0;
 
-    open my $fh, "<", "revbank.accounts";
-    while (defined(my $line = readline $fh)) {
+    for my $line (slurp 'revbank.accounts') {
         my ($username, $balance) = split " ", $line;
         next if RevBank::Users::is_hidden($username);
 

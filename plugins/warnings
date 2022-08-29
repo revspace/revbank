@@ -6,7 +6,6 @@
 use Time::HiRes qw(sleep);
 
 sub _read_warnings() {
-    open my $fh, 'revbank.warnings' or die $!;
     return map {
         my ($regex, $products, $text) = m[^
             (?:
@@ -26,7 +25,7 @@ sub _read_warnings() {
             my ($id, $desc) = @_;
             (grep { $_ eq $id } split /,/, $products) ? $text : ();
         }
-    } grep /\S/, grep !/^\s*#/, readline $fh;
+    } grep /\S/, grep !/^\s*#/, slurp 'revbank.warnings';
 }
 
 sub hook_add_entry($class, $cart, $entry, @) {

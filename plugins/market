@@ -5,9 +5,8 @@ HELP "market" => "Edit market list";
 my $filename = 'revbank.market';
 
 sub _read_market() {
-    open my $fh, '<', $filename or die "$filename: $!";
     my %market;
-    while (readline $fh) {
+    for (slurp $filename) {
         /^\s*#/ and next;
         /\S/ or next;
         chomp;

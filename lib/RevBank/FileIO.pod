@@ -1,0 +1,96 @@
+=head1 NAME
+
+RevBank::FileIO - Line-based text file manipulation with advisory locking
+
+=head1 SYNOPSIS
+
+	with_lock {
+		...
+	};
+
+	my $data  = slurp $filename;
+	my @lines = slurp $filename;
+	spurt $filename, @data;
+	append $filename, @data;
+
+	rewrite $filename, sub($line) {
+		return $line;  # return changed or unchanged line
+		return undef;  # exclude line from file
+	};
+
+=head1 DESCRIPTION
+
+This package implements very simple locking to protect against filesystem
+based race conditions when running multiple instances of revbank on the same
+data files.
+
+These race conditions are probably exceptionally rare and very hard to trigger
+in real-world conditions, because file system access is very fast due to
+caching and buffering by the kernel. RevBank was used for over a decade without
+any known problem due such a race condition, before locking was finally
+added.
+
+No attempt was made to optimize for performance, and all locks are global and
+exclusive.
+
+Will wait for the global lock for as long as it takes, printing a message every
+few seconds to keep the user informed.
+
+=head2 Functions
+
+=head3 with_lock BLOCK
+
+Gets the lock, executes the block, releases the lock again. Returns whatever
+the block returned.
+
+Use this instead of C<get_lock> to prevent forgetting to release the lock.
+
+=head3 get_lock
+
+Acquires the lock if it is not already held. Keeps extra virtual locks (by
+virtue of a simple counter) if the global lock is already held by the current
+process.
+
+Calling this function directly is discouraged. Use C<with_lock> instead.
+
+=head3 release_lock
+
+Decreases the number of virtual locks, releasing the real lock if none are
+left.
+
+Calling this function directly is discouraged. Use C<with_lock> instead.
+
+=head1 slurp($filename)
+
+Returns the entire contents of the file. In list context, returns a list of
+lines (including the line ending).
+
+=head1 spurt($filename, @data)
+
+=head1 append($filename, @data)
+
+Writes to a file. No separators or delimiters are added to the provided data,
+so in general you will want to pass either the entire contents as a single
+string, or a list of lines that already have line endings.
+
+=head1 rewrite($filename, sub($line) { ...; return $line; })
+
+Rewrites the existing text file. The provided subroutine is called for each
+line, and must return everything that should be written back. The sub can
+return undef to essentially skip (remove) a line.
+
+=head2 CAVEATS
+
+=over 2
+
+=item * A lock file is used, so external processes should not depend on the
+individual files being flocked.
+
+=item * Using a text editor while revbank is running and changing files will
+still mess things up.
+
+=item * The locking mechanism provides a lock per process; different parts
+(e.g. plugins) of the same process can still simultaneously do things, so keep
+to the pattern of always closing files before returning control or forking.
+
+=back

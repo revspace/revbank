@@ -5,14 +5,16 @@ HELP "pfand" => "Pfand zurueck";
 # This is a demo plugin. It's called "pfand" because "deposit" would be
 # confusing and only the Germans are crazy enough to have deposits on small
 # bottles anyway ;)
+#
+# ^^ aged like milk - the netherlands has deposits on small bottles now.
+# (but we're allowed to sell them without, for immediate consumption)
 
 # The file format for 'revbank.pfand' is simply two whitespace separated
 # columns: product id and pfand amount.
 
 sub _read_pfand() {
-    open my $fh, 'revbank.pfand' or die $!;
     return {
-        map { split " " } grep /\S/, grep !/^\s*#/, readline $fh
+        map { split " " } grep /\S/, grep !/^\s*#/, slurp 'revbank.pfand';
     };
 }
 

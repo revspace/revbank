@@ -29,17 +29,11 @@ sub hook_checkout($class, $cart, $user, $transaction_id, @) {
 
     my @entries = $cart->entries('product_id') or return;
 
-    my %stock = do {
-        my $in;
-        open($in, '<', $filename)
-        ? map { split " ", $_, 2 } readline $in
-        : ()
-    };
+    my %stock = eval { map { split " ", $_, 2 } slurp $filename };
 
     $stock{ $_->attribute('product_id') } -= $_->quantity for @entries;
 
-    open my $out, '>', "$filename.$$" or warn "$filename.$$: $!";
-    printf {$out} "%-16s %+9d\n", $_, $stock{$_} for sort keys %stock;
-    close $out or die "$filename.$$: $!";
-    rename "$filename.$$", $filename or die $!;
+    spurt $filename, map {
+        sprintf "%-16s %+9d\n", $_, $stock{$_}
+    } sort keys %stock;
 }
