@@ -23,7 +23,8 @@ sub _read_market() {
 
 sub command :Tab(market,&tab) ($self, $cart, $command, @) {
     if ($command eq 'market') {
-        system $ENV{EDITOR} || 'vi', $filename;
+        require RevBank::TextEditor;
+        RevBank::TextEditor::edit($filename);
         return ACCEPT;
     }
 

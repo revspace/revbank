@@ -23,7 +23,8 @@ sub _read_products() {
 
 sub command :Tab(edit,&tab) ($self, $cart, $command, @) {
     if ($command eq 'edit') {
-        system $ENV{EDITOR} || 'vi', $filename;
+        require RevBank::TextEditor;
+        RevBank::TextEditor::edit($filename);
         return ACCEPT;
     }
 

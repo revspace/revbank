@@ -1,0 +1,37 @@
+=head1 NAME
+
+RevBank::TextEditor - Basic Lightweight User-friendly TextEditor
+
+=head1 SYNOPSIS
+
+	require RevBank::TextEditor;
+	RevBank::TextEditor::edit($filename);
+
+=head1 DESCRIPTION
+
+BLUT is a built-in text editor based on Curses::UI.
+
+It was made because vim is too hard for unprepared newbies, and nano too,
+really: not everyone knows that C<^X> means Ctrl+X, making nano almost as hard
+to exit as vim. And of course, none of the really user friendly editors out
+there would work well on our old IBM 3151 terminal. (For instance, C<^S> and
+C<^Q> are used for software flow control, or as the manual of said terminal
+calls it, "pacing".)
+
+And of course, all the editors out there will let you open other files, or even
+run shells...
+
+=head2 Functions
+
+=head3 edit($filename)
+
+Runs the editor.
+
+=head2 CAVEATS
+
+=over 2
+
+=item * It's a really dumb editor, and many unsupported presses will end up as
+garbage.
+
+=back
