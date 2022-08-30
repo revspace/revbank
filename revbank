@@ -133,7 +133,6 @@ OUTER: for (;;) {
         print "\n";
     }
 
-    my $split_input = 1;
     my $prompt = "";
     my @plugins = RevBank::Plugins->new;
     my $method = "command";
@@ -157,6 +156,7 @@ OUTER: for (;;) {
             }
 
             call_hooks "prompt", $cart, $prompt;
+            my $split_input = !ref($method) && $method eq 'command';
 
             my %completions = qw(abort 1);
             for my $plugin (@plugins) {
@@ -195,7 +195,6 @@ OUTER: for (;;) {
 
             my $word = shift @words;
             push @retry, $word;
-            $split_input = 0;  # Only split 'outer' input.
 
             PLUGIN: for my $plugin (@plugins) {
                 my ($rv, @rvargs) = eval { $plugin->$method($cart, $word) };
@@ -223,7 +222,6 @@ OUTER: for (;;) {
                 if ($rv == REJECT) {
                     my ($reason) = @rvargs;
                     #abort if @words;
-
                     if (@words) {
                         call_hooks "retry", $plugin->id, $reason, @words ? 1 : 0;
                         push @retry, [@words];
