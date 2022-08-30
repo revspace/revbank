@@ -14,7 +14,7 @@ HELP "pfand" => "Pfand zurueck";
 
 sub _read_pfand() {
     return {
-        map { split " " } grep /\S/, grep !/^\s*#/, slurp 'revbank.pfand';
+        map { split " " } grep /\S/, grep !/^\s*#/, slurp 'revbank.pfand'
     };
 }
 
@@ -54,4 +54,3 @@ sub hook_add_entry ($class, $cart, $entry, @) {
 
     return;
 }
-
