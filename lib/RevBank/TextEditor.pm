@@ -87,7 +87,7 @@ sub _find($win) {
     $win->delete('find');
 }
 
-sub _editor($title, $data) {
+sub _editor($title, $origdata) {
     our $cui ||= Curses::UI->new;
     my $win = $cui->add('main', 'Window');
     $title = "[$title]  Ctrl+X: exit  Ctrl+F: find  Ctrl+C/K/V: copy/cut/paste";
@@ -95,7 +95,7 @@ sub _editor($title, $data) {
     my $editor = $win->add(
         'editor', 'TextEditor',
         -title      => $title,
-        -text       => $data,
+        -text       => $origdata,
         -border     => 1,
         -padbottom  => 1,  # ibm3151/screen lastline corner glitch workaround
         -wrapping   => 0,
@@ -120,17 +120,21 @@ sub _editor($title, $data) {
         [ "\cC" => sub { $editor->{-pastebuffer} = $editor->getline_at_ypos($editor->{-ypos}) } ],
         [ "\cF" => sub { _find($win) } ],
         [ "\cX" => sub {
-            my $answer = $cui->dialog(
-                -message => "Save changes?",
-                -buttons => [
-                    { -label => "[Save]",    -value => 1 },
-                    { -label => "[Discard]", -value => 0 },
-                    { -label => "[Cancel]",  -value => -1 },
-                ],
-                -values => [ 1, 0 ],
-            );
-            $return = $editor->get if $answer == 1;
-            $cui->mainloopExit     if $answer >= 0;
+            if ($editor->get ne $origdata) {
+                my $answer = $cui->dialog(
+                    -message => "Save changes?",
+                    -buttons => [
+                        { -label => "[Save]",    -value => 1 },
+                        { -label => "[Discard]", -value => 0 },
+                        { -label => "[Cancel]",  -value => -1 },
+                    ],
+                    -values => [ 1, 0 ],
+                );
+                $return = $origdata if $answer == 1;
+                $cui->mainloopExit  if $answer >= 0;
+            } else {
+                $cui->mainloopExit;
+            }
         } ],
     );
 
@@ -159,7 +163,12 @@ sub edit($filename) {
         or die "Someone else is alreading editing $filename.\n";
 
     my $save = _editor($filename, scalar slurp $filename);
-    spurt $filename, $save if defined $save;
+    if (defined $save) {
+        spurt $filename, $save;
+        print "$filename updated.\n";
+    } else {
+        print "$filename not changed.\n";
+    }
 }
 
 1;
