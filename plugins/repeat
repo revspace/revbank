@@ -12,10 +12,10 @@ my $limit = 200;
 my $err_limit = "Repetition is limited at $limit items.";
 
 sub command($self, $cart, $command, @) {
-    return ABORT, $err_pfand if $cart->entries('is_pfand');
-
     my ($lhs, $op, $rhs) = $command =~ /^(\d+)?([x*+-])(\d+)?$/
         or return NEXT;
+
+    return ABORT, $err_pfand if $cart->entries('is_pfand');
 
     my $last = ($cart->entries)[-1];
 
