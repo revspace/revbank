@@ -18,11 +18,11 @@ In general, upgrading is done by committing any changed files and then doing a
 
 ## Installing
 
-1. Install the Perl module Term::ReadLine::Gnu
+1. Install the dependencies:
 
 ```
-Debian:  apt install libterm-readline-gnu-perl
-Generic: cpan Term::ReadLine::Gnu
+Debian:  apt install libterm-readline-gnu-perl libcurses-ui-perl
+Generic: cpan Term::ReadLine::Gnu Curses::UI
 ```
 
 2. Clone the repository, run revbank :)

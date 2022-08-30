@@ -1,3 +1,11 @@
+# (2022-08-30) RevBank 3.5
+
+RevBank now has a simple built-in text editor for products and market;
+rationale in lib/RevBank/TextArea.pod.
+
+This comes with a new dependency, the perl module Curses::UI (debian:
+libcurses-ui-perl).
+
 # (2022-06-11) RevBank 3.4
 
 RevBank now has built-in hidden accounts and balanced transactions. These
