@@ -130,8 +130,8 @@ sub _editor($title, $origdata) {
                     ],
                     -values => [ 1, 0 ],
                 );
-                $return = $origdata if $answer == 1;
-                $cui->mainloopExit  if $answer >= 0;
+                $return = $editor->get if $answer == 1;
+                $cui->mainloopExit     if $answer >= 0;
             } else {
                 $cui->mainloopExit;
             }
@@ -163,6 +163,7 @@ sub edit($filename) {
         or die "Someone else is alreading editing $filename.\n";
 
     my $save = _editor($filename, scalar slurp $filename);
+
     if (defined $save) {
         spurt $filename, $save;
         print "$filename updated.\n";
