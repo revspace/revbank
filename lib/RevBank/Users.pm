@@ -31,7 +31,7 @@ sub since($username) {
 
 sub create($username) {
     my $now = now();
-    append $filename, "$username 0.00 $now\n";
+    append $filename, "$username " . RevBank::Amount->new(0) . " $now\n";
     RevBank::Plugins::call_hooks("user_created", $username);
     return $username;
 }

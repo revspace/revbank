@@ -31,7 +31,7 @@ sub command :Tab(cash) ($self, $cart, $command, @) {
 
 sub hook_cash($class, @) {
     printf "There should currently be (at least) %s in the cash box.\n",
-        -RevBank::Users::balance("-cash") || "0.00";
+        -RevBank::Users::balance("-cash") || RevBank::Amount->new(0);
 }
 
 our $suppress = 0;
@@ -94,7 +94,7 @@ sub confirm($self, $cart, $arg, @) {
     $cart->checkout('-expenses/discrepancies');
 
     printf "\nDiscrepancy recorded; corrected cash box amount is %s.\n",
-        -RevBank::Users::balance("-cash") || "0.00";
+        -RevBank::Users::balance("-cash") || RevBank::Amount->new(0);
 
     return ACCEPT;
 }

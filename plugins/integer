@@ -1,0 +1,43 @@
+# Monkey patching of RevBank::Amount to make RevBank use integer currency.
+
+# WILL NOT WORK with existing data files. Update revbank.accounts,
+# revbank.market, revbank.products manually to remove the decimal parts of
+# amounts.
+
+use POSIX qw(lround);
+
+sub RevBank::Amount::parse_string($class, $str) {
+	defined $str and $str =~ /\S/ or return undef;
+
+	my ($neg, $int)
+		= $str =~ /^\s*(?:\+|(-)?)([0-9]+)?\s*$/
+		or return undef;
+	
+	$int //= 0;
+
+	return $class->new(
+		($neg ? -1 : 1) * $int
+	);
+}
+
+sub RevBank::new_from_float($class, $num) {
+	return $class->new(lround sprintf "%d", $num);
+	# See comment in RevBank/Amount.pm
+}
+
+sub RevBank::Amount::string($self, $plus = "") {
+	return sprintf(
+		"%s%d",
+		$$self < 0 ? "-" : $plus,
+		abs($$self),
+	);
+}
+
+sub RevBank::Amount::string_flipped($self, $sep = " ") {
+	return sprintf(
+		"%s%d",
+		$$self > 0 ? "+" : "",
+		$sep,
+		abs($$self)
+	);
+}
