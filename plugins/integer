@@ -35,7 +35,7 @@ sub RevBank::Amount::string($self, $plus = "") {
 
 sub RevBank::Amount::string_flipped($self, $sep = " ") {
 	return sprintf(
-		"%s%d",
+		"%s%s%d",
 		$$self > 0 ? "+" : "",
 		$sep,
 		abs($$self)
