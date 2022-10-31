@@ -24,13 +24,15 @@ sub get_lock() {
 
 	open $lockfh, ">", $lockfn;
 	my $attempt = 1;
+
+	my $debug = !!$ENV{REVBANK_DEBUG};
 	FLOCK: {
 		if (flock $lockfh, LOCK_EX | LOCK_NB) {
 			syswrite $lockfh, $$;
 			return ++$lockcount;
 		}
 
-		if (($attempt % 50) == 0) {
+		if (($attempt % 50) == 0 or $debug) {
 			warn "Another revbank instance has the global lock. Waiting for it to finish...\n"
 		}
 		sleep .1;

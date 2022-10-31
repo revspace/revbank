@@ -83,9 +83,8 @@ sub checkout($self, $user) {
             for $entry, $entry->contras;
     }
 
-    my $transaction_id = time() - 1300000000;
-
     RevBank::FileIO::with_lock {
+        my $transaction_id = time() - 1300000000;
         RevBank::Plugins::call_hooks("checkout", $self, $user, $transaction_id);
 
         for my $account (reverse sort keys %deltas) {
@@ -96,11 +95,12 @@ sub checkout($self, $user) {
         }
 
         RevBank::Plugins::call_hooks("checkout_done", $self, $user, $transaction_id);
+
+        sleep 1;  # look busy (and ensure new id for next transaction :))
     };
 
     $self->empty;
 
-    sleep 1;  # Ensure new timestamp/id for new transaction
     return 1;
 }
 
