@@ -27,12 +27,13 @@ sub add_entry($self, $entry) {
 }
 
 sub add($self, $amount, $description, $data = {}) {
-    Carp::croak "Unitialized amount; possibly a deprecated call style (\$cart->add(undef, ...))"
-        if not defined $amount;
-    Carp::croak "Non-hash data argument; possibly a deprecated call style (\$cart->add(\$user, ...)"
-        if @_ == 4 and not ref $data;
-    Carp::croak "Missing description; possibly a deprecated call style (\$cart->add(\$entry); use add_entry instead)"
-        if not defined $description;
+    Carp::croak "Non-hash data argument; possibly a deprecated call style"
+        if not ref $data;
+
+    # Old pre-v3 call styles:
+    # ->add(undef, ...)  => just remove the "undef,"
+    # ->add($user, ...)  => use $cart->add(...)->add_contra($user, ...)
+    # ->add($entry)      => use $cart->add_entry($entry)
 
     return $self->add_entry(RevBank::Cart::Entry->new($amount, $description, $data));
 }
