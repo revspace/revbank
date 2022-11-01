@@ -31,7 +31,13 @@ sub hook_checkout($class, $cart, $user, $transaction_id, @) {
 
 sub list($self) {
     require RevBank::TextEditor;
-    my $list = join "", sort grep !/^[-+]/, slurp("revbank.accounts");
+
+    my $list = join "", sort {
+        lc($a) cmp lc($b)
+    } grep {
+        !/^[-+]/
+    } slurp("revbank.accounts");
+
     RevBank::TextEditor::pager("RevBank account list", $list);
     return ACCEPT;
 }
