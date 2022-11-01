@@ -9,6 +9,8 @@ sub command :Tab(list,ls,shame,USERS) ($self, $cart, $command, @) {
     return $self->list  if $command eq 'ls';
     return $self->shame if $command eq 'shame';
 
+    return "Username", \&log_for if $command eq 'log';
+
     my $user = parse_user($command)
         or return NEXT;
 
@@ -28,19 +30,45 @@ sub hook_checkout($class, $cart, $user, $transaction_id, @) {
 }
 
 sub list($self) {
-    system "sort -f revbank.accounts | grep -v ^# | perl -ne's/( -[\\d.]+)/\\e[31;1m\$1\\e[0m/; print if not /^[-+]/' | more";
+    require RevBank::TextEditor;
+    my $list = join "", sort grep !/^[-+]/, slurp("revbank.accounts");
+    RevBank::TextEditor::pager("RevBank account list", $list);
     return ACCEPT;
 }
 
 sub shame($self) {
-    system "sort -k2 -n revbank.accounts | grep -v ^# | grep -- ' -' | perl -ne's/( -[\\d.]+)/\\e[31;1m\$1\\e[0m/; print if not /^[-+]/' | more";
+    my $list = join "", sort grep / -/ && !/^[-+]/, slurp("revbank.accounts");
+    $list =~ s/( -[\d.]+)/\e[31;1m$1\e[0m/g;
+    print $list;
+    return ACCEPT;
+}
+
+sub _grep($u) {
+    my @lines;
+    open my $fh, "<", ".revbank.log" or die $!;
+    while (defined($_ = readline $fh)) {
+        s/CHECKOUT\s+\S+\s+(\S+)\s+// or next;
+        lc($1) eq lc($u) or next;
+        s/  #// or next;
+        s/_/ /; 
+        push @lines, $_;
+    }
+    return @lines;
+}
+
+sub log_for($self, $cart, $input, @) {
+    my $user = parse_user($input) or return REJECT, "Unknown user";
+    my @lines = _grep($user);
+
+    require RevBank::TextEditor;
+    RevBank::TextEditor::pager("RevBank log for $user", join("", @lines, "(end)"));
     return ACCEPT;
 }
 
 sub _recent($n, $u) {
     $n += 0;
     print "Last $n transactions for $u:\n";
-    system "perl -lane'lc(\$F[3]) eq lc(qq[\Q$u\E]) or next; s/CHECKOUT\\s+\\S+\\s+\\S+\\s+// or next; s/  #// or next; s/_/ /; print' .revbank.log | tail -n$n";
+    print +(_grep($u))[-$n .. -1];
 }
 
 sub balance($self, $u) {

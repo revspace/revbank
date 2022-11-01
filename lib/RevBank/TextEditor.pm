@@ -13,6 +13,17 @@ use Time::HiRes qw(sleep);
 
 my $tab = 4;
 
+sub _require {
+    if (not eval { require Curses::UI }) {
+        my $install = -e "/etc/debian_version"
+            ? "apt install libcurses-ui-perl"
+            : "cpan Curses::UI";
+
+        die "Couldn't load the Perl module Curses::UI.\n" .
+            "Please install it! (sudo $install)\n";
+    }
+}
+
 sub _find_next($win, $textref) {
     my $editor = $win->getobj('editor');
     my $find = $win->getobj('find');
@@ -87,10 +98,12 @@ sub _find($win) {
     $win->delete('find');
 }
 
-sub _editor($title, $origdata) {
+sub _editor($title, $origdata, $readonly = 0) {
     our $cui ||= Curses::UI->new;
     my $win = $cui->add('main', 'Window');
-    $title = "[$title]  Ctrl+X: exit  Ctrl+F: find  Ctrl+C/K/V: copy/cut/paste";
+    $title = $readonly
+        ? "[$title]  Press q to quit"
+        : "[$title]  Ctrl+X: exit  Ctrl+F: find  Ctrl+C/K/V: copy/cut/paste";
 
     my $editor = $win->add(
         'editor', 'TextEditor',
@@ -101,6 +114,8 @@ sub _editor($title, $origdata) {
         -wrapping   => 0,
         -hscrollbar => 0,
         -vscrollbar => 0,
+        -pos        => ($readonly ? length($origdata) : 0),
+        #-readonly => !!$readonly  # does not support -pos
     );
 
     my $return;
@@ -138,7 +153,9 @@ sub _editor($title, $origdata) {
         } ],
     );
 
+    $editor->readonly(1) if $readonly;  # must be before bindings
     $editor->set_binding(reverse @$_) for @keys;
+    $editor->set_binding(sub { $cui->mainloopExit }, "q") if $readonly;
     $editor->focus();
 
     $cui->mainloop;
@@ -149,14 +166,7 @@ sub _editor($title, $origdata) {
 }
 
 sub edit($filename) {
-    if (not eval { require Curses::UI }) {
-        my $install = -e "/etc/debian_version"
-            ? "apt install libcurses-ui-perl"
-            : "cpan Curses::UI";
-
-        die "Couldn't load the Perl module Curses::UI.\n" .
-            "Please install it! (sudo $install)\n";
-    }
+    _require();
 
     open my $fh, ">>", $filename;
     flock $fh, LOCK_EX | LOCK_NB
@@ -170,6 +180,11 @@ sub edit($filename) {
     } else {
         print "$filename not changed.\n";
     }
+}
+
+sub pager($title, $data) {
+    _require();
+    _editor($title, $data, 1);
 }
 
 1;
