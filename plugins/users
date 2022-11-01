@@ -67,7 +67,7 @@ sub _grep($u) {
     return @lines;
 }
 
-sub log_for($self, $cart, $input, @) {
+sub log_for :Tab(USERS) ($self, $cart, $input, @) {
     my $user = parse_user($input) or return REJECT, "Unknown user";
     my @lines = _grep($user);
 
