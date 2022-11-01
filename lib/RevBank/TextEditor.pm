@@ -114,48 +114,51 @@ sub _editor($title, $origdata, $readonly = 0) {
         -wrapping   => 0,
         -hscrollbar => 0,
         -vscrollbar => 0,
-        -pos        => ($readonly ? length($origdata) : 0),
+        -pos        => ($readonly == 2 ? length($origdata) : 0),
         #-readonly => !!$readonly  # does not support -pos
     );
 
     my $return;
 
-    my @keys = (
-        [ Curses::KEY_HOME() => 'cursor-scrlinestart' ],
-        [ Curses::KEY_END()  => 'cursor-scrlineend' ],
-        [ "\cK" => 'delete-line' ],  # nano (can't do meta/alt for M-m)
-        [ "\cU" => 'paste' ],        # nano
-        [ "\c[" => sub { } ],
-        [ "\cL" => sub { $cui->draw } ],
-        [ "\c^" => sub { $editor->pos(0) } ],
-        [ "\c_" => sub { $editor->pos(length($editor->get)) } ],
-        [ "\cI" => sub { $editor->add_string(" " x ($tab - ($editor->{-xpos} % $tab))) } ],
-        [ "\cS" => sub { $cui->dialog("Enable flow control :)") } ],
-        [ "\cQ" => sub {} ],
-        [ "\cC" => sub { $editor->{-pastebuffer} = $editor->getline_at_ypos($editor->{-ypos}) } ],
-        [ "\cF" => sub { _find($win) } ],
-        [ "\cX" => sub {
-            if ($editor->get ne $origdata) {
-                my $answer = $cui->dialog(
-                    -message => "Save changes?",
-                    -buttons => [
-                        { -label => "[Save]",    -value => 1 },
-                        { -label => "[Discard]", -value => 0 },
-                        { -label => "[Cancel]",  -value => -1 },
-                    ],
-                    -values => [ 1, 0 ],
-                );
-                $return = $editor->get if $answer == 1;
-                $cui->mainloopExit     if $answer >= 0;
-            } else {
-                $cui->mainloopExit;
-            }
-        } ],
-    );
+    if ($readonly) {
+        $editor->readonly(1);  # must be before bindings
+        $editor->set_binding(sub { $cui->mainloopExit }, "q") if $readonly;
+    } else {
+        my @keys = (
+            [ Curses::KEY_HOME() => 'cursor-scrlinestart' ],
+            [ Curses::KEY_END()  => 'cursor-scrlineend' ],
+            [ "\cK" => 'delete-line' ],  # nano (can't do meta/alt for M-m)
+            [ "\cU" => 'paste' ],        # nano
+            [ "\c[" => sub { } ],
+            [ "\cL" => sub { $cui->draw } ],
+            [ "\c^" => sub { $editor->pos(0) } ],
+            [ "\c_" => sub { $editor->pos(length($editor->get)) } ],
+            [ "\cI" => sub { $editor->add_string(" " x ($tab - ($editor->{-xpos} % $tab))) } ],
+            [ "\cS" => sub { $cui->dialog("Enable flow control :)") } ],
+            [ "\cQ" => sub {} ],
+            [ "\cC" => sub { $editor->{-pastebuffer} = $editor->getline_at_ypos($editor->{-ypos}) } ],
+            [ "\cF" => sub { _find($win) } ],
+            [ "\cX" => sub {
+                if ($editor->get ne $origdata) {
+                    my $answer = $cui->dialog(
+                        -message => "Save changes?",
+                        -buttons => [
+                            { -label => "[Save]",    -value => 1 },
+                            { -label => "[Discard]", -value => 0 },
+                            { -label => "[Cancel]",  -value => -1 },
+                        ],
+                        -values => [ 1, 0 ],
+                    );
+                    $return = $editor->get if $answer == 1;
+                    $cui->mainloopExit     if $answer >= 0;
+                } else {
+                    $cui->mainloopExit;
+                }
+            } ],
+        );
 
-    $editor->readonly(1) if $readonly;  # must be before bindings
-    $editor->set_binding(reverse @$_) for @keys;
-    $editor->set_binding(sub { $cui->mainloopExit }, "q") if $readonly;
+        $editor->set_binding(reverse @$_) for @keys;
+    }
     $editor->focus();
 
     $cui->mainloop;
@@ -185,6 +188,11 @@ sub edit($filename) {
 sub pager($title, $data) {
     _require();
     _editor($title, $data, 1);
+}
+
+sub logpager($title, $data) {
+    _require();
+    _editor($title, $data, 2);
 }
 
 1;
