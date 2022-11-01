@@ -37,7 +37,12 @@ sub list($self) {
 }
 
 sub shame($self) {
-    my $list = join "", sort grep / -/ && !/^[-+]/, slurp("revbank.accounts");
+    my $list = join "", sort {
+        (split " ", $a)[1] <=> (split " ", $b)[1]
+    } grep {
+        / -/ && !/^[-+]/
+    } slurp("revbank.accounts");
+
     $list =~ s/( -[\d.]+)/\e[31;1m$1\e[0m/g;
     print $list;
     return ACCEPT;
