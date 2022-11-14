@@ -2,6 +2,7 @@
 
 HELP1 "<account>" => "[Pay with your account and] show balance";
 HELP  "list" => "List accounts and balances";
+HELP  "log" => "View transaction log";
 HELP  "shame" => "Display Hall of Shame (negative balances)";
 
 sub command :Tab(list,ls,shame,USERS) ($self, $cart, $command, @) {
