@@ -13,7 +13,7 @@ sub command :Tab(take,steal,split) ($self, $cart, $command, @) {
 
     $self->{users} = [];
 
-    my $sum = List::Util::sum(map -$_->{amount}, _select_split($cart));
+    my $sum = List::Util::sum(map -$_->{amount} * $_->{quantity}, _select_split($cart));
     $self->{split_amount} = $sum;
 
     return REJECT, "Nothing to split. Add products first." if not $sum;
