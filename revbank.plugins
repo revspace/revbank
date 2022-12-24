@@ -13,7 +13,6 @@ give
 grandtotal
 take
 split
-#pfand      # makes little sense in a self service environment
 #cash       # cash tracking also requires deposit_methods to make sense
 #skim       # cash tracking also requires deposit_methods to make sense
 stock
