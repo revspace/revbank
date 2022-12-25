@@ -80,7 +80,7 @@ sub log_for :Tab(USERS) ($self, $cart, $input, @) {
 sub _recent($n, $u) {
     $n += 0;
     print "Last $n transactions for $u:\n";
-    print +(_grep($u))[-$n .. -1];
+    print grep defined, +(_grep($u))[-$n .. -1];
 }
 
 sub balance($self, $u) {
