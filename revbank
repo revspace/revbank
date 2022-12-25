@@ -18,7 +18,7 @@ use RevBank::Global;
 use RevBank::Messages;
 use RevBank::Cart;
 
-our $VERSION = "3.5";
+our $VERSION = "3.6";
 our %HELP1 = (
     "abort" => "Abort the current transaction",
 );

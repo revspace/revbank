@@ -1,3 +1,82 @@
+# (2022-12-25) RevBank 3.6
+
+## Update your `revbank.plugins`
+
+The `edit` command is now in its own plugin, so that it can be disabled (this
+has been requested several times). To keep the ability to edit the products
+list from within RevBank, add `edit` to `revbank.plugins`.
+
+## Check your `revbank.products`
+
+There's new syntax for `revbank.products`: addons. Check that your lines don't
+have `+foo` at the end, where `foo` can be anything.
+
+Also check that you don't have any product ids that start with `+`; those can
+no longer be entered as this syntax now has special semantics.
+
+So these don't work as before:
+
+    example_id      1.00  Example product +something
+    +something      1.00  Product id that starts with plus
+    example,+alias  1.00  Alias that starts with plus
+
+These will keep working as they were:
+
+    example_id1     1.00  Example product+something
+    example_id2     1.00  Example product + something
+    more_stuff      1.00  Example product with +something but not at the end
+    bbq             1.00  3+ pieces of meat
+
+## New features in `products` plugin
+
+There are several new features that you may wish to take advantage of. By
+combining the new features, powerful things can be done that previously
+required custom plugins.
+
+The syntax for `revbank.products` has become complex. Please refer to the new
+documentation in [products.pod](plugins/products.pod) for details.
+
+### Negative prices (add money to account)
+
+Support for non-positive prices was requested several times over the years and
+has now finally been implemented.
+
+It's now possible to have a product with a negative amount, which when "bought"
+will cause the user to receive money instead of spending it.
+
+### Product addons
+
+It is now possible to add products to products, which is done by specifying
+`+foo` at the end of a product description, where `foo` is the id of another
+product. This can be used for surcharges and discounts, or for bundles of
+products that can also be bought individually.
+
+### Eplicit contra accounts
+
+By default, products sold via the `products` plugin, are accounted on the
+`+sales/products` contra account. This can now be overridden by specifying
+`@accountname` after the price in `revbank.products`. For example,
+`1.00@+sales/products/specificcategory`. While this will mess up your tidy
+columns, you may be able to get rid of a bunch of custom plugins now.
+
+When the specified contra account is a regular account (does not start with `+`
+or `-`), this works similar to the `market` plugin, but without any commission
+for the organization.
+
+## Pfand plugin: gone
+
+The `pfand` plugin, that was originally written as a proof-of-concept demo, has
+been removed without deprecation cycle. To my knowledge, nobody uses this
+plugin. If you did use it, just grab the old version from git. Please let me
+know about your usecase!
+
+The introduction of beverage container deposits in The Netherlands has
+triggered reevaluation, and several things about that plugin were wrong,
+including the condescending comments that bottle deposits for small bottles
+would be crazy or wouldn't make sense in a self-service environment. RevBank
+was too limited to support it properly, but I think current RevBank fulfills
+all requirements for making a better, proper pfand plugin.
+
 # (2022-08-30) RevBank 3.5
 
 RevBank now has a simple built-in text editor for products and market;

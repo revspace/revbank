@@ -18,7 +18,7 @@ sub new($class, $amount, $description, $attributes = {}) {
         description => $description,
         attributes  => { %$attributes },
         user        => undef,
-        contras     => [],
+        contras     => [],  # infos + contras
         caller      => List::Util::first(sub { !/^RevBank::Cart/ }, map { (caller $_)[3] } 1..10)
                        || (caller 1)[3],
     };
@@ -35,6 +35,22 @@ sub add_contra($self, $user, $amount, $description) {
     push @{ $self->{contras} }, {
         user        => $user,
         amount      => $amount,  # should usually have opposite sign (+/-)
+        description => $description,
+    };
+
+    $self->attribute('changed', 1);
+
+    return $self;  # for method chaining
+}
+
+sub add_info($self, $amount, $description) {
+    $amount = RevBank::Amount->parse_string($amount) if not ref $amount;
+
+    $description =~ s/\$you/$self->{user}/g if defined $self->{user};
+
+    push @{ $self->{contras} }, {
+        user        => undef,
+        amount      => $amount,  # should usually have SAME sign (+/-)
         description => $description,
     };
 
@@ -73,7 +89,7 @@ sub multiplied($self) {
 
 sub contras($self) {
     # Shallow copy suffices for now, because there is no depth.
-    return map +{ %$_ }, @{ $self->{contras} };
+    return map +{ %$_ }, grep defined $_->{user}, @{ $self->{contras} };
 }
 
 sub as_printable($self) {
@@ -85,16 +101,19 @@ sub as_printable($self) {
     # positive numbers.
     push @s, sprintf "%8s %s", $self->{amount}->string_flipped, $self->{description};
 
-    for my $c ($self->contras) {
-        next if RevBank::Users::is_hidden($c->{user}) and not $ENV{REVBANK_DEBUG};
-
+    for my $c (@{ $self->{contras} }) {
+        my $description;
+        if (defined $c->{user}) {
+            next if RevBank::Users::is_hidden($c->{user}) and not $ENV{REVBANK_DEBUG};
+            $description = join " ", ($c->{amount}->cents > 0 ? "->" : "<-"), $c->{user};
+        } else {
+            $description = $c->{description};
+        }
         push @s, sprintf(
-            "%11s %s %s",
-            $c->{amount}->abs->string,
-            ($c->{amount}->cents > 0 ? "->" : "<-"),
-            $c->{user}
+            "%11s %s",
+            ($self->{amount} > 0 ? $c->{amount}->string_flipped("") : $c->{amount}->string),
+            $description
         );
-
     }
 
     push @s, "}" if $self->multiplied;
@@ -109,6 +128,7 @@ sub as_loggable($self) {
 
     my @s;
     for ($self, @{ $self->{contras} }) {
+        next if not defined $_->{user};
         my $total = $quantity * $_->{amount};
 
         my $description =

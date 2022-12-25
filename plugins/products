@@ -1,36 +1,58 @@
 #!perl
 
 HELP1 "<productID>" => "Add a product to pending transaction";
-HELP  "edit" => "Edit product list";
 
 my $filename = 'revbank.products';
 
 sub _read_products() {
     my %products;
+    my $line = 0;
     for (slurp $filename) {
+        $line++;
         /^\s*#/ and next;
         /\S/ or next;
         chomp;
-        my ($ids, $p, $d) = split " ", $_, 3;
+
+        my ($ids, $p, $desc) = split " ", $_, 3;
         my @ids = split /,/, $ids;
 
-        $products{ $_ } = { id => $ids[0], price => $p, description => $d}
-            for @ids;
+        $p ||= "invalid";
+        $desc ||= "(no description)";
+
+        my ($price, $contra) = split /\@/, $p, 2;
+
+        my $sign = $price =~ s/^-// ? -1 : 1;
+
+        $price = eval { parse_amount($price) };
+        if (not defined $price) {
+            warn "Invalid price for '$ids[0]' at $filename line $line.\n";
+            next;
+        }
+
+        my @addons;
+        unshift @addons, $1 while $desc =~ s/\s+ \+ (\S+) \s*$//x;
+
+
+        $products{$_} = {
+            id          => $ids[0],
+            price       => $sign * $price,
+            description => $desc,
+            contra      => $contra || '+sales/products',
+            addons      => \@addons,
+            line        => $line,
+        } for @ids;
     }
 
     return \%products;
 }
 
-sub command :Tab(edit,&tab) ($self, $cart, $command, @) {
-    if ($command eq 'edit') {
-        require RevBank::TextEditor;
-        RevBank::TextEditor::edit($filename);
-        return ACCEPT;
-    }
+sub command :Tab(&tab) ($self, $cart, $command, @) {
+    $command =~ /\S/ or return NEXT;
+    $command =~ /^\+/ and return NEXT;
 
-    my $product = _read_products->{ $command } or return NEXT;
-
-    my $price = parse_amount( $product->{price} ) or return NEXT;
+    my $products = _read_products;
+    my $product = $products->{ $command } or return NEXT;
+    my $price = $product->{price};
 
     my @existing = grep {
         $_->attribute('plugin') eq $self->id and
@@ -42,17 +64,56 @@ sub command :Tab(edit,&tab) ($self, $cart, $command, @) {
         return ACCEPT;
     }
 
-    $cart
-        ->add(
-            -$price,
-            $product->{description},
-            { product_id => $product->{id}, plugin => $self->id }
-        )
-        ->add_contra(
-            "+sales/products",
-            +$price,
-            "\$you bought $product->{description}"
-        );
+    my $total = $price;
+    my $contra_desc = "\$you bought $product->{description}";
+
+    my @addons = @{ $product->{addons} };
+    my @infos = @addons ? (
+          $price->cents > 0 ? ([ $price, "Product" ])
+        : $price->cents < 0 ? ([ $price, "Reimbursement" ])
+        : ()  # price == 0: only addons
+    ) : ();
+
+    my @contras;
+    my %ids_seen = ($product->{id} => 1);
+
+    while (my $addon_id = shift @addons) {
+        $addon_id = "+$addon_id" if exists $products->{"+$addon_id"};
+
+        if ($ids_seen{$addon_id}++) {
+            return REJECT, "Infinite addons are not supported.";
+        }
+
+        my $addon = $products->{$addon_id}
+            or return REJECT, "Addon '$addon_id' does not exist.";
+
+        $total += $addon->{price};
+
+        push @infos, [ $addon->{price}, $addon->{description} ]
+            if $addon->{contra} =~ /^[-+]/;
+
+        push @contras, [
+            $addon->{contra},
+            $addon->{price},
+            "$addon->{description} ($contra_desc)"
+        ];
+
+        push @addons, @{ $addon->{addons} };
+    }
+
+    my $entry = $cart->add(
+        -$total,
+        $product->{description},
+        { product_id => $product->{id}, plugin => $self->id, addons => $product->{addons} }
+    );
+    $entry->add_contra(
+        $product->{contra},
+        +$price,
+        $contra_desc
+    );
+    $entry->add_info(@$_) for @infos;
+    $entry->add_contra(@$_) for @contras;
+
     return ACCEPT;
 }
 
