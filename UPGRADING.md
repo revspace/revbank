@@ -51,7 +51,7 @@ It is now possible to add products to products, which is done by specifying
 product. This can be used for surcharges and discounts, or for bundles of
 products that can also be bought individually.
 
-### Eplicit contra accounts
+### Explicit contra accounts
 
 By default, products sold via the `products` plugin, are accounted on the
 `+sales/products` contra account. This can now be overridden by specifying
@@ -76,6 +76,18 @@ including the condescending comments that bottle deposits for small bottles
 would be crazy or wouldn't make sense in a self-service environment. RevBank
 was too limited to support it properly, but I think current RevBank fulfills
 all requirements for making a better, proper pfand plugin.
+
+## Perl warnings are now enabled for plugins
+
+If you get Perl warnings from a plugin, and don't want to fix the issues with
+the code (or disagree with the warning), just add "no warnings;" to the top of
+the plugin file. However, the warnings are often indicative of suboptimal code
+that is ground for improvement!
+
+Most warnings will be about unitialized (undefined) values. Some guidance for
+Perl newbies: you can test whether something is defined with `if
+(defined($foo)) { ... }`, or provide a default value with `$foo // "example
+default value"`.
 
 # (2022-08-30) RevBank 3.5
 

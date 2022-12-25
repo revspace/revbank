@@ -52,6 +52,7 @@ sub load($class) {
         }
         RevBank::Eval::clean_eval(qq[
             use strict;
+            use warnings;
             use feature qw(signatures);
             no warnings 'experimental::signatures';
             package $package;
