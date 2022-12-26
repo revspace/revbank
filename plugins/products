@@ -9,9 +9,10 @@ sub _read_products() {
     my $line = 0;
     for (slurp $filename) {
         $line++;
-        /^\s*#/ and next;
-        /\S/ or next;
-        chomp;
+
+        s/^\s+|\s+$//g;  # trim
+        next if /^#/;
+        next if not length;
 
         my ($ids, $p, $desc) = split " ", $_, 3;
         my @ids = split /,/, $ids;
@@ -30,8 +31,7 @@ sub _read_products() {
         }
 
         my @addons;
-        unshift @addons, $1 while $desc =~ s/\s+ \+ (\S+) \s*$//x;
-
+        unshift @addons, $1 while $desc =~ s/\s+ \+ (\S+)$//x;
 
         $products{$_} = {
             id          => $ids[0],

@@ -10,10 +10,20 @@ products - RevBank plugin for selling products
 
 =head1 DESCRIPTION
 
-This plugin turns products from a product list into RevBank commands.
+This plugin turns products from a product list into RevBank commands,
+that add the respective products as Entries to the current Cart.
+
+=head1 CONFIGURATION
 
 The configuration for this plugin lives in a text file called
-C<revbank.products>, which has whitespace-separated columns:
+C<revbank.products>.
+
+Whitespace at the beginning or end of a line are ignored. Blank lines are
+ignored. Comments are lines that start with C<#> and are also ignored. Note
+that a whole line is either a comment or a data line; trailing comments are
+not supported and C<#> is a valid character in a product description.
+
+Data lines have whitespace-separated columns:
 
 =head2 Product ids
 
