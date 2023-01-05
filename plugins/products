@@ -77,6 +77,12 @@ sub command :Tab(&tab) ($self, $cart, $command, @) {
 
     my $contra_desc = "\$you bought $product->{description}";
 
+    my @addons = @{ $product->{addons} };
+
+    my $display = undef;
+    $display = "Product"       if @addons and $price->cents > 0;
+    $display = "Reimbursement" if @addons and $price->cents < 0;
+
     my $entry = $cart->add(
         -$price,
         $product->{description},
@@ -85,15 +91,9 @@ sub command :Tab(&tab) ($self, $cart, $command, @) {
     $entry->add_contra(
         $product->{contra},
         +$price,
-        $contra_desc
+        $contra_desc,
+        $display
     );
-
-    my @addons = @{ $product->{addons} }
-        or return ACCEPT;
-
-
-    $entry->add_info($price, "Product")       if $price->cents > 0;
-    $entry->add_info($price, "Reimbursement") if $price->cents < 0;
 
     my %ids_seen = ($product->{id} => 1);
 
@@ -120,13 +120,11 @@ sub command :Tab(&tab) ($self, $cart, $command, @) {
 
         $entry->amount( $entry->amount - $addon_price );
 
-        $entry->add_info($addon_price, $addon->{description})
-            if $addon->{contra} =~ /^[-+]/;
-
         $entry->add_contra(
             $addon->{contra},
             $addon_price,
-            "$addon->{description} ($contra_desc)"
+            "$addon->{description} ($contra_desc)",
+            $addon->{description}
         );
 
         push @addons, @{ $addon->{addons} };

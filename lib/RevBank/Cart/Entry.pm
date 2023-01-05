@@ -18,7 +18,7 @@ sub new($class, $amount, $description, $attributes = {}) {
         description => $description,
         attributes  => { %$attributes },
         user        => undef,
-        contras     => [],  # infos + contras
+        contras     => [],
         caller      => List::Util::first(sub { !/^RevBank::Cart/ }, map { (caller $_)[3] } 1..10)
                        || (caller 1)[3],
     };
@@ -26,7 +26,10 @@ sub new($class, $amount, $description, $attributes = {}) {
     return bless $self, $class;
 }
 
-sub add_contra($self, $user, $amount, $description) {
+sub add_contra($self, $user, $amount, $description, $display = undef) {
+    # $display should be given for either ALL or NONE of the contras,
+    # with the exception of contras with $amount == 0.00;
+
     $amount = RevBank::Amount->parse_string($amount) if not ref $amount;
     $user = RevBank::Users::assert_user($user);
 
@@ -35,23 +38,8 @@ sub add_contra($self, $user, $amount, $description) {
     push @{ $self->{contras} }, {
         user        => $user,
         amount      => $amount,  # should usually have opposite sign (+/-)
-        description => $description,
-    };
-
-    $self->attribute('changed', 1);
-
-    return $self;  # for method chaining
-}
-
-sub add_info($self, $amount, $description) {
-    $amount = RevBank::Amount->parse_string($amount) if not ref $amount;
-
-    $description =~ s/\$you/$self->{user}/g if defined $self->{user};
-
-    push @{ $self->{contras} }, {
-        user        => undef,
-        amount      => $amount,  # should usually have SAME sign (+/-)
-        description => $description,
+        description => $description,  # contra user's perspective
+        display     => $display,  # interactive user's perspective
     };
 
     $self->attribute('changed', 1);
@@ -100,7 +88,7 @@ sub multiplied($self) {
 
 sub contras($self) {
     # Shallow copy suffices for now, because there is no depth.
-    return map +{ %$_ }, grep defined $_->{user}, @{ $self->{contras} };
+    return map +{ %$_ }, @{ $self->{contras} };
 }
 
 sub as_printable($self) {
@@ -114,11 +102,23 @@ sub as_printable($self) {
 
     for my $c (@{ $self->{contras} }) {
         my $description;
-        if (defined $c->{user}) {
-            next if RevBank::Users::is_hidden($c->{user}) and not $ENV{REVBANK_DEBUG};
-            $description = join " ", ($c->{amount}->cents > 0 ? "->" : "<-"), $c->{user};
+        my $amount = $self->{amount};
+        my $hidden = RevBank::Users::is_hidden($c->{user});
+        my $fromto = $c->{amount}->cents < 0 ? "<-" : "->";
+        $fromto .= " $c->{user}";
+
+        if ($c->{display}) {
+            $description =
+                $hidden
+                ? ($ENV{REVBANK_DEBUG} ? "($fromto:) $c->{display}" : $c->{display})
+                : "$fromto: $c->{display}";
+
+            $amount *= -1;
+        } elsif ($hidden) {
+            next unless $ENV{REVBANK_DEBUG};
+            $description = "($fromto: $c->{description})";
         } else {
-            $description = $c->{description};
+            $description = $fromto;
         }
         push @s, sprintf(
             "%11s %s",
@@ -139,7 +139,6 @@ sub as_loggable($self) {
 
     my @s;
     for ($self, @{ $self->{contras} }) {
-        next if not defined $_->{user};
         my $total = $quantity * $_->{amount};
 
         my $description =
