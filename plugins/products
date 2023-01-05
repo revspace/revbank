@@ -3,6 +3,7 @@
 HELP1 "<productID>" => "Add a product to pending transaction";
 
 my $filename = 'revbank.products';
+my $default_contra = '+sales/products';
 
 sub _read_products() {
     my %products;
@@ -23,11 +24,20 @@ sub _read_products() {
         my ($price, $contra) = split /\@/, $p, 2;
 
         my $sign = $price =~ s/^-// ? -1 : 1;
+        my $percent = $price =~ s/%$//;
 
-        $price = eval { parse_amount($price) };
-        if (not defined $price) {
-            warn "Invalid price for '$ids[0]' at $filename line $line.\n";
-            next;
+        if ($percent) {
+            if (grep !/^\+/, @ids) {
+                warn "Percentage invalid for non-addon at $filename line $line.\n";
+                next;
+            }
+            $price = 0 + $price;
+        } else {
+            $price = eval { parse_amount($price) };
+            if (not defined $price) {
+                warn "Invalid price for '$ids[0]' at $filename line $line.\n";
+                next;
+            }
         }
 
         my @addons;
@@ -36,8 +46,9 @@ sub _read_products() {
         $products{$_} = {
             id          => $ids[0],
             price       => $sign * $price,
+            percent     => $percent,
             description => $desc,
-            contra      => $contra || '+sales/products',
+            contra      => $contra || $default_contra,
             addons      => \@addons,
             line        => $line,
         } for @ids;
@@ -64,17 +75,26 @@ sub command :Tab(&tab) ($self, $cart, $command, @) {
         return ACCEPT;
     }
 
-    my $total = $price;
     my $contra_desc = "\$you bought $product->{description}";
 
-    my @addons = @{ $product->{addons} };
-    my @infos = @addons ? (
-          $price->cents > 0 ? ([ $price, "Product" ])
-        : $price->cents < 0 ? ([ $price, "Reimbursement" ])
-        : ()  # price == 0: only addons
-    ) : ();
+    my $entry = $cart->add(
+        -$price,
+        $product->{description},
+        { product_id => $product->{id}, plugin => $self->id, addons => $product->{addons} }
+    );
+    $entry->add_contra(
+        $product->{contra},
+        +$price,
+        $contra_desc
+    );
 
-    my @contras;
+    my @addons = @{ $product->{addons} }
+        or return ACCEPT;
+
+
+    $entry->add_info($price, "Product")       if $price->cents > 0;
+    $entry->add_info($price, "Reimbursement") if $price->cents < 0;
+
     my %ids_seen = ($product->{id} => 1);
 
     while (my $addon_id = shift @addons) {
@@ -87,32 +107,30 @@ sub command :Tab(&tab) ($self, $cart, $command, @) {
         my $addon = $products->{$addon_id}
             or return REJECT, "Addon '$addon_id' does not exist.";
 
-        $total += $addon->{price};
+        my $addon_price = $addon->{price};
+        if ($addon->{percent}) {
+            my $sum = List::Util::sum map {
+                $_->{amount}
+            } grep {
+                $_->{user} eq $addon->{contra}
+            } $entry->contras;
 
-        push @infos, [ $addon->{price}, $addon->{description} ]
+            $addon_price = $addon_price / 100 * $sum;
+        }
+
+        $entry->amount( $entry->amount - $addon_price );
+
+        $entry->add_info($addon_price, $addon->{description})
             if $addon->{contra} =~ /^[-+]/;
 
-        push @contras, [
+        $entry->add_contra(
             $addon->{contra},
-            $addon->{price},
+            $addon_price,
             "$addon->{description} ($contra_desc)"
-        ];
+        );
 
         push @addons, @{ $addon->{addons} };
     }
-
-    my $entry = $cart->add(
-        -$total,
-        $product->{description},
-        { product_id => $product->{id}, plugin => $self->id, addons => $product->{addons} }
-    );
-    $entry->add_contra(
-        $product->{contra},
-        +$price,
-        $contra_desc
-    );
-    $entry->add_info(@$_) for @infos;
-    $entry->add_contra(@$_) for @contras;
 
     return ACCEPT;
 }

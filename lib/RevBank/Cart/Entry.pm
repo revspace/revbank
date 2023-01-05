@@ -72,6 +72,17 @@ sub attribute($self, $key, $new = undef) {
     return $$ref;
 }
 
+sub amount($self, $new = undef) {
+    my $ref = \$self->{amount};
+    if (defined $new) {
+        $new = RevBank::Amount->parse_string($new) if not ref $new;
+        $$ref = $new;
+        $self->attribute('changed', 1);
+    }
+
+    return $$ref;
+}
+
 sub quantity($self, $new = undef) {
     my $ref = \$self->{quantity};
     if (defined $new) {
