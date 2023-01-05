@@ -95,3 +95,21 @@ listed as a component named "Product".
 
 A product can have multiple addons. Addon products themselves can also have
 further addons, but circular recursion is not supported.
+
+=head3 Percentage addons
+
+As a special case, an addon's price can be a percentage. In this case, the
+price is calculated from the sum of the the product components I<up to that
+point> that have I<the same contra account> as the percentage addon.
+
+So, given the following example,
+
+	example_id          0.90          Example product +some_fee +discount
+	+some_fee           0.15@+fees    Some fee; might be a bottle deposit
+	+discount           -50%          Special offer discount!
+
+only 0.45 is discounted, because the 0.15 has a different contra account. While
+complicated, this is probably what you want in most cases. There is currently
+no way to apply a discount to the product with all of its addons.
+
+A percentage addon must have a product_id that begins with C<+>.
