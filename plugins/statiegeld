@@ -1,0 +1,108 @@
+use List::Util;
+
+# This plugin is intended for use on a separate terminal.
+# Run revbank with REVBANK_STATIEGELD=1 on the bottle deposit terminal.
+#
+# In revbank.products, add the bottle/can deposit to products:
+#
+# clubmate     1.40                   Club-Mate bottle +sb
+# cola         0.90                   Cola can +sc
+# +sb          0.15@+statiegeld       Bottle deposit
+# +sc          0.25@+statiegeld       Can deposit
+#
+# This plugin is called "statiegeld" to prevent confusion with the existing
+# plugin "deposit":
+#      geld storten = deposit
+#      statiegeld   = deposit
+# (Note that the Dutch term "statiegeld" should only be displayed if you
+# choose to use it in the product descriptions.)
+
+my @addon_accounts = ("+statiegeld");
+my $nope = "Sorry, no deposit on that product.\n";
+
+my $S = ($ENV{REVBANK_STATIEGELD} // 0) == 1;
+
+sub command ($self, $cart, $command, @) {
+	$S or return NEXT;
+
+	defined &RevBank::Plugin::products::_read_products
+		or die "statiegeld plugin requires products plugin";
+	
+	my $products = RevBank::Plugin::products::_read_products();
+	my $product = $products->{$command} or return NEXT;
+
+	my @addons = @{ $product->{addons} };
+	my @relevant_addons;
+
+	while (my $product_id = shift @addons) {
+		my $addon = $products->{"+$product_id"} // $products->{$product_id};
+		
+		push @relevant_addons, $addon
+			if !$addon->{percent}
+			and (List::Util::any { $addon->{contra} eq $_ } @addon_accounts)
+			and $addon->{price} > 0;
+
+		push @addons, @{ $addon->{addons} };
+	};
+
+	if (not @relevant_addons) {
+		print $nope;
+		return ACCEPT;
+	}
+
+	for my $addon (@relevant_addons) {
+		my $d = "$addon->{description} ($product->{description})";
+
+		$cart
+		->add(+$addon->{price}, $d)
+		->add_contra($addon->{contra}, -$addon->{price}, "$d for \$you");
+	}
+
+	return ACCEPT;
+}
+
+sub hook_added_entry ($class, $cart, $entry, @) {
+	$S or return;
+	$entry->has_attribute('plugin') or return;
+
+	if ($entry->attribute('plugin') eq 'market') {
+		print $nope;
+		$cart->delete($entry);
+	}
+	if ($entry->attribute('plugin') eq 'products') {
+		my $id = $class->id;
+		die "Configuration error: the '$id' plugin must be *before* the 'products' plugin in revbank.plugins.\n";
+	}
+}
+
+sub hook_prompt($class, $cart, $prompt, @) {
+	$S or return;
+
+	# Assumption: only the main prompt will have fewer than 3 \w characters
+	print "++ Scan product for deposit return ++\n" if $prompt !~ /\w{3,}/;
+}
+
+sub hook_input($class, $cart, $input, $split_input, @) {
+	$S or return;
+
+	# Hijack 'help' command so it never reaches the 'help' plugin.
+
+	if ($split_input and $input eq "help") {
+		print <<"END";
+
+This is a beverage container (e.g. bottle) deposit return terminal to get your
+money back; please use the other RevBank terminal for buying things and to read
+the regular RevBank help text. (Normal RevBank commands are available.)
+
+\e[1mJust scan the products and type your account name.\e[0m; deposits are only refunded
+for container deposits on products that we have sold to you.
+END
+
+		no warnings qw(exiting);
+		# "Exiting subroutine via %s"
+		# "(W exiting) You are exiting a subroutine by unconventional means,
+		# such as a goto, or a loop control statement."
+
+		redo OUTER;  # this is phenominally vile :)
+	}
+}
