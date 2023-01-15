@@ -22,10 +22,10 @@ sub call_hooks($hook, @args) {
     my $method = "hook_$hook";
     for my $class (@plugins) {
          if ($class->can($method)) {
-            my ($rv, $message) = $class->$method(@args);
+            my ($rv, @message) = $class->$method(@args);
 
             if (defined $rv and ref $rv) {
-                main::abort($message) if $rv == ABORT;
+                main::abort(@message) if $rv == ABORT;
                 warn "$class->$method returned an unsupported value.\n";
             }
         }
