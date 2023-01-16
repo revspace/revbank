@@ -143,6 +143,7 @@ OUTER: for (;;) {
         @retry = ();
         call_hooks "abort", $cart, \@_;
         $cart->empty;
+        RevBank::FileIO::release_all_locks;
         { no warnings; redo OUTER; }
     }
 

@@ -60,6 +60,10 @@ sub release_lock() {
 	}
 }
 
+sub release_all_locks() {
+	release_lock while $lockcount;
+}
+
 sub with_lock :prototype(&) ($code) {
 	get_lock;
 	my @rv;
