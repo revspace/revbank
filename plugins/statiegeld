@@ -23,24 +23,20 @@ my $nope = "Sorry, no deposit on that product.\n";
 
 our $S = ($ENV{REVBANK_STATIEGELD} // 0) == 1;
 
-sub statiegeld_product($product_id, $products = undef) {
-	$products ||= RevBank::Plugin::products::_read_products();
+sub statiegeld_product($product) {
+	if (not ref $product) {
+		# $product is a product id string; look up in product list
+		my $products = RevBank::Plugin::products::read_products();
+		$product = $products->{$product} or return;
+	}
 
-	my $product = $products->{$product_id} or return;
+	my @relevant_addons = grep {
+		my $addon = $_;
 
-	my @addons = @{ $product->{addons} };
-	my @relevant_addons;
-
-	while (my $product_id = shift @addons) {
-		my $addon = $products->{"+$product_id"} // $products->{$product_id};
-		
-		push @relevant_addons, $addon
-			if !$addon->{percent}
-			and (List::Util::any { $addon->{contra} eq $_ } @addon_accounts)
-			and $addon->{price} > 0;
-
-		push @addons, @{ $addon->{addons} };
-	};
+		!$addon->{percent}
+		and (List::Util::any { $addon->{contra} eq $_ } @addon_accounts)
+		and $addon->{price} > 0;
+	} @{ $product->{addons} // [] };
 
 	return 0 if not @relevant_addons;
 	return { product => $product, statiegeld_addons => \@relevant_addons };
@@ -65,7 +61,7 @@ sub hook_deposit_command($class, $prompt, $array, @) {
 sub command ($invocant, $cart, $command, @) {
 	$S or return NEXT;
 
-	defined &RevBank::Plugin::products::_read_products
+	defined &RevBank::Plugin::products::read_products
 		or die "statiegeld plugin requires products plugin";
 
 	my $sg = statiegeld_product($command) // return NEXT;

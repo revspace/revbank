@@ -5,9 +5,15 @@ HELP1 "<productID>" => "Add a product to pending transaction";
 my $filename = 'revbank.products';
 my $default_contra = '+sales/products';
 
-sub _read_products() {
-    my %products;
+sub read_products() {
+    state %products;
+    state $mtime;
+
+    return \%products if $mtime and $mtime == -M $filename;
+    $mtime = -M $filename;
+
     my $line = 0;
+
     for (slurp $filename) {
         $line++;
 
@@ -40,8 +46,8 @@ sub _read_products() {
             }
         }
 
-        my @addons;
-        unshift @addons, $1 while $desc =~ s/\s+ \+ (\S+)$//x;
+        my @addon_ids;
+        unshift @addon_ids, $1 while $desc =~ s/\s+ \+ (\S+)$//x;
 
         $products{$_} = {
             id          => $ids[0],
@@ -49,9 +55,32 @@ sub _read_products() {
             percent     => $percent,
             description => $desc,
             contra      => $contra || $default_contra,
-            addons      => \@addons,
+            _addon_ids  => \@addon_ids,
             line        => $line,
         } for @ids;
+    }
+
+    PRODUCT: for my $product (values %products) {
+        my %ids_seen = ($product->{id} => 1);
+        my @addon_ids = @{ $product->{_addon_ids} };
+
+        while (my $addon_id = shift @addon_ids) {
+            $addon_id = "+$addon_id" if exists $products{"+$addon_id"};
+
+            if ($ids_seen{$addon_id}++) {
+                warn "Infinite addon loop for '$product->{id}' at $filename line $product->{line}.\n";
+                next PRODUCT;
+            }
+
+            my $addon = $products{$addon_id};
+            if (not $addon) {
+                warn "Addon '$addon_id' does not exist for '$product->{id}' at $filename line $product->{line}.\n";
+                next PRODUCT;
+            }
+
+            push @{ $product->{addons} }, $addon;
+            push @addon_ids, @{ $addon->{_addon_ids} };
+        }
     }
 
     return \%products;
@@ -61,7 +90,7 @@ sub command :Tab(&tab) ($self, $cart, $command, @) {
     $command =~ /\S/ or return NEXT;
     $command =~ /^\+/ and return NEXT;
 
-    my $products = _read_products;
+    my $products = read_products;
     my $product = $products->{ $command } or return NEXT;
     my $price = $product->{price};
 
@@ -77,7 +106,7 @@ sub command :Tab(&tab) ($self, $cart, $command, @) {
 
     my $contra_desc = "\$you bought $product->{description}";
 
-    my @addons = @{ $product->{addons} };
+    my @addons = @{ $product->{addons} // [] };
 
     my $display = undef;
     $display = "Product"       if @addons and $price->cents > 0;
@@ -86,7 +115,7 @@ sub command :Tab(&tab) ($self, $cart, $command, @) {
     my $entry = $cart->add(
         -$price,
         $product->{description},
-        { product_id => $product->{id}, plugin => $self->id, addons => $product->{addons} }
+        { product_id => $product->{id}, plugin => $self->id, product => $product }
     );
     $entry->add_contra(
         $product->{contra},
@@ -95,18 +124,7 @@ sub command :Tab(&tab) ($self, $cart, $command, @) {
         $display
     );
 
-    my %ids_seen = ($product->{id} => 1);
-
-    while (my $addon_id = shift @addons) {
-        $addon_id = "+$addon_id" if exists $products->{"+$addon_id"};
-
-        if ($ids_seen{$addon_id}++) {
-            return REJECT, "Infinite addons are not supported.";
-        }
-
-        my $addon = $products->{$addon_id}
-            or return REJECT, "Addon '$addon_id' does not exist.";
-
+    for my $addon (@addons) {
         my $addon_price = $addon->{price};
         if ($addon->{percent}) {
             my $sum = List::Util::sum map {
@@ -126,13 +144,11 @@ sub command :Tab(&tab) ($self, $cart, $command, @) {
             "$addon->{description} ($contra_desc)",
             $addon->{description}
         );
-
-        push @addons, @{ $addon->{addons} };
     }
 
     return ACCEPT;
 }
 
 sub tab {
-    return grep /\D/, keys %{ _read_products() };
+    return grep /\D/, keys %{ read_products() };
 }

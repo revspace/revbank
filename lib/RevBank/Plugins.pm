@@ -53,7 +53,7 @@ sub load($class) {
         RevBank::Eval::clean_eval(qq[
             use strict;
             use warnings;
-            use feature qw(signatures);
+            use feature qw(signatures state);
             no warnings 'experimental::signatures';
             package $package;
             BEGIN { RevBank::Global->import; }

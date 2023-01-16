@@ -100,13 +100,11 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 	my $is_new = !defined $tokens_by_id;
 	$tokens_by_id = {} if $is_new;
 
-	my $products = RevBank::Plugin::products::_read_products();
 	my $tokens_changed = 0;
 
 	# Products bought: add tokens
-	for my $entry ($cart->entries('product_id')) {
-		my $id = $entry->attribute('product_id');
-		my $sg = RevBank::Plugin::statiegeld::statiegeld_product($id, $products)
+	for my $entry ($cart->entries('product')) {
+		my $sg = RevBank::Plugin::statiegeld::statiegeld_product($entry->attribute('product'))
 			or next;
 
 		for my $addon (@{ $sg->{statiegeld_addons} }) {
@@ -133,7 +131,6 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 		my $available = @{ $tokens_by_id->{$id} // [] };
 
 		if ($available < $entry->quantity) {
-
 			if ($available == 0) {
 				$cart->delete($entry);
 				$warnings_by_id{$id}++;
@@ -147,6 +144,7 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 		$tokens_changed++;
 	}
 	for my $id (keys %warnings_by_id) {
+		my $products = RevBank::Plugin::products::read_products();
 		my $addon = $products->{"+$id"} // $products->{$id};
 		my $avail = $had_num_tokens_by_id{$id};
 		my $only = $avail ? "only $avail" : "0";
