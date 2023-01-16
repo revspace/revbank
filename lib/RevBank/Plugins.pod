@@ -156,9 +156,13 @@ item going into the cart!
 
 Be careful to avoid infinite loops if you add new stuff.
 
+=item hook_checkout_prepare($class, $cart, $user, $transaction_id, @)
+
+Called when the transaction is about to be processed. In this phase, the cart and its entries can still be manipulated.
+
 =item hook_checkout($class, $cart, $user, $transaction_id, @)
 
-Called when the transaction is finalized, before accounts are updated.
+Called when the transaction is finalized, before accounts are updated. The cart and cart entries must not be changed.
 
 =item hook_checkout_done($class, $cart, $user, $transaction_id, @)
 
