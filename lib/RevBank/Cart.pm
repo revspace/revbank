@@ -72,20 +72,25 @@ sub checkout($self, $user) {
 
     my $entries = $self->{entries};
 
-    my %deltas;
     for my $entry (@$entries) {
         $entry->sanity_check;
-
         $entry->user($user);
-
-        $deltas{$entry->{user}} //= RevBank::Amount->new(0);
-        $deltas{$_->{user}} += $_->{amount} * $entry->quantity
-            for $entry, $entry->contras;
     }
 
     RevBank::FileIO::with_lock {
         my $transaction_id = time() - 1300000000;
         RevBank::Plugins::call_hooks("checkout", $self, $user, $transaction_id);
+
+        my %deltas = ($user => RevBank::Amount->new(0));
+
+        for my $entry (@$entries) {
+            # In case entries were added by the hook
+            $entry->sanity_check;
+            $entry->user($user) if not $entry->user;
+
+            $deltas{$_->{user}} += $_->{amount} * $entry->quantity
+                for $entry, $entry->contras;
+        }
 
         for my $account (reverse sort keys %deltas) {
             # The reverse sort is a lazy way to make the "-" accounts come last,
