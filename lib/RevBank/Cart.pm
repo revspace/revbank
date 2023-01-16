@@ -79,15 +79,18 @@ sub checkout($self, $user) {
 
     RevBank::FileIO::with_lock {
         my $transaction_id = time() - 1300000000;
+
+        RevBank::Plugins::call_hooks("checkout_prepare", $self, $user, $transaction_id);
+        for my $entry (@$entries) {
+            $entry->sanity_check;
+            $entry->user($user) if not $entry->user;
+        }
+
         RevBank::Plugins::call_hooks("checkout", $self, $user, $transaction_id);
 
         my %deltas = ($user => RevBank::Amount->new(0));
 
         for my $entry (@$entries) {
-            # In case entries were added by the hook
-            $entry->sanity_check;
-            $entry->user($user) if not $entry->user;
-
             $deltas{$_->{user}} += $_->{amount} * $entry->quantity
                 for $entry, $entry->contras;
         }

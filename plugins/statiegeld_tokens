@@ -89,7 +89,7 @@ sub _handle_undo($cart) {
 	}
 }
 
-sub hook_checkout($class, $cart, $username, $transaction_id, @) {
+sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 	if ($username eq '-undo') {
 		_handle_undo($cart);
 		return;
