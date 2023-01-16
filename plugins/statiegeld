@@ -23,8 +23,9 @@ my $nope = "Sorry, no deposit on that product.\n";
 
 our $S = ($ENV{REVBANK_STATIEGELD} // 0) == 1;
 
-sub statiegeld_product($product_id) {
-	my $products = RevBank::Plugin::products::_read_products();
+sub statiegeld_product($product_id, $products = undef) {
+	$products ||= RevBank::Plugin::products::_read_products();
+
 	my $product = $products->{$product_id} or return;
 
 	my @addons = @{ $product->{addons} };

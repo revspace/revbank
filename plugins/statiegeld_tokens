@@ -104,15 +104,12 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 	my $tokens_changed = 0;
 
 	# Products bought: add tokens
-	for my $entry ($cart->entries('addons')) {
-		for my $addon_id (@{ $entry->attribute('addons') }) {
-			my $addon = $products->{"+$addon_id"} // $products->{$addon_id};
+	for my $entry ($cart->entries('product_id')) {
+		my $id = $entry->attribute('product_id');
+		my $sg = RevBank::Plugin::statiegeld::statiegeld_product($id, $products)
+			or next;
 
-			next
-				if $addon->{percent}
-				or (List::Util::none { $addon->{contra} eq $_ } _addon_accounts)
-				or $addon->{price} <= 0;
-
+		for my $addon (@{ $sg->{statiegeld_addons} }) {
 			for (1 .. $entry->quantity) {
 				my $token = join(":",
 					join(".", time(), time() + $ttl, $transaction_id),
