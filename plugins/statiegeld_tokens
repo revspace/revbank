@@ -4,6 +4,7 @@
 # voiding of tokens
 # querying of tokens
 # expiry of tokens
+# token for non-hidden addon (direct product use)
 
 use List::Util;
 
@@ -147,8 +148,11 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 		my $products = RevBank::Plugin::products::read_products();
 		my $addon = $products->{"+$id"} // $products->{$id};
 		my $avail = $had_num_tokens_by_id{$id};
-		my $only = $avail ? "only $avail" : "0";
-		_warn "you have $only deposit tokens of type $id ($addon->{description}).";
+		my $only =
+			+ $avail == 0 ? "0 deposit tokens"
+			: $avail == 1 ? "only 1 deposit token"
+			:               "only $avail deposit tokens";
+		_warn "you have $only of type $id ($addon->{description}).";
 	}
 
 	# Store data
@@ -156,4 +160,15 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 
 	return ABORT if %warnings_by_id and not $cart->size;
 	return;
+}
+
+sub hook_user_info ($class, $username, @) {
+	my $tokens_by_id = _read->{$username};
+	my @info;
+	for my $id (sort keys %$tokens_by_id) {
+		my @tokens = @{ $tokens_by_id->{$id} // [] };
+		push @info, sprintf("%dx %s", scalar @tokens, $id);
+	}
+	@info = ("none") if not @info;
+	print "Deposit tokens: ", join(", ", @info), "\n";
 }
