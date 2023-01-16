@@ -1,0 +1,164 @@
+#!perl
+
+# TODO:
+# voiding of tokens
+# querying of tokens
+# expiry of tokens
+
+use List::Util;
+
+my $ttl = 100 * 86400;  # expiry time in seconds
+my $filename = "revbank.statiegeld";
+
+sub _addon_accounts {
+	my @accounts = @RevBank::Plugin::statiegeld::addon_accounts
+		or die "statiegeld_tokens plugin requires statiegeld plugin";
+	return @accounts;
+}
+
+sub _read {
+	spurt $filename if not -e $filename;
+
+	my %users_tokens;
+	for (slurp $filename) {
+		my ($username, @tokens) = split " ", $_;
+		if (exists $users_tokens{$username}) {
+			die "Corrupt data file $filename, $username listed twice";
+		}
+
+		my %by_id;
+		for my $token (@tokens) {
+			my (undef, $id) = split /:/, $token, 2;
+			push @{ $by_id{$id} }, $token;
+		}
+
+		$users_tokens{$username} = \%by_id;
+	}
+	return \%users_tokens;
+}
+
+sub _write($username, $tokens_by_id, $create) {
+	my @tokens = map @{ $tokens_by_id->{$_} }, sort keys %$tokens_by_id;
+	my $new_line = @tokens == 0 ? undef : join(" ", $username, @tokens) . "\n";
+	
+	if ($create) {
+		append $filename, $new_line if defined $new_line;
+	} else {
+		rewrite $filename, sub ($old_line) {
+			# removes line from file if $new_line is undef
+			return /(\S+)/ && $1 eq $username ? $new_line : $old_line;
+		};
+	}
+}
+
+sub _warn($message) {
+	warn "\e[31;1mSorry,\e[0m $message\n";
+}
+
+sub _handle_undo($cart) {
+	# Undoing properly is hard. We can easily void tokens, but we can't restore
+	# them. That would requires duplicating all of the undo logic that exists
+	# for account balances, but for tokens. Too much work for something that I
+	# suspect would hardly be used anyway, so instead we'll just prohibit
+	# undoing refunds.
+	for my $entry ($cart->entries) {
+		# Undo deposit refund: prohibit
+		for my $contra ($entry->contras) {
+			next if $contra->{amount} < 0;
+			next if List::Util::none { $contra->{user} eq $_ } _addon_accounts;
+
+			_warn "deposit refunds cannot be undone.";
+			die "ROLLBACK_UNDO";
+		}
+
+		# Undo buying: void specific tokens
+		my $undo_tid = $entry->attribute('undo_transaction_id')
+			or die "Plugin error: broken '-undo' transaction";
+
+		rewrite $filename, sub ($line) {
+			my ($username, @tokens) = split " ", $line;
+			@tokens = grep {
+				my ($meta, $id) = split /:/, $_;
+				my (undef, undef, $tid) = split /\./, $meta;
+
+				$tid ne $undo_tid
+			} @tokens;
+
+			return @tokens ? join(" ", $username, @tokens) : undef;
+		};
+	}
+}
+
+sub hook_checkout($class, $cart, $username, $transaction_id, @) {
+	if ($username eq '-undo') {
+		_handle_undo($cart);
+		return;
+	}
+
+	# Read data
+	my $tokens_by_id = _read->{$username};
+	my $is_new = !defined $tokens_by_id;
+	$tokens_by_id = {} if $is_new;
+
+	my $products = RevBank::Plugin::products::_read_products();
+	my $tokens_changed = 0;
+
+	# Products bought: add tokens
+	for my $entry ($cart->entries('addons')) {
+		for my $addon_id (@{ $entry->attribute('addons') }) {
+			my $addon = $products->{"+$addon_id"} // $products->{$addon_id};
+
+			next
+				if $addon->{percent}
+				or (List::Util::none { $addon->{contra} eq $_ } _addon_accounts)
+				or $addon->{price} <= 0;
+
+			for (1 .. $entry->quantity) {
+				my $token = join(":",
+					join(".", time(), time() + $ttl, $transaction_id),
+					$addon->{id}
+				);
+				push @{ $tokens_by_id->{$addon->{id}} }, $token;
+			}
+			$tokens_changed++;
+		}
+	}
+
+	# Products (containers) returned: void tokens in FIFO order
+	my $cart_changed = 0;
+	my %warnings_by_id;
+	my %had_num_tokens_by_id = map { $_ => scalar @{ $tokens_by_id->{$_} } } keys %$tokens_by_id;
+
+	ENTRY: for my $entry ($cart->entries('plugin')) {
+		$entry->attribute('plugin') eq 'statiegeld' or next;
+
+		my $id = $entry->attribute('addon_id');
+		my $available = @{ $tokens_by_id->{$id} // [] };
+
+		if ($available < $entry->quantity) {
+
+			if ($available == 0) {
+				$cart->delete($entry);
+				$warnings_by_id{$id}++;
+				next ENTRY;
+			}
+			$entry->quantity($available);
+			$warnings_by_id{$id}++;
+		}
+
+		splice @{ $tokens_by_id->{$id} }, 0, $entry->quantity;
+		$tokens_changed++;
+	}
+	for my $id (keys %warnings_by_id) {
+		my $addon = $products->{"+$id"} // $products->{$id};
+		my $avail = $had_num_tokens_by_id{$id};
+		my $only = $avail ? "only $avail" : "0";
+		_warn "you have $only deposit tokens of type $id ($addon->{description})";
+	}
+
+	# Store data
+	_write $username, $tokens_by_id, $is_new if $tokens_changed;
+
+	return ABORT if %warnings_by_id and not $cart->size;
+	return;
+}

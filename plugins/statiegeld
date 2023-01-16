@@ -18,7 +18,7 @@ use List::Util;
 # (Note that the Dutch term "statiegeld" should only be displayed if you
 # choose to use it in the product descriptions.)
 
-my @addon_accounts = ("+statiegeld");
+our @addon_accounts = ("+statiegeld");
 my $nope = "Sorry, no deposit on that product.\n";
 
 my $S = ($ENV{REVBANK_STATIEGELD} // 0) == 1;
@@ -28,7 +28,7 @@ sub command ($self, $cart, $command, @) {
 
 	defined &RevBank::Plugin::products::_read_products
 		or die "statiegeld plugin requires products plugin";
-	
+
 	my $products = RevBank::Plugin::products::_read_products();
 	my $product = $products->{$command} or return NEXT;
 
@@ -55,7 +55,7 @@ sub command ($self, $cart, $command, @) {
 		my $d = "$addon->{description} ($product->{description})";
 
 		$cart
-		->add(+$addon->{price}, $d)
+		->add(+$addon->{price}, $d, { plugin => $self->id, addon_id => $addon->{id} })
 		->add_contra($addon->{contra}, -$addon->{price}, "$d for \$you");
 	}
 

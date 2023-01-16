@@ -44,13 +44,19 @@ sub undo :Tab(&tab) ($self, $cart, $tid, @) {
     my $description = "Undo $tid";
     my $entry;
     my $found = 0;
+    my $aborted = 0;
 
     with_lock {
+        my $backup = "$filename.bak.$$";
+        spurt $backup, slurp $filename;  # copy for rollback
+
+        # Immediately remove from file, to avoid double undo when something
+        # crashes.
         rewrite $filename, sub($line) {
             if ($line =~ /^\Q$tid\E\s/) {
                 my (undef, $user, $delta) = split " ", $line;
 
-                $entry ||= $cart->add(0, $description);
+                $entry ||= $cart->add(0, $description, { undo_transaction_id => $tid });
                 $entry->{FORCE_UNBALANCED} = 1;
 
                 $entry->add_contra($user, $delta, "Undo $tid");
@@ -63,11 +69,27 @@ sub undo :Tab(&tab) ($self, $cart, $tid, @) {
         if ($cart->size) {
             $found = 1;
             $doing_undo = 1;  # don't allow undoing undos
-            $cart->checkout('-undo');
+
+            eval { $cart->checkout('-undo') };
+
+            if ($@ and $@ =~ "ROLLBACK_UNDO") {
+                # Undo the undo... :)
+                spurt $filename, slurp $backup;
+
+                # can't 'return ABORT' here; it would return from with_lock
+                $aborted = 1;
+            } elsif ($@) {
+                # Re-throw exception
+                die "(undo file BACKUP at $backup.)\n$@";
+            } else {
+                unlink $backup;
+            }
+
             $doing_undo = 0;
         }
     };
 
+    return ABORT, "Undo prohibited." if $aborted;
     return ACCEPT if $found;
     return ABORT, "Transaction ID '$tid' not found in undo log.";
 }
