@@ -21,16 +21,11 @@ use List::Util;
 our @addon_accounts = ("+statiegeld");
 my $nope = "Sorry, no deposit on that product.\n";
 
-my $S = ($ENV{REVBANK_STATIEGELD} // 0) == 1;
+our $S = ($ENV{REVBANK_STATIEGELD} // 0) == 1;
 
-sub command ($self, $cart, $command, @) {
-	$S or return NEXT;
-
-	defined &RevBank::Plugin::products::_read_products
-		or die "statiegeld plugin requires products plugin";
-
+sub statiegeld_product($product_id) {
 	my $products = RevBank::Plugin::products::_read_products();
-	my $product = $products->{$command} or return NEXT;
+	my $product = $products->{$product_id} or return;
 
 	my @addons = @{ $product->{addons} };
 	my @relevant_addons;
@@ -46,16 +41,47 @@ sub command ($self, $cart, $command, @) {
 		push @addons, @{ $addon->{addons} };
 	};
 
-	if (not @relevant_addons) {
+	return 0 if not @relevant_addons;
+	return { product => $product, statiegeld_addons => \@relevant_addons };
+}
+
+sub hook_deposit_command($class, $prompt, $array, @) {
+	$$prompt =~ s/$/, or scan empty container/;
+
+	push @$array, sub($, $cart, $input, @) {
+		my $p = statiegeld_product($input) // return NEXT;
+
+		if (not $p) {
+			print $nope;
+			return NEXT;
+		}
+
+		local $S = 1;
+		return command($class, $cart, $input);
+	};
+}
+
+sub command ($invocant, $cart, $command, @) {
+	$S or return NEXT;
+
+	defined &RevBank::Plugin::products::_read_products
+		or die "statiegeld plugin requires products plugin";
+
+	my $sg = statiegeld_product($command) // return NEXT;
+
+	if (not $sg) {
 		print $nope;
 		return ACCEPT;
 	}
 
-	for my $addon (@relevant_addons) {
+	my $product = $sg->{product};
+	my $addons  = $sg->{statiegeld_addons};
+
+	for my $addon (@$addons) {
 		my $d = "$addon->{description} ($product->{description})";
 
 		$cart
-		->add(+$addon->{price}, $d, { plugin => $self->id, addon_id => $addon->{id} })
+		->add(+$addon->{price}, $d, { plugin => $invocant->id, addon_id => $addon->{id} })
 		->add_contra($addon->{contra}, -$addon->{price}, "$d for \$you");
 	}
 

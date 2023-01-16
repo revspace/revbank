@@ -7,12 +7,20 @@ HELP1 "deposit <amount>" => "Deposit into an account";
 sub command :Tab(deposit) ($self, $cart, $command, @) {
     $command eq 'deposit' or return NEXT;
 
-    return "Amount to deposit into your account", \&amount;
+    my $prompt = "Amount to deposit into your account";
+    call_hooks("deposit_command", \$prompt, $self->{alternatives} = []);
+
+    return $prompt, \&amount;
 }
 
-sub amount :Tab(13.37,42) ($self, $cart, $amount, @) {
-    $self->{amount} = $amount = parse_amount($amount)
-        or return REJECT, "Invalid amount";
+sub amount :Tab(13.37,42) ($self, $cart, $input, @) {
+    for my $sub (@{ $self->{alternatives} }) {
+        my @rv = $sub->(undef, $cart, $input);
+        return @rv if $rv[0] != NEXT;
+    }
+
+    $self->{amount} = my $amount = parse_amount($input)
+        or return REJECT, "Invalid input.";
 
     call_hooks("deposit_methods", \my $message, $self->{deposit_methods} = {});
 
