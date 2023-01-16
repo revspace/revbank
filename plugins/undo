@@ -6,7 +6,7 @@ my $filename = ".revbank.undo";
 
 my @TAB;
 
-sub command :Tab(undo) ($self, $cart, $command,  @) {
+sub command :Tab(undo) ($self, $cart, $command, @) {
     $command eq 'undo' or return NEXT;
 
     $cart->size and return REJECT, "Undo is not available mid-transaction.";
@@ -23,16 +23,17 @@ sub command :Tab(undo) ($self, $cart, $command,  @) {
 
     @TAB = ();
 
+    my $menu = "";
     my $max = @log < 15 ? @log : 15;
     for my $txn (@log[-$max .. -1]) {
-        print "ID: $txn->{tid}  $txn->{dt} ", (
-            join ", ", map { sprintf "%s:%+.2f", @$_ } @{ $txn->{deltas} }
-        ), "\n";
+        $menu .= "ID: $txn->{tid}  $txn->{dt} " . join(", ", 
+            map { sprintf "%s:%+.2f", @$_ } @{ $txn->{deltas} }
+        ) . "\n";
 
         push @TAB, $txn->{tid};
     }
 
-    return "Transaction ID", \&undo;
+    return $menu . "Transaction ID", \&undo;
 }
 
 sub tab { @TAB }
