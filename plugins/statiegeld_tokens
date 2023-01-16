@@ -150,7 +150,7 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 		my $addon = $products->{"+$id"} // $products->{$id};
 		my $avail = $had_num_tokens_by_id{$id};
 		my $only = $avail ? "only $avail" : "0";
-		_warn "you have $only deposit tokens of type $id ($addon->{description})";
+		_warn "you have $only deposit tokens of type $id ($addon->{description}).";
 	}
 
 	# Store data
