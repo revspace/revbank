@@ -147,7 +147,7 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 	for my $id (keys %warnings_by_id) {
 		my $products = RevBank::Plugin::products::read_products();
 		my $addon = $products->{"+$id"} // $products->{$id};
-		my $avail = $had_num_tokens_by_id{$id};
+		my $avail = $had_num_tokens_by_id{$id} // 0;
 		my $only =
 			+ $avail == 0 ? "0 deposit tokens"
 			: $avail == 1 ? "only 1 deposit token"
