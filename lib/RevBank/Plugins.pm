@@ -18,11 +18,13 @@ sub _read_file($fn) {
     readline *ARGV;
 }
 
-sub call_hooks($hook, @args) {
+sub call_hooks {
+    my $hook = shift;
     my $method = "hook_$hook";
+
     for my $class (@plugins) {
          if ($class->can($method)) {
-            my ($rv, @message) = $class->$method(@args);
+            my ($rv, @message) = $class->$method(@_);
 
             if (defined $rv and ref $rv) {
                 main::abort(@message) if $rv == ABORT;

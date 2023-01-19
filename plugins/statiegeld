@@ -101,18 +101,25 @@ sub hook_added_entry ($class, $cart, $entry, @) {
 	}
 }
 
-sub hook_prompt($class, $cart, $prompt, @) {
+sub hook_prompt {  # ($class, $cart, $prompt), but via @_ for mutable alias
 	$S or return;
 
-	# Assumption: only the main prompt will have fewer than 3 \w characters
-	print "++ Scan product for deposit return ++\n" if $prompt !~ /\w{3,}/;
+	my $statiegeld_prompt = "\x01\e[33;1m\x02+>\x01\e[0m\x02";  # yellow "+>"
+
+	if ($_[2] eq "" or $_[2] eq $statiegeld_prompt) {
+		# Assumption: only the main prompt will have fewer than 3 \w characters
+		print "\e[33;1mScan products for deposit return.\e[0m\n" if not $_[1]->size;
+	}
+	$_[2] =~ s/^$/$statiegeld_prompt/;
 }
 
 sub hook_input($class, $cart, $input, $split_input, @) {
 	$S or return;
 
-	# Hijack 'help' command so it never reaches the 'help' plugin.
+	# Extra newline before new "Scan products for ..." line.
+	print "\n" if $input eq "" and $split_input; 
 
+	# Hijack 'help' command so it never reaches the 'help' plugin.
 	if ($split_input and $input eq "help") {
 		print <<"END";
 

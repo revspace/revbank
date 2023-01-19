@@ -51,7 +51,7 @@ my $cart = RevBank::Cart->new;
 
 sub prompt($prompt, $plugins, $completions) {
     if ($prompt) {
-        $prompt =~ s/$/:/ if $prompt !~ /[?>]$/;
+        $prompt =~ s/$/:/ if $prompt !~ /[?>](?:\x01[^\x02]*\x02)?$/;
         $prompt .= " ";
     } else {
         # \x01...\x02 = zero width markers for readline
