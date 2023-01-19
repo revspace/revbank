@@ -1,5 +1,16 @@
 ### THIS IS THE EXAMPLE FILE; DON'T ADD PRODUCTS, BUT MAKE A NEW FILE ###
 
+# Deze in principe niet veranderen want dat heeft invloed op producten
+# die al eerder verkocht zijn. Omschrijving aanpassen kan geen kwaad.
++sb       0.15@+statiegeld    Statiegeld blikje
++sf       0.15@+statiegeld    Statiegeld plastic flesje
++sm       0.15@+statiegeld    Statiegeld Mehrwegflasche
+matekrat  1.50@+statiegeld    Statiegeld matekrat excl. inhoud
+
+# Let op: als een product een statiegeld addon (bijv. +sb) heeft, dat niet
+# meer veranderen, want dan kan het product niet meer worden ingeleverd.
+
+
 
 # Empty lines and lines beginning with # are ignored.
 
@@ -23,3 +34,50 @@
 05414359710322  0.50    Chips
 05414359710315  0.50    Chips
 zakjechips      0.50    Chips
+
+
+clubmate,4029764001807            1.40   Club-Mate +sm
+87124385                 1.10   Chocomel
+8710447032756            0.80   Festini peer
+tostikaas                1.15   Tosti kaas
+4001724035848 5.10 Pizza Veggie Mix
+
+cola,5000112638745            0.90   Coca-Cola Zero, blik 33 cl +korting +sb
+pizza 4.50 Pizza +sgo
++korting -50% Yay korting
+
+dinges     0.00  Dingeskitje +aa +pcb +koppla +j +korting
+aa         0.20@+sales/batt  Batterij
+pcb        0.80  pcb
+koppla     5.00  Koppla
+j          0.10@juerd  Gratis geld voor juerd
+
+#moo 2,151 bla
+#meh 1.00 blaaat +mekker
+bla -5
+
+#aap 1.00 ding +noot
+#noot 9.99 dinges deze niet
+#+noot 2.00 dinges +mies
+#mies 3.00 donges +aap
+
+sgo   0.80@+stroomgebruik Stroomgebruik oven
+
+nietsb -0.15@+statiegeld WHoaaa
+
+korting -0.10@-korting Korting \o/
+
+BOUNTY1 -10.00@-expenses/bounties Bedankt voor dingen!!  +j
+BOUNTY2 -5.00@-expenses/bounties Bedankt en zo
+
+
+    example_id     1.00     Example product +something
+    +something     1.00     Product that has an id that starts with plus
+    example,+alias 1.00     Product that has an alias that starts with plus
+
+
+    example_id1    1.00     Example product+something
+    example_id2    1.00     Example product + something
+    more_stuff     1.00     Example product with +something but not at the end
+    bbq            1.00     3+ pieces of meat
+

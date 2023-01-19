@@ -5,8 +5,9 @@ products - RevBank plugin for selling products
 =head1 SYNOPISIS
 
 	8710447032756              0.80          Festini Peer
-	4029764001807,clubmate     1.40          Club-Mate +pf
+	4029764001807,clubmate     1.40          Club-Mate +half +pf
 	pf                         0.15@+pfand   Pfand NRW-Flasche
+	+half                      -50%          50% discount \o/
 
 =head1 DESCRIPTION
 

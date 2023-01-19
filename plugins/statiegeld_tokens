@@ -1,11 +1,10 @@
 #!perl
 
 # TODO:
-# voiding of tokens
-# querying of tokens
 # expiry of tokens
-
 use List::Util;
+
+HELP void => "Destroy deposit tokens";
 
 my $ttl = 100 * 86400;  # expiry time in seconds
 my $filename = "revbank.statiegeld";
@@ -159,6 +158,9 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 			$entry->quantity($available);
 			$warnings_by_type{$type}++;
 		}
+		if ($entry->attribute('statiegeld_VOID_TOKENS')) {
+			$cart->delete($entry);
+		}
 
 		splice @{ $tokens_by_type->{$type} }, 0, $entry->quantity;
 		$tokens_changed++;
@@ -196,4 +198,34 @@ sub hook_user_info ($class, $username, @) {
 	}
 	@info = ("none") if not @info;
 	print "Deposit tokens: ", join(", ", @info), "\n";
+}
+
+sub command($self, $cart, $command, @) {
+	$command eq 'void' or return NEXT;
+
+	my $found =0;
+	for my $entry ($cart->entries('plugin')) {
+		next if $entry->attribute('plugin') ne 'statiegeld';
+		$found++;
+	}
+	$found or return REJECT, "Add deposit returns first.";
+
+	return "\e[31;1mDeposit token destruction mode.\e[0m\n\n"
+		. "The tokens will be deleted irrevokably and you will NOT RECEIVE THE MONEY.\n"
+		. "Type 'yes' if you are sure", \&void;
+}
+
+sub void :Tab(yes,no) ($self, $cart, $input, @) {
+	if ($input ne 'yes') {
+		print "Destruction cancelled.\n";
+		return ACCEPT;
+	}
+
+	for my $entry ($cart->entries('plugin')) {
+		next if $entry->attribute('plugin') ne 'statiegeld';
+		$entry->attribute('statiegeld_VOID_TOKENS', 1);
+	}
+
+	print "\e[31;1mDeposit token destruction mode activated.\e[0m\n";
+	return ACCEPT;
 }
