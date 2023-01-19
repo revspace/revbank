@@ -11,6 +11,17 @@ use List::Util;
 my $ttl = 100 * 86400;  # expiry time in seconds
 my $filename = "revbank.statiegeld";
 
+# Token format: token_type,time,expiry_time,product_id,transaction_id,seq
+# - token_type (also just "type") is the id of the product addon.
+# - product_id is recorded but only used for debugging.
+# - seq is a 0 based counter per transaction to make tokens unique,
+#   although the uniqueness of tokens is currently neither used nor enforced.
+#
+# Tokens are spent in FIFO order, by type rather than product_id. This
+# effectively extends the TTL for active consumers. The product_ids of
+# a user's remaining tokens may not correspond to those of the empty containers
+# in their possession.
+
 sub _addon_accounts {
 	my @accounts = @RevBank::Plugin::statiegeld::addon_accounts
 		or die "statiegeld_tokens plugin requires statiegeld plugin";
@@ -27,19 +38,19 @@ sub _read {
 			die "Corrupt data file $filename, $username listed twice";
 		}
 
-		my %by_id;
+		my %by_type;
 		for my $token (@tokens) {
-			my (undef, $id) = split /:/, $token, 2;
-			push @{ $by_id{$id} }, $token;
+			my ($token_type) = (split /,/, $token)[0];
+			push @{ $by_type{$token_type} }, $token;
 		}
 
-		$users_tokens{$username} = \%by_id;
+		$users_tokens{$username} = \%by_type;
 	}
 	return \%users_tokens;
 }
 
-sub _write($username, $tokens_by_id, $create) {
-	my @tokens = map @{ $tokens_by_id->{$_} }, sort keys %$tokens_by_id;
+sub _write($username, $tokens_by_type, $create) {
+	my @tokens = map @{ $tokens_by_type->{$_} }, sort keys %$tokens_by_type;
 	my $new_line = @tokens == 0 ? undef : join(" ", $username, @tokens) . "\n";
 	
 	if ($create) {
@@ -79,8 +90,7 @@ sub _handle_undo($cart) {
 		rewrite $filename, sub ($line) {
 			my ($username, @tokens) = split " ", $line;
 			@tokens = grep {
-				my ($meta, $id) = split /:/, $_;
-				my (undef, undef, $tid) = split /\./, $meta;
+				my ($token_type, undef, undef, undef, $tid) = split /,/, $_;
 
 				$tid ne $undo_tid
 			} @tokens;
@@ -97,24 +107,34 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 	}
 
 	# Read data
-	my $tokens_by_id = _read->{$username};
-	my $is_new = !defined $tokens_by_id;
-	$tokens_by_id = {} if $is_new;
+	my $tokens_by_type = _read->{$username};
+	my $is_new = !defined $tokens_by_type;
+	$tokens_by_type = {} if $is_new;
 
 	my $tokens_changed = 0;
 
 	# Products bought: add tokens
+	my $seq = 0;
 	for my $entry ($cart->entries('product')) {
 		my $sg = RevBank::Plugin::statiegeld::statiegeld_product($entry->attribute('product'))
 			or next;
 
 		for my $addon (@{ $sg->{statiegeld_addons} }) {
+			# These should never contain commas in vanilla revbank, but custom
+			# plugins may be less well behaved.
+			/,/ and die "Internal error"
+				for $addon->{id}, $entry->attribute('product_id'), $transaction_id;
+
 			for (1 .. $entry->quantity) {
-				my $token = join(":",
-					join(".", time(), time() + $ttl, $transaction_id),
-					$addon->{id}
+				my $token = join(",",
+					$addon->{id},  # token_type
+					time(),
+					time() + $ttl,
+					$entry->attribute('product_id'),
+					$transaction_id,
+					$seq++,
 				);
-				push @{ $tokens_by_id->{$addon->{id}} }, $token;
+				push @{ $tokens_by_type->{$addon->{id}} }, $token;
 			}
 			$tokens_changed++;
 		}
@@ -122,52 +142,52 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 
 	# Products (containers) returned: void tokens in FIFO order
 	my $cart_changed = 0;
-	my %warnings_by_id;
-	my %had_num_tokens_by_id = map { $_ => scalar @{ $tokens_by_id->{$_} } } keys %$tokens_by_id;
+	my %warnings_by_type;
+	my %had_num_tokens_by_type = map { $_ => scalar @{ $tokens_by_type->{$_} } } keys %$tokens_by_type;
 
 	ENTRY: for my $entry ($cart->entries('plugin')) {
 		$entry->attribute('plugin') eq 'statiegeld' or next;
 
-		my $id = $entry->attribute('addon_id');
-		my $available = @{ $tokens_by_id->{$id} // [] };
+		my $type = $entry->attribute('addon_id');
+		my $available = @{ $tokens_by_type->{$type} // [] };
 
 		if ($available < $entry->quantity) {
 			if ($available == 0) {
 				$cart->delete($entry);
-				$warnings_by_id{$id}++;
+				$warnings_by_type{$type}++;
 				next ENTRY;
 			}
 			$entry->quantity($available);
-			$warnings_by_id{$id}++;
+			$warnings_by_type{$type}++;
 		}
 
-		splice @{ $tokens_by_id->{$id} }, 0, $entry->quantity;
+		splice @{ $tokens_by_type->{$type} }, 0, $entry->quantity;
 		$tokens_changed++;
 	}
-	for my $id (keys %warnings_by_id) {
+	for my $type (keys %warnings_by_type) {
 		my $products = RevBank::Plugin::products::read_products();
-		my $addon = $products->{"+$id"} // $products->{$id};
-		my $avail = $had_num_tokens_by_id{$id} // 0;
+		my $addon = $products->{"+$type"} // $products->{$type};
+		my $avail = $had_num_tokens_by_type{$type} // 0;
 		my $only =
 			+ $avail == 0 ? "0 deposit tokens"
 			: $avail == 1 ? "only 1 deposit token"
 			:               "only $avail deposit tokens";
-		_warn "you have $only of type $id ($addon->{description}).";
+		_warn "you have $only of type $type ($addon->{description}).";
 	}
 
 	# Store data
-	_write $username, $tokens_by_id, $is_new if $tokens_changed;
+	_write $username, $tokens_by_type, $is_new if $tokens_changed;
 
-	return ABORT if %warnings_by_id and not $cart->size;
+	return ABORT if %warnings_by_type and not $cart->size;
 	return;
 }
 
 sub hook_user_info ($class, $username, @) {
-	my $tokens_by_id = _read->{$username};
+	my $tokens_by_type = _read->{$username};
 	my @info;
-	for my $id (sort keys %$tokens_by_id) {
-		my @tokens = @{ $tokens_by_id->{$id} // [] };
-		push @info, sprintf("%dx %s", scalar @tokens, $id);
+	for my $type (sort keys %$tokens_by_type) {
+		my @tokens = @{ $tokens_by_type->{$type} // [] };
+		push @info, sprintf("%dx %s", scalar @tokens, $type);
 	}
 	@info = ("none") if not @info;
 	print "Deposit tokens: ", join(", ", @info), "\n";
