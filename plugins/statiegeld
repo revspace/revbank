@@ -3,6 +3,8 @@ use List::Util;
 
 # This plugin is intended for use on a separate terminal.
 # Run revbank with REVBANK_STATIEGELD=1 on the bottle deposit terminal.
+# Alternatively, users can use the "deposit" command on a regular terminal if
+# this plugin and the deposit plugin are both loaded.
 #
 # In revbank.products, add the bottle/can deposit to products:
 #
