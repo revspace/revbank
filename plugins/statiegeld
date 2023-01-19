@@ -30,13 +30,15 @@ sub statiegeld_product($product) {
 		$product = $products->{$product} or return;
 	}
 
+	# Called 'addons' here but also includes the queried product itself,
+	# to support things that are 100% statiegeld (e.g. empty crate)
 	my @relevant_addons = grep {
 		my $addon = $_;
 
 		!$addon->{percent}
 		and (List::Util::any { $addon->{contra} eq $_ } @addon_accounts)
 		and $addon->{price} > 0;
-	} @{ $product->{addons} // [] };
+	} $product, @{ $product->{addons} // [] };
 
 	return 0 if not @relevant_addons;
 	return { product => $product, statiegeld_addons => \@relevant_addons };

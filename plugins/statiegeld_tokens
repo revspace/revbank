@@ -4,7 +4,6 @@
 # voiding of tokens
 # querying of tokens
 # expiry of tokens
-# token for non-hidden addon (direct product use)
 
 use List::Util;
 
