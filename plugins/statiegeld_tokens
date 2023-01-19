@@ -171,6 +171,7 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 			+ $avail == 0 ? "0 deposit tokens"
 			: $avail == 1 ? "only 1 deposit token"
 			:               "only $avail deposit tokens";
+
 		_warn "you have $only of type $type ($addon->{description}).";
 	}
 
@@ -178,6 +179,12 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 	_write $username, $tokens_by_type, $is_new if $tokens_changed;
 
 	return ABORT if %warnings_by_type and not $cart->size;
+
+	if (%warnings_by_type and $cart->changed) {  # resets 'changed' attr.
+		print "\n";         # Between warnings and transaction overview
+		$cart->changed(1);  # restore attribute
+	}
+
 	return;
 }
 
