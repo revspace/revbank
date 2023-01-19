@@ -118,13 +118,15 @@ sub entries($self, $attribute = undef) {
     return @entries;
 }
 
-sub changed($self) {
+sub changed($self, $keep = 0) {
     my $changed = 0;
     for my $entry ($self->entries('changed')) {
-        $entry->attribute('changed', undef);
+        $entry->attribute('changed', undef) unless $keep;
         $changed = 1;
     }
-    $changed = 1 if delete $self->{changed};
+    $changed = 1 if $self->{changed};
+    delete $self->{changed} unless $keep;
+
     return $changed;
 }
 

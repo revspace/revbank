@@ -180,9 +180,8 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 
 	return ABORT if %warnings_by_type and not $cart->size;
 
-	if (%warnings_by_type and $cart->changed) {  # resets 'changed' attr.
-		print "\n";         # Between warnings and transaction overview
-		$cart->changed(1);  # restore attribute
+	if (%warnings_by_type and $cart->changed(1)) {
+		print "\n";  # Between warnings and transaction overview
 	}
 
 	return;
