@@ -1,7 +1,5 @@
 #!perl
 
-# TODO:
-# expiry of tokens
 use List::Util;
 
 HELP void => "Destroy deposit tokens";
@@ -11,7 +9,8 @@ my $filename = "revbank.statiegeld";
 
 # Token format: token_type,time,expiry_time,product_id,transaction_id,seq
 # - token_type (also just "type") is the id of the product addon.
-# - product_id is recorded but only used for debugging.
+# - expiry_time < 0 means the token does not expire.
+# - time and product_id is recorded but only used for debugging.
 # - seq is a 0 based counter per transaction to make tokens unique,
 #   although the uniqueness of tokens is currently neither used nor enforced.
 #
@@ -26,11 +25,32 @@ sub _addon_accounts {
 	return @accounts;
 }
 
+sub _time_is_reliable() {
+	state $cache;
+	state $cached_at;
+	undef $cache if defined $cached_at and $cached_at <= (time() - 10);
+
+	return $cache if defined $cache;
+
+	$cache = sub {
+		return 1 if system('ntpstat >/dev/null 2>/dev/null') == 0;
+		return 1 if `timedatectl show -p NTPSynchronized 2>/dev/null` =~ /=yes/;
+
+		warn "Time/NTP status unknown or bad; deposit tokens will not expire.\n";
+		return 0;
+	}->();
+	$cached_at = time;
+
+	return $cache;
+}
+
 sub _read {
 	spurt $filename if not -e $filename;
 
 	my %users_tokens;
 	for (slurp $filename) {
+		/\S/ or next;
+
 		my ($username, @tokens) = split " ", $_;
 		if (exists $users_tokens{$username}) {
 			die "Corrupt data file $filename, $username listed twice";
@@ -47,16 +67,34 @@ sub _read {
 	return \%users_tokens;
 }
 
+sub _expire_tokens($line, $time) {
+	$time > 0     or return $line;
+	defined $line or return $line;
+	$line =~ / /  or return $line;
+
+	# Rewrite line with only non-tokens, invalid tokens, and non-expired tokens
+	return join(" ", grep {
+		my ($type, undef, $expiry) = split /,/;
+
+		!defined($expiry) or $expiry < 0 or $expiry > $time
+	} split " ", $line) . "\n";
+}
+
 sub _write($username, $tokens_by_type, $create) {
 	my @tokens = map @{ $tokens_by_type->{$_} }, sort keys %$tokens_by_type;
 	my $new_line = @tokens == 0 ? undef : join(" ", $username, @tokens) . "\n";
+
+	my $time = _time_is_reliable ? time() : -1;
 	
 	if ($create) {
 		append $filename, $new_line if defined $new_line;
 	} else {
 		rewrite $filename, sub ($old_line) {
+			$old_line =~ /\S/ or return $old_line;  # keep whitespace-only lines
+
 			# removes line from file if $new_line is undef
-			return /(\S+)/ && $1 eq $username ? $new_line : $old_line;
+			my $line = /(\S+)/ && $1 eq $username ? $new_line : $old_line;
+			return _expire_tokens($line, $time);
 		};
 	}
 }
@@ -108,6 +146,7 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 	my $tokens_by_type = _read->{$username};
 	my $is_new = !defined $tokens_by_type;
 	$tokens_by_type = {} if $is_new;
+	my $time_is_reliable = _time_is_reliable;
 
 	my $tokens_changed = 0;
 
@@ -127,7 +166,7 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 				my $token = join(",",
 					$addon->{id},  # token_type
 					time(),
-					time() + $ttl,
+					($time_is_reliable ? time() + $ttl : -1),
 					$entry->attribute('product_id'),
 					$transaction_id,
 					$seq++,
