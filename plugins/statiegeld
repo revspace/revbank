@@ -68,6 +68,8 @@ sub command ($invocant, $cart, $command, @) {
 	defined &RevBank::Plugin::products::read_products
 		or die "statiegeld plugin requires products plugin";
 
+	$command =~ /^\+/ and return NEXT;
+
 	my $sg = statiegeld_product($command) // return NEXT;
 
 	if (not $sg) {
