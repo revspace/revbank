@@ -1,25 +1,6 @@
 #!perl
 use List::Util;
 
-# This plugin is intended for use on a separate terminal.
-# Run revbank with REVBANK_STATIEGELD=1 on the bottle deposit terminal.
-# Alternatively, users can use the "deposit" command on a regular terminal if
-# this plugin and the deposit plugin are both loaded.
-#
-# In revbank.products, add the bottle/can deposit to products:
-#
-# clubmate     1.40                   Club-Mate bottle +sb
-# cola         0.90                   Cola can +sc
-# +sb          0.15@+statiegeld       Bottle deposit
-# +sc          0.25@+statiegeld       Can deposit
-#
-# This plugin is called "statiegeld" to prevent confusion with the existing
-# plugin "deposit":
-#      geld storten = deposit
-#      statiegeld   = deposit
-# (Note that the Dutch term "statiegeld" should only be displayed if you
-# choose to use it in the product descriptions.)
-
 our @addon_accounts = ("+statiegeld");
 my $nope = "Sorry, no deposit on that product.\n";
 

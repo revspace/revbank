@@ -1,0 +1,65 @@
+=head1 NAME
+
+statiegeld - RevBank plugin for return deposits
+
+=head1 SYNOPISIS
+
+revbank.products:
+
+	clubmate     1.40                   Club-Mate bottle +sb
+	cola         0.90                   Cola can +sc
+	+sb          0.15@+statiegeld       Bottle deposit
+	+sc          0.25@+statiegeld       Can deposit
+	matecrate    1.50@+statiegeld       Mate crate (empty)
+
+=head1 DESCRIPTION
+
+This plugin allows users to get refunds for empty container deposits.
+In a typical setup, there would be a separate terminal where RevBank runs in
+statiegeld mode. In statiegeld mode, you scan products to get your deposit
+money back in the same way you would normally buy them.
+
+Alternatively, on a regular RevBank terminal, the C<deposit> command (which is
+provided by the C<deposit> plugin) is extended to support product id's where
+you would normally enter an amount.
+
+=head2 Usage
+
+If RevBank was run with the environment variable C<REVBANK_STATIEGELD> set to
+C<1>, the user just scans the products.
+
+Alternatively, a product can be scanned after entering the C<deposit> command.
+
+The product_id (barcode) is used to look up the stategield addon. In case of a
+non-hidden addon (does not begin with C<+>), the name of the addon can also be
+used.
+
+=head2 Configuration
+
+The statiegeld plugin recognises products from C<revbank.products> by matching
+the contra accounts (the C<+statiegeld> in C<0.15@+statiegeld>) of the
+product's addons against a list of known accounts.
+
+That list is hard coded in the plugin, but could be changed if you want to use
+a different account than the default C<+statiegeld>. The contra account can be
+a hidden account or a regular account.
+
+Don't remove statiegeld addons because that means customers can no longer get
+their deposits back. Also, consider the consequences of changing the price
+before doing so.
+
+=head2 "statiegeld"?!
+
+"Statiegeld" is the Dutch word for container deposits. Because the English word
+"deposit" is also the verb for adding money to your account, and used
+extensively in RevBank, it was useful to distinguish between the two features.
+
+In the user interface, the terms "deposit" and "deposit return" are used.
+
+=head2 Limits
+
+By itself, the C<statiegeld> plugin only supports refunding deposits for known
+products that are configured as such. There is no limit to how many containers
+the user can return to get refunds. There's another plugin,
+C<statiegeld_tokens>, that can be used to limit the refunds to what the same
+user has actually purchased.
