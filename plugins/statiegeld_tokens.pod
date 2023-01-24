@@ -1,0 +1,31 @@
+=head1 NAME
+
+statiegeld_tokens - RevBank plugin for limiting return deposits
+
+=head1 DESCRIPTION
+
+When using this plugin together with C<statiegeld>, return deposits are limited
+to what users have previously paid. This is done by keeping track of I<tokens>:
+when you buy something with a deposit, you receive a token, and when you return
+the empty container, you spend the token when getting your deposit back.
+
+Tokens expire and are (currently) spent in FIFO order per type. The token type
+corresponds to the product_id of the matched addon.
+
+The tokens are stored in a file called C<revbank.statiegeld> which is not
+intended to be edited externally.
+
+=head2 User interaction
+
+When checking out, return deposits are removed from the cart if the user does
+not have enough tokens for the transaction.
+
+Users can choose to delete tokens by entering the C<void> command before
+checking out. At the moment of writing, it is unclear whether this is actually
+useful for any practical use case.
+
+=head2 NTP
+
+Tokens expire only if C<ntpdate> or systemd's C<datetimectl> says the system
+time is synchronized. Else, new tokens made will never expire and existing
+tokens won't be processed for expiry.
