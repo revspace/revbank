@@ -92,7 +92,7 @@ sub hook_added_entry ($class, $cart, $entry, @) {
 sub hook_prompt {  # ($class, $cart, $prompt), but via @_ for mutable alias
 	$S or return;
 
-	my $m = "Scan products for deposit return.";
+	my $m = "Scan empty container for deposit return.";
 
 	# The message is prepended to the prompt, so it is printed after
 	# clear-screen (^L).
