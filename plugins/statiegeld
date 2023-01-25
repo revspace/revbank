@@ -62,7 +62,9 @@ sub command ($invocant, $cart, $command, @) {
 	my $addons  = $sg->{statiegeld_addons};
 
 	for my $addon (@$addons) {
-		my $d = "$addon->{description} ($product->{description})";
+		my $d = $addon->{id} eq $product->{id}
+			? "$addon->{description}"
+			: "$addon->{description} ($product->{description})";
 
 		$cart
 		->add(+$addon->{price}, $d, { plugin => $invocant->id, addon_id => $addon->{id} })
