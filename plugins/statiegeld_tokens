@@ -213,7 +213,8 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 			: $avail == 1 ? "only 1 deposit token"
 			:               "only $avail deposit tokens";
 
-		_warn "you have $only of type $type ($addon->{description}).";
+		_warn qq[you have $only of type $type.\n]
+			. qq[($type = "$addon->{description}")];
 	}
 
 	# Store data
