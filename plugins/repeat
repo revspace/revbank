@@ -19,11 +19,24 @@ sub command($self, $cart, $command, @) {
 
     my $last = ($cart->entries)[-1];
 
-    return NEXT if $lhs and $rhs;  # 123x123 -> invalid syntax
+    return NEXT if $lhs and $rhs;  # 123x123 -> invalid, likely user or product
+
+    if ($lhs) {
+        return REJECT, $err_postfix if $op eq '+' or $op eq '-';
+
+        $lhs = abs $lhs;  # withdrawal is negative
+
+        return REJECT, $err_limit if $lhs > $limit;
+        $cart
+            ->add(0, "?  (The next thing you add will be multiplied.)", { _repeat => 1, refuse_checkout => 1 })
+            ->quantity($lhs);
+        return ACCEPT;
+    }
+
+    return ABORT, "Can't modify an empty transaction." if not $cart->size;
+    return REJECT, $err_nope if $last->attribute('no_repeat');
 
     if ($rhs) {
-        return ABORT, "Can't modify an empty transaction." if not $cart->size;
-        return REJECT, $err_nope if $last->attribute('no_repeat');
         return REJECT, $err_limit if $rhs > $limit;
 
         if ($op eq '+') {
@@ -43,39 +56,20 @@ sub command($self, $cart, $command, @) {
             }
             return ACCEPT;
         }
+
         # $op is not + or -, so it must be * (or x).
-
         return REJECT, $err_stacked if $last->multiplied;
-
         $last->quantity($rhs);
         return ACCEPT;
     }
 
-    if (not $lhs and not $rhs) {
-        # Lone operator. Convert withdrawal into repetition.
-
-        return ABORT, "Can't modify an empty transaction." if not $cart->size;
-
-        if ($op eq '+' or $op eq '-') {
-            $self->{op} = $op;
-            return "$op how many?",  \&plusminus;
-        }
+    if ($op eq '+' or $op eq '-') {
+        $self->{op} = $op;
+        return "$op how many?", \&plusminus;
     }
 
-    if ($lhs) {
-        return REJECT, $err_postfix if $op eq '+' or $op eq '-';
-
-        $lhs = abs $lhs;  # withdrawal is negative
-
-        return REJECT, $err_limit if $lhs > $limit;
-        $cart
-            ->add(0, "?  (The next thing you add will be multiplied.)", { _repeat => 1, refuse_checkout => 1 })
-            ->quantity($lhs);
-        return ACCEPT;
-    }
-
+    # $op is not + or -, so it must be * (or x).
     return REJECT, $err_stacked if $last->multiplied;
-    return REJECT, $err_nope if $last->attribute('no_repeat');
     return "Multiply previous product by", \&repeat;
 }
 
