@@ -1,7 +1,7 @@
 #!perl
 
-HELP "*<N>, x<N>, <N>x, <N>*" => "Set quantity of previous/next product";
-HELP "-<N>, +<N>" => "Decrease/increase quantity of previous product";
+HELP "<N>x, <N>*" => "Set quantity of previous/next product";
+HELP "-<N>, +<N>, *<N>, x<N>" => "Change quantity of previous product";
 
 my $err_stacked = "Stacked repetition is not supported.";
 my $err_pfand = "Plugins 'pfand' and 'repeat' cannot be combined.";
@@ -59,12 +59,6 @@ sub command($self, $cart, $command, @) {
         if ($op eq '+' or $op eq '-') {
             $self->{op} = $op;
             return "$op how many?",  \&plusminus;
-        }
-
-        if ($last->has_attribute('is_withdrawal')) {
-            $lhs = $last->{amount}->abs->float;
-            $lhs == int $lhs or return REJECT, "Repeat only works on integers.";
-            $cart->delete($last);
         }
     }
 
