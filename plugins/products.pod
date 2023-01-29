@@ -49,7 +49,7 @@ account when they check out with this product in the cart. When it is a
 negative number, the user will instead have money added to their account when
 "buying" this product.
 
-Optionally, the price can be augmented with at C<@> sign and the name of the
+Optionally, the price can be augmented with an C<@> sign and the name of the
 contra account. When no contra account is specified, C<+sales/products> is used.
 Internal accounts (that start with C<-> or C<+>) are created automatically. A
 regular account can also be used, but has to exist before the product can be
