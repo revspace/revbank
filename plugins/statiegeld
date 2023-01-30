@@ -66,6 +66,18 @@ sub command ($invocant, $cart, $command, @) {
 			? "$addon->{description}"
 			: "$addon->{description} ($product->{description})";
 
+		my @existing = grep {
+			$_->attribute('plugin') eq $invocant->id and
+			$_->attribute('addon_id') eq $addon->{id} and
+			$_->{description} eq $d
+		} $cart->entries('plugin');
+
+		if (@existing) {
+			$existing[0]->quantity($existing[0]->quantity + 1);
+			$cart->select($existing[0]);
+			next;
+		}
+
 		$cart
 		->add(+$addon->{price}, $d, { plugin => $invocant->id, addon_id => $addon->{id} })
 		->add_contra($addon->{contra}, -$addon->{price}, "$d for \$you");
