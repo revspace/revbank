@@ -194,7 +194,7 @@ OUTER: for (;;) {
             redo PROMPT if not @words;
             abort if grep $_ eq 'abort', @words;
 
-            my $word = shift @words;
+            my $origword = my $word = shift @words;
             push @retry, $word;
 
             PLUGIN: for my $plugin (@plugins) {
@@ -248,7 +248,7 @@ OUTER: for (;;) {
                 call_hooks "plugin_fail", $plugin->id, "Invalid return value";
                 abort;
             }
-            call_hooks "invalid_input", $cart, $word;
+            call_hooks "invalid_input", $cart, $origword, $word;
             @retry = ();
             abort if @words;
             redo OUTER;
