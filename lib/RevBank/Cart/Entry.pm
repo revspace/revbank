@@ -93,12 +93,15 @@ sub contras($self) {
 
 sub as_printable($self) {
     my @s;
-    push @s, $self->{quantity} . "x {" if $self->multiplied;
 
     # Normally, the implied sign is "+", and an "-" is only added for negative
     # numbers. Here, the implied sign is "-", and a "+" is only added for
     # positive numbers.
-    push @s, sprintf "%8s %s", $self->{amount}->string_flipped, $self->{description};
+    my $q = $self->{quantity};
+    push @s, sprintf "%s%6s %s", 
+        ($q > 1 ? "${q}x" . " " x (3 - length $q) : " " x 4),
+        $self->{amount}->string_flipped,
+        $self->{description};
 
     for my $c (@{ $self->{contras} }) {
         my $description;
@@ -121,13 +124,11 @@ sub as_printable($self) {
             $description = $fromto;
         }
         push @s, sprintf(
-            "%11s %s",
+            "%13s %s",
             ($self->{amount} > 0 ? $c->{amount}->string_flipped("") : $c->{amount}->string),
             $description
         );
     }
-
-    push @s, "}" if $self->multiplied;
 
     return @s;
 }
