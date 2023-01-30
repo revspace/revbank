@@ -151,5 +151,5 @@ sub command :Tab(&tab) ($self, $cart, $command, @) {
 }
 
 sub tab {
-    return grep /\D/, keys %{ read_products() };
+    return grep !/^\+/, grep /\D/, keys %{ read_products() };
 }

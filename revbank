@@ -175,7 +175,8 @@ OUTER: for (;;) {
                 }
             }
             if (delete $completions{USERS}) {
-                $completions{$_}++ for RevBank::Users::names;
+                $completions{$_}++ for grep !RevBank::Users::is_hidden($_),
+                    RevBank::Users::names;
             }
             if (delete $completions{NOABORT}) {
                 delete $completions{abort};
