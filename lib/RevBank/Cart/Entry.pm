@@ -106,9 +106,9 @@ sub as_printable($self) {
     # numbers. Here, the implied sign is "-", and a "+" is only added for
     # positive numbers.
     my $q = $self->{quantity};
-    push @s, sprintf "%s%s%s" . "%s%6s%s" . " " . "%s%s%s", 
+    push @s, sprintf "%s%-4s%s" . "%s%6s%s" . " " . "%s%s%s", 
         ($self->{highlight} || $self->{highlight_quantity} ? $HI : $LO),
-        ($q > 1 || $self->{highlight_quantity} ? "${q}x" . " " x (3 - length $q) : " " x 4),
+        ($q > 1 || $self->{highlight_quantity} ? "${q}x" : ""),
         ($self->{highlight} ? "" : $END),
 
         ($self->{highlight} || $self->{highlight_amount} ? $HI : $LO),
