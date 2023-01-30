@@ -42,6 +42,7 @@ sub command :Tab(market,&tab) ($self, $cart, $command, @) {
 
     if (@existing) {
         $existing[0]->quantity($existing[0]->quantity + 1);
+        $cart->select($existing[0]);
         return ACCEPT;
     }
 

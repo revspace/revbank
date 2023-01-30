@@ -35,7 +35,23 @@ sub add($self, $amount, $description, $data = {}) {
     # ->add($user, ...)  => use $cart->add(...)->add_contra($user, ...)
     # ->add($entry)      => use $cart->add_entry($entry)
 
-    return $self->add_entry(RevBank::Cart::Entry->new($amount, $description, $data));
+    my $entry = $self->add_entry(RevBank::Cart::Entry->new($amount, $description, $data));
+    $self->select($entry);
+    return $entry;
+}
+
+sub select($self, $entry) {
+    return $self->{selected_entry} = $entry;
+}
+
+sub selected($self) {
+    return undef if not @{ $self->{entries} };
+
+    for my $entry (@{ $self->{entries} }) {
+        return $entry if $entry == $self->{selected_entry};
+    }
+
+    return $self->select( $self->{entries}->[-1] );
 }
 
 sub delete($self, $entry) {

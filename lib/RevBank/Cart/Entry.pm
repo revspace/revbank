@@ -21,6 +21,7 @@ sub new($class, $amount, $description, $attributes = {}) {
         contras     => [],
         caller      => List::Util::first(sub { !/^RevBank::Cart/ }, map { (caller $_)[3] } 1..10)
                        || (caller 1)[3],
+        highlight   => 1,
     };
 
     return bless $self, $class;
@@ -40,6 +41,7 @@ sub add_contra($self, $user, $amount, $description, $display = undef) {
         amount      => $amount,  # should usually have opposite sign (+/-)
         description => $description,  # contra user's perspective
         display     => $display,  # interactive user's perspective
+        highlight   => 1,
     };
 
     $self->attribute('changed', 1);
@@ -66,6 +68,7 @@ sub amount($self, $new = undef) {
         $new = RevBank::Amount->parse_string($new) if not ref $new;
         $$ref = $new;
         $self->attribute('changed', 1);
+        $self->{highlight_amount} = 1;
     }
 
     return $$ref;
@@ -77,6 +80,7 @@ sub quantity($self, $new = undef) {
         $new >= 0 or croak "Quantity must be positive";
         $$ref = $new;
         $self->attribute('changed', 1);
+        $self->{highlight_quantity} = 1;
     }
 
     return $$ref;
@@ -91,6 +95,10 @@ sub contras($self) {
     return map +{ %$_ }, @{ $self->{contras} };
 }
 
+my $HI = "\e[1m";
+my $LO = "\e[2m";
+my $END = "\e[0m";
+
 sub as_printable($self) {
     my @s;
 
@@ -98,10 +106,18 @@ sub as_printable($self) {
     # numbers. Here, the implied sign is "-", and a "+" is only added for
     # positive numbers.
     my $q = $self->{quantity};
-    push @s, sprintf "%s%6s %s", 
+    push @s, sprintf "%s%s%s" . "%s%6s%s" . " " . "%s%s%s", 
+        ($self->{highlight} || $self->{highlight_quantity} ? $HI : $LO),
         ($q > 1 ? "${q}x" . " " x (3 - length $q) : " " x 4),
+        ($self->{highlight} ? "" : $END),
+
+        ($self->{highlight} || $self->{highlight_amount} ? $HI : $LO),
         $self->{amount}->string_flipped,
-        $self->{description};
+        ($self->{highlight} ? "" : $END),
+
+        ($self->{highlight} ? $HI : $LO),
+        $self->{description},
+        $END;
 
     for my $c (@{ $self->{contras} }) {
         my $description;
@@ -124,11 +140,15 @@ sub as_printable($self) {
             $description = $fromto;
         }
         push @s, sprintf(
-            "%13s %s",
+            "%s%13s %s%s",
+            ($self->{highlight} || $c->{highlight} ? $HI : $LO),
             ($self->{amount} > 0 ? $c->{amount}->string_flipped("") : $c->{amount}->string),
-            $description
+            $description,
+            $END,
         );
+        delete $c->{highlight};
     }
+    delete $self->@{qw(highlight highlight_quantity highlight_amount)};
 
     return @s;
 }

@@ -17,7 +17,7 @@ sub command($self, $cart, $command, @) {
 
     return ABORT, $err_pfand if $cart->entries('is_pfand');
 
-    my $last = ($cart->entries)[-1];
+    my $last = $cart->selected;
 
     return NEXT if $lhs and $rhs;  # 123x123 -> invalid, likely user or product
 
@@ -79,7 +79,7 @@ sub repeat($self, $cart, $arg, @) {
 
     return REJECT, $err_limit if $arg > $limit;
 
-    ($cart->entries)[-1]->quantity($arg);
+    $cart->selected->quantity($arg);
     return ACCEPT;
 }
 
@@ -87,7 +87,7 @@ sub plusminus($self, $cart, $arg, @) {
     $arg =~ /^\d+$/ and $arg > 0
         or return REJECT, "Invalid value.";
 
-    my $last = ($cart->entries)[-1];
+    my $last = $cart->selected;
     my $new = $last->quantity;
     $new += $arg if $self->{op} eq '+';
     $new -= $arg if $self->{op} eq '-';
@@ -97,7 +97,7 @@ sub plusminus($self, $cart, $arg, @) {
         $cart->delete($last);
         print "Deleted.\n";
     } else {
-        ($cart->entries)[-1]->quantity($new);
+        $cart->selected->quantity($new);
     }
     return ACCEPT;
 }
