@@ -43,8 +43,18 @@ sub hook_deposit_command($class, $prompt, $array, @) {
 	};
 }
 
-sub command ($invocant, $cart, $command, @) {
+sub command { # args via @_ for mutable alias
+	my ($invocant, $cart, $command) = @_;
 	$S or return NEXT;
+
+	# Hidden feature: use \ in front of product id to ignore statiegeld plugin.
+	# Not sure if this will stay; there might be a negative social aspect to
+	# normalizing grabbing a product and walking away from where one would
+	# normally pay.
+	if ($_[2] =~ s/^\\//) {
+		$cart->{statiegeld_ignore} = 1;
+		return NEXT;
+	}
 
 	defined &RevBank::Plugin::products::read_products
 		or die "statiegeld plugin requires products plugin";
@@ -88,6 +98,7 @@ sub command ($invocant, $cart, $command, @) {
 
 sub hook_added_entry ($class, $cart, $entry, @) {
 	$S or return;
+	$cart->{statiegeld_ignore} and return;
 	$entry->has_attribute('plugin') or return;
 
 	if ($entry->attribute('plugin') eq 'market') {
@@ -116,7 +127,9 @@ sub hook_prompt {  # ($class, $cart, $prompt), but via @_ for mutable alias
 	$_[2] =~ s/^$/$statiegeld_prompt/;
 }
 
-sub hook_input($class, $cart, $input, $split_input, @) {
+sub hook_input { # args via @_ for mutable alias
+	my ($class, $cart, $input, $split_input) = @_;
+
 	$S or return;
 
 	# Extra newline before new "Scan products for ..." line.
@@ -141,4 +154,6 @@ END
 
 		redo OUTER;  # this is phenominally vile :)
 	}
+
+	$_[2] = "help" if $split_input and $input eq "\\help";
 }
