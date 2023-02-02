@@ -52,3 +52,7 @@ sub hook_log_warning($class, $message, @) {
 sub hook_log_error($class, $message, @) {
     _log(ERROR => $message);
 }
+
+sub hook_log_info($class, $message, @) {
+    _log(INFO => $message);
+}

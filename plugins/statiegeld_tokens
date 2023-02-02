@@ -72,12 +72,24 @@ sub _expire_tokens($line, $time) {
 	defined $line or return $line;
 	$line =~ / /  or return $line;
 
-	# Rewrite line with only non-tokens, invalid tokens, and non-expired tokens
-	return join(" ", grep {
-		my ($type, undef, $expiry) = split /,/;
+	my ($username, @tokens) = split " ", $line;
 
-		!defined($expiry) or $expiry < 0 or $expiry > $time
-	} split " ", $line) . "\n";
+	# Rewrite line with only non-tokens, invalid tokens, and non-expired tokens
+	my @keep;
+	my @expired;
+	for my $token (@tokens) {
+		my ($type, undef, $expiry) = split /,/, $token;
+
+		my $expired = defined($expiry) && $expiry > 0 && $expiry < $time;
+		push @{ $expired ? \@expired : \@keep }, $token;
+	}
+
+	call_hooks(
+		"log_info",
+		"statiegeld_tokens: ${\scalar @expired} expired for $username: @expired"
+	) if @expired;
+
+	return join(" ", $username, @keep) . "\n";
 }
 
 sub _write($username, $tokens_by_type, $create) {
@@ -149,6 +161,8 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 	my $time_is_reliable = _time_is_reliable;
 
 	my $tokens_changed = 0;
+	my @created;
+	my @used;
 
 	# Products bought: add tokens
 	my $seq = 0;
@@ -171,6 +185,7 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 					$transaction_id,
 					$seq++,
 				);
+				push @created, $token;
 				push @{ $tokens_by_type->{$addon->{id}} }, $token;
 			}
 			$tokens_changed++;
@@ -201,7 +216,7 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 			$cart->delete($entry);
 		}
 
-		splice @{ $tokens_by_type->{$type} }, 0, $entry->quantity;
+		push @used, splice @{ $tokens_by_type->{$type} }, 0, $entry->quantity;
 		$tokens_changed++;
 	}
 	for my $type (keys %warnings_by_type) {
@@ -218,6 +233,16 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 	}
 
 	# Store data
+	call_hooks(
+		"log_info",
+		"statiegeld_tokens: ${\scalar @created } created for $username: @created"
+	) if @created;
+
+	call_hooks(
+		"log_info",
+		"statiegeld_tokens: ${\scalar @used } used by $username: @used"
+	) if @used;
+
 	_write $username, $tokens_by_type, $is_new if $tokens_changed;
 
 	return ABORT if %warnings_by_type and not $cart->size;
