@@ -1,0 +1,14 @@
+sub _set_title($title) {
+	my $term = $ENV{TERM} or return;
+	print "\e]2;$title\a"   if $term =~ /^xterm|^rxvt/;
+	print "\e]2;$title\e\\" if $term =~ /^screen/;  # includes tmux
+}
+
+sub hook_prompt($class, $cart, $prompt, @) {
+	_set_title($cart->size ? "*RevBank" : "RevBank");
+}
+
+END {
+	_set_title("-");
+}
+
