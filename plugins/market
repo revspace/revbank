@@ -35,21 +35,14 @@ sub command :Tab(market,&tab) ($self, $cart, $command, @) {
     my $space    = parse_amount($product->{ space })  or return NEXT;
     my $description = $product->{description};
 
-    my @existing = grep {
-        $_->attribute('plugin') eq $self->id and
-        $_->attribute('product_id') eq $command
-    } $cart->entries('plugin');
-
-    if (@existing) {
-        $existing[0]->quantity($existing[0]->quantity + 1);
-        $cart->select($existing[0]);
-        return ACCEPT;
-    }
-
     $cart->add(
         -($seller + $space),
         "$description (sold by $username)",
-        { product_id => $command, plugin => $self->id }
+        {
+            product_id => $command,
+            plugin => $self->id,
+            deduplicate => join("/", $self->id, $command),
+        }
     )->add_contra(
         $username,
         $seller,

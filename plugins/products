@@ -94,17 +94,6 @@ sub command :Tab(&tab) ($self, $cart, $command, @) {
     my $product = $products->{ $command } or return NEXT;
     my $price = $product->{price};
 
-    my @existing = grep {
-        $_->attribute('plugin') eq $self->id and
-        $_->attribute('product_id') eq $product->{id}
-    } $cart->entries('plugin');
-
-    if (@existing) {
-        $existing[0]->quantity($existing[0]->quantity + 1);
-        $cart->select($existing[0]);
-        return ACCEPT;
-    }
-
     my $contra_desc = "\$you bought $product->{description}";
 
     my @addons = @{ $product->{addons} // [] };
@@ -116,7 +105,12 @@ sub command :Tab(&tab) ($self, $cart, $command, @) {
     my $entry = $cart->add(
         -$price,
         $product->{description},
-        { product_id => $product->{id}, plugin => $self->id, product => $product }
+        {
+            product_id => $product->{id},
+            plugin => $self->id,
+            product => $product,
+            deduplicate => join("/", $self->id, $product->{id}),
+        }
     );
     $entry->add_contra(
         $product->{contra},

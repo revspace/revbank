@@ -1,0 +1,31 @@
+#!perl
+
+# Deduplication merges duplicate entries in the cart, e.g.
+# 3x cola + 4x cola = 7x cola.
+#
+# Plugins that support this, set the "deduplicate" attribute to a string key
+# that is used to determine which entries are equal. It is the responsibility
+# of the plugin that sets this, to ensure that the entries are indeed exactly
+# the same, if their deduplicate keys are equal.
+#
+# The recommended value for the deduplicate attribute is join("/", $plugin_id,
+# $unique_id), where $plugin_id can be obtained from $self->id in interactive
+# methods or $class->id in hooks. Including the plugin id avoids deduplicating
+# across plugins, that are probably not aware of eachothers $unique_id's.
+
+use List::Util qw(sum any);
+
+sub hook_added_entry($class, $cart, $added_entry, @) {
+    my $key = $added_entry->attribute('deduplicate') or return;
+
+    my @dedupe = grep {
+        $_->attribute('deduplicate') eq $key
+    } $cart->entries('deduplicate');
+
+    @dedupe >= 2 or return;
+
+    $dedupe[0]->quantity(sum map { $_->quantity } @dedupe);
+    $cart->select($dedupe[0]);
+
+    $cart->delete($_) for @dedupe[1 .. $#dedupe];
+}

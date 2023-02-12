@@ -27,6 +27,7 @@ dinnerbonus
 # Then, plugins that apply heuristics
 
 repeat
+deduplicate  # wants to be after 'repeat'
 statiegeld
 statiegeld_tokens
 products   # matches product IDs (barcodes)

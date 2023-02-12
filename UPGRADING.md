@@ -1,3 +1,11 @@
+# (2023-02-12) RevBank 3.8
+
+## Update your `revbank.plugins`
+
+Deduplication is moved from individual plugins to a plugin that does that. If
+you want to keep deduplication of cart items, and you probably do want that,
+add `deduplicate` to `revbank.plugins` just below `repeat`.
+
 # (2022-12-25) RevBank 3.6
 
 ## Update your `revbank.plugins`

@@ -21,6 +21,8 @@ sub add_entry($self, $entry) {
 
     push @{ $self->{entries} }, $entry;
     $self->{changed}++;
+    $self->select($entry);
+
     RevBank::Plugins::call_hooks("added_entry", $self, $entry);
 
     return $entry;
@@ -35,9 +37,7 @@ sub add($self, $amount, $description, $data = {}) {
     # ->add($user, ...)  => use $cart->add(...)->add_contra($user, ...)
     # ->add($entry)      => use $cart->add_entry($entry)
 
-    my $entry = $self->add_entry(RevBank::Cart::Entry->new($amount, $description, $data));
-    $self->select($entry);
-    return $entry;
+    return $self->add_entry(RevBank::Cart::Entry->new($amount, $description, $data));
 }
 
 sub select($self, $entry) {

@@ -20,7 +20,11 @@ sub data($self, $cart, $input, @) {
         ->add(
             -$price,
             "Barcode <$input>",
-            { is_barcode => 1, barcode_data => $input }
+            {
+                is_barcode => 1,
+                barcode_data => $input,
+                deduplicate => join("/", $self->id, $input),
+            }
         )
         ->add_contra(
             "+sales/barcodes",
