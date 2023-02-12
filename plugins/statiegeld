@@ -111,7 +111,7 @@ sub hook_prompt {  # ($class, $cart, $prompt), but via @_ for mutable alias
 
 	# The message is prepended to the prompt, so it is printed after
 	# clear-screen (^L).
-	#                        ignore----------end   ignore-----end
+	#                        ignore-------end      ignore----end
 	#                            yellow----------------reset
 	my $statiegeld_prompt = "\x01\e[33;1m\x02$m\n+>\x01\e[0m\x02";
 	#              Actual text:              ^^^^^^
