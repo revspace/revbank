@@ -6,6 +6,13 @@ Deduplication is moved from individual plugins to a plugin that does that. If
 you want to keep deduplication of cart items, and you probably do want that,
 add `deduplicate` to `revbank.plugins` just below `repeat`.
 
+The deprecation warning was moved from the `withdraw` plugin to a new plugin
+called `deprecated_raw`. If you're upgrading from an older versions and some of
+your users have been around since before the withdraw/unlisted split, you may
+want to keep the deprecation warning. But for new RevBank installations it does
+not make sense. To keep providing these warnings to users that enter raw
+amounts, add `deprecated_raw` to the very end of `revbank.plugins`.
+
 # (2022-12-25) RevBank 3.6
 
 ## Update your `revbank.plugins`

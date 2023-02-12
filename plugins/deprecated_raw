@@ -1,0 +1,10 @@
+#!perl
+
+sub command :Tab(withdraw) ($self, $cart, $command, @) {
+    if (defined eval { parse_amount($command) }) {
+        warn "Note: raw amounts for withdrawal or unlisted products are no longer supported.\n\n";
+        warn "Please use the 'withdraw' command to take money out of your revbank account, or\n";
+        warn "the 'unlisted' command to pay for an unlisted product.\n\n";
+    }
+    return NEXT;
+}
