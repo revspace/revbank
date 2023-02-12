@@ -1,39 +1,48 @@
 # Order matters. Read RevBank::Plugins for documentation.
 
-# First, plugins with no commands, or very specific commands
-
 log        # first, so that the registrations of other plugins are logged
+
+# Plugins with no commands
+
 beep
-sigint
-restart
-help
+beep_terminal
 idle
-undo
+#json
+restart
+repeat
+deduplicate  # wants to be after 'repeat'
+sigint
+#stock
+#warnings
+window_title
+
+# Then, specific commands:
+
+adduser
+#cash       # cash tracking also requires deposit_methods to make sense
+deposit
+#deposit_methods  # Extra options for 'deposit'. Edit/configure first!
+#deposit_iban_qr  # QR code display, edit/configure first! (needs qrencode(1))
+dinnerbonus
+edit
 give
 grandtotal
-take
-split
-#cash       # cash tracking also requires deposit_methods to make sense
+help
 #skim       # cash tracking also requires deposit_methods to make sense
-stock
+split
+take
+tail
+undo
+undeposit
 unlisted
-#warnings
-adduser
-edit
-
-beep_terminal
-dinnerbonus
+withdraw
 
 # Then, plugins that apply heuristics
 
-repeat
-deduplicate  # wants to be after 'repeat'
-statiegeld
+statiegeld         # wants to be before 'products'; matches product IDs
 statiegeld_tokens
-products   # matches product IDs (barcodes)
-market     # also matches product IDs
-withdraw   # matches amounts
-users      # matches usernames
-deposit    # wants to be after 'users'
-deposit_methods  # Extra options for 'deposit'. Edit/configure first!
-#deposit_iban_qr  # QR code display, edit/configure first! (needs qrencode(1))
+products           # matches product IDs (barcodes)
+market             # also matches product IDs
+users              # matches usernames
+url
+#deprecated_raw     # matches amounts
