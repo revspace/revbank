@@ -212,9 +212,6 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 			$entry->quantity($available);
 			$warnings_by_type{$type}++;
 		}
-		if ($entry->attribute('statiegeld_VOID_TOKENS')) {
-			$cart->delete($entry);
-		}
 
 		push @used, splice @{ $tokens_by_type->{$type} }, 0, $entry->quantity;
 		$tokens_changed++;
@@ -275,25 +272,26 @@ sub command($self, $cart, $command, @) {
 	}
 	$found or return REJECT, "Add deposit returns first.";
 
-	return "\e[31;1mDeposit token destruction mode.\e[0m\n\n"
-		. "The tokens will be deleted irrevokably and you will NOT RECEIVE THE MONEY.\n"
+	return "The tokens will be deleted irrevokably and you will NOT RECEIVE THE MONEY.\n"
 		. "Type 'yes' if you are sure", \&void;
 }
 
 sub void :Tab(yes,no) ($self, $cart, $input, @) {
-	if ($input eq 'y') {
+	if (lc $input eq 'y') {
 		return REJECT, "y is not yes...";
 	}
-	if ($input ne 'yes') {
+	if (lc $input ne 'yes') {
 		print "Destruction cancelled.\n";
 		return ACCEPT;
 	}
 
 	for my $entry ($cart->entries('plugin')) {
 		next if $entry->attribute('plugin') ne 'statiegeld';
-		$entry->attribute('statiegeld_VOID_TOKENS', 1);
+		$entry->{description} = "Void: $entry->{description}";
+		$entry->amount(0);
+		$entry->delete_contras;
+		$entry->attribute(deduplicate => join("/", $self->id, $entry->attribute('addon_id')));
 	}
 
-	print "\e[31;1mDeposit token destruction mode activated.\e[0m\n";
 	return ACCEPT;
 }

@@ -95,6 +95,10 @@ sub contras($self) {
     return map +{ %$_ }, @{ $self->{contras} };
 }
 
+sub delete_contras($self) {
+    $self->{contras} = [];
+}
+
 my $HI = "\e[37;1m";
 my $LO = "\e[2m";
 my $END = "\e[0m";
