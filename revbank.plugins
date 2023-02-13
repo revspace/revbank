@@ -6,6 +6,7 @@ log        # first, so that the registrations of other plugins are logged
 
 beep
 beep_terminal
+#cash_drawer
 idle
 #json
 restart

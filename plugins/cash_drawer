@@ -1,0 +1,22 @@
+
+sub open_drawer {
+    warn "The cash_drawer plugin should be changed to actually implement the opening of a cash drawer; stub code executed";
+}
+
+sub hook_add_entry($class, $cart, $entry, @) {
+    $entry->attribute('is_deposit') and $entry->attribute('method') =~ /reimburse|cash/
+        or $entry->attribute('is_withdrawal')
+        or return;
+
+    open_drawer();
+}
+
+sub hook_cash {
+    open_drawer();
+}
+
+sub hook_checkout($class, $cart, $user, $transaction_id, @) {
+    $user eq '-cash' or return;
+
+    open_drawer();
+}
