@@ -78,9 +78,10 @@ sub command { # args via @_ for mutable alias
 
 		$cart
 		->add(+$addon->{price}, $d, {
-			plugin => $invocant->id,
-			addon_id => $addon->{id},
-			deduplicate => join("/", $invocant->id, $addon->{id}),
+			plugin      => $invocant->id,
+			addon_id    => $addon->{id},
+			product_id  => $product->{id},
+			deduplicate => join("/", $invocant->id, $product->{id}),
 		})
 		->add_contra($addon->{contra}, -$addon->{price}, "$d for \$you");
 	}
