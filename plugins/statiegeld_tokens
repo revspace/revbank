@@ -281,6 +281,9 @@ sub command($self, $cart, $command, @) {
 }
 
 sub void :Tab(yes,no) ($self, $cart, $input, @) {
+	if ($input eq 'y') {
+		return REJECT, "y is not yes...";
+	}
 	if ($input ne 'yes') {
 		print "Destruction cancelled.\n";
 		return ACCEPT;
