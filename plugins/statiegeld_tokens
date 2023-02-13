@@ -290,6 +290,9 @@ sub void :Tab(yes,no) ($self, $cart, $input, @) {
 		$entry->{description} = "Void: $entry->{description}";
 		$entry->amount(0);
 		$entry->delete_contras;
+
+		# Change key so subsequently added things aren't also void;
+		# deduplication of tokens to be voided doesn't actually work yet.
 		$entry->attribute(deduplicate => join("/", $self->id, $entry->attribute('addon_id')));
 	}
 
