@@ -67,6 +67,10 @@ sub prompt($prompt, $plugins, $completions) {
         return shift @matches;
     };
 
+    # Term::ReadLine::Gnu (1.37) does not expose rl_completion_case_fold,
+    # but it can be assigned through the corresponding .inputrc command.
+    $readline->parse_and_bind("set completion-ignore-case on");
+
     my $done;
     my $input;
 
