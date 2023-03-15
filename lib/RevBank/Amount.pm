@@ -81,6 +81,8 @@ sub parse_string($class, $str) {
         = $str =~ /^\s*(?:\+|(-)?)([0-9]+)?(?:[,.]([0-9]{1,2}))?\s*$/
         or return undef;
 
+    defined $int or defined $cents or return undef;
+
     $int //= 0;
     $cents //= 0;
     $cents *= 10 if length($cents) == 1;  # 4.2 -> 4.20
