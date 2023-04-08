@@ -52,7 +52,7 @@ sub _read {
 		/\S/ or next;
 
 		my ($username, @tokens) = split " ", $_;
-		if (exists $users_tokens{$username}) {
+		if (exists $users_tokens{lc $username}) {
 			die "Corrupt data file $filename, $username listed twice";
 		}
 
@@ -62,7 +62,7 @@ sub _read {
 			push @{ $by_type{$token_type} }, $token;
 		}
 
-		$users_tokens{$username} = \%by_type;
+		$users_tokens{lc $username} = \%by_type;
 	}
 	return \%users_tokens;
 }
@@ -105,7 +105,7 @@ sub _write($username, $tokens_by_type, $create) {
 			$old_line =~ /\S/ or return $old_line;  # keep whitespace-only lines
 
 			# removes line from file if $new_line is undef
-			my $line = /(\S+)/ && $1 eq $username ? $new_line : $old_line;
+			my $line = /(\S+)/ && lc($1) eq lc($username) ? $new_line : $old_line;
 			return _expire_tokens($line, $time);
 		};
 	}
@@ -155,7 +155,7 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 	}
 
 	# Read data
-	my $tokens_by_type = _read->{$username};
+	my $tokens_by_type = _read->{lc $username};
 	my $is_new = !defined $tokens_by_type;
 	$tokens_by_type = {} if $is_new;
 	my $time_is_reliable = _time_is_reliable;
@@ -252,7 +252,7 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 }
 
 sub hook_user_info ($class, $username, @) {
-	my $tokens_by_type = _read->{$username};
+	my $tokens_by_type = _read->{lc $username};
 	my @info;
 	for my $type (sort keys %$tokens_by_type) {
 		my @tokens = @{ $tokens_by_type->{$type} // [] };
