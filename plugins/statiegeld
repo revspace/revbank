@@ -145,7 +145,7 @@ END
 		# "(W exiting) You are exiting a subroutine by unconventional means,
 		# such as a goto, or a loop control statement."
 
-		redo OUTER;  # this is phenominally vile :)
+		redo OUTER;  # this is phenomenally vile :)
 	}
 
 	$_[2] = "help" if $split_input and $input eq "\\help";
