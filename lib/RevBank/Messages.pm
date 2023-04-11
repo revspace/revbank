@@ -60,7 +60,7 @@ sub hook_user_balance($class, $username, $old, $delta, $new, @) {
     my $sign = $delta->cents >= 0 ? '+' : '-';
     my $rood = $new->cents < 0 ? '31;' : '';
     my $abs  = $delta->abs;
-    my $warn = $new->cents < -1984 ? " \e[5;1m(!!)\e[0m" : "";
+    my $warn = $new->cents < -2200 ? " \e[5;1m(!!)\e[0m" : "";
 
     $_ = $_->string("+") for $old, $new;
     printf "New balance for $username: $old $sign $abs = \e[${rood}1m$new\e[0m$warn\n",
