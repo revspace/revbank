@@ -14,21 +14,21 @@ sub amount($self, $cart, $arg, @) {
     $self->{amount} = parse_amount($arg) or return REJECT, "Invalid amount.";
 
     if ($self->{command} eq 'donate') {
-        $cart
-            ->add(-$self->{amount}, "Donation (THANK YOU!)")
-            ->add_contra("+donations", +$self->{amount}, "Donation by \$you");
+        return "Message ('x' for no message)", sub($self, $cart, $desc, @) {
+            $desc = $desc eq 'x' ? "" : " ($desc)";
+            $cart
+                ->add(-$self->{amount}, "Donation$desc - THANK YOU!")
+                ->add_contra("+donations", +$self->{amount}, "Donation by \$you");
 
-        return ACCEPT;
+            return ACCEPT;
+        }
     }
 
-    return "Please provide a short description", \&description;
+    return "Please provide a short description", sub($self, $cart, $desc, @) { 
+        $cart
+            ->add(-$self->{amount}, "Unlisted: $desc")
+            ->add_contra("+sales/unlisted", +$self->{amount}, "Unlisted: $desc by \$you");
+
+        return ACCEPT;
+    };
 }
-
-sub description($self, $cart, $desc, @) {
-    $cart
-        ->add(-$self->{amount}, "Unlisted: $desc")
-        ->add_contra("+sales/unlisted", +$self->{amount}, "Unlisted: $desc by \$you");
-
-    return ACCEPT;
-}
-
