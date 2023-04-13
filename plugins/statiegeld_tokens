@@ -171,9 +171,9 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 			or next;
 
 		for my $addon (@{ $sg->{statiegeld_addons} }) {
-			# These should never contain commas in vanilla revbank, but custom
-			# plugins may be less well behaved.
-			/,/ and die "Internal error"
+			# These should never contain spaces or commas in vanilla revbank,
+			# but custom plugins may be less well behaved.
+			/[\s,]/ and die "Internal error"
 				for $addon->{id}, $entry->attribute('product_id'), $transaction_id;
 
 			for (1 .. $entry->quantity) {
