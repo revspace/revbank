@@ -143,7 +143,7 @@ sub _handle_undo($cart) {
 				$tid ne $undo_tid
 			} @tokens;
 
-			return @tokens ? join(" ", $username, @tokens) : undef;
+			return @tokens ? join(" ", $username, @tokens) . "\n" : undef;
 		};
 	}
 }
