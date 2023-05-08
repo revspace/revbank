@@ -77,7 +77,7 @@ Read [RevBank::Plugins](lib/RevBank/Plugins.pod) and [RevBank::Amount](lib/RevBa
 
 ## Exiting revbank
 
-Exiting is not supported because it's desigend to run continuously. But if you
+Exiting is not supported because it's designed to run continuously. But if you
 run it from a shell, you can probably stop it using ctrl+Z and then kill the
 process (e.g. `kill %1`). RevBank does not keep any files open, so it's safe
 to kill when idle.
