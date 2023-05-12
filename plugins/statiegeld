@@ -91,7 +91,7 @@ sub command { # args via @_ for mutable alias
 
 sub hook_added_entry ($class, $cart, $entry, @) {
 	$S or return;
-	$cart->{statiegeld_ignore} and return;
+	delete $cart->{statiegeld_ignore} and return;
 	$entry->has_attribute('plugin') or return;
 
 	if ($entry->attribute('plugin') eq 'market') {
