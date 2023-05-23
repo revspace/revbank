@@ -1,0 +1,45 @@
+=head1 NAME
+
+RevBank::Global - Constants and utility functions
+
+=head1 SYNOPSIS
+
+    use RevBank::Global;
+
+=head1 DESCRIPTION
+
+This module unconditionally exports the following symbols into the calling
+namespace:
+
+=head2 ACCEPT, ABORT, REJECT, NEXT, DONE
+
+Return codes for plugins. See L<RevBank::Plugins>.
+
+=head2 say
+
+Print with newline, in case your Perl version doesn't already have a C<say>.
+
+=head2 call_hooks($hook, @arguments)
+
+See C<call_hooks> in L<RevBank::Plugins>.
+
+=head2 parse_amount($amount)
+
+Returns the amount given if it is well formed, undef if it was not. Dies if
+the given amount exceeds certain boundaries.
+
+Commas are changed to periods so C<3,50> and C<3.50> both result in C<3.5>.
+
+=head2 parse_user($username)
+
+See C<parse_user> in L<RevBank::Users>.
+
+Returns the canonical username, or undef if the account does not exist.
+
+=head1 AUTHOR
+
+Juerd Waalboer <#####@juerd.nl>
+
+=head1 LICENSE
+
+Pick your favourite OSI license.
