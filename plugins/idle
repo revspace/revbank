@@ -21,7 +21,7 @@ sub hook_prompt_idle($class, $cart, $plugin, $seconds, $readline, @) {
     my $help = $cart->entries('refuse_checkout')
         ? "Enter 'abort' to abort."
         : "Enter username to $verb or 'abort' to abort.";
-    print "\e[33;2;1mTransaction incomplete.\e[0m $help\n";
+    print "\e[33;4;1mTransaction incomplete.\e[0m $help\n";
 
     $readline->restore_prompt;
     $readline->replace_line($text);
