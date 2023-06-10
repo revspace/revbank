@@ -113,7 +113,7 @@ sub hook_prompt {  # ($class, $cart, $prompt), but via @_ for mutable alias
 	# The message is prepended to the prompt, so it is printed after
 	# clear-screen (^L). The color is repeated on the second line because
 	# readline redraws only the last line of a multiline prompt.
-	my $yellow = "\x01\e[e33;1m\x02";
+	my $yellow = "\x01\e[33;1m\x02";
 	my $reset  = "\x01\e[m\x02";
 	my $statiegeld_prompt = "$yellow$message$reset\n$yellow+>$reset";
 
