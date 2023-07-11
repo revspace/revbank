@@ -97,7 +97,9 @@ sub _recent($n, $u) {
 sub balance($self, $u) {
     _recent(10, $u);
     call_hooks("user_info", $u);
-    printf "Balance for $u is \e[1m%s\e[0m\n", RevBank::Users::balance($u)->string("+");
+    my $balance = RevBank::Users::balance($u);
+    my $red = $balance->cents < 0 ? "31;" : "";
+    printf "Balance for $u is \e[%s1m%s\e[0m\n", $red, $balance->string("+");
     say "NB: Products/amounts/commands FIRST, username LAST.";
     return ABORT;
 }
