@@ -6,8 +6,33 @@ sub command :Tab(tail) ($self, $cart, $command, @) {
     my $n = (`tput lines 2>/dev/null` || 13) - 3;
     my $c = (`tput cols 2>/dev/null` || 80) + 0;
 
-    # ew :)
-    system "perl -lane's/CHECKOUT\\s+\\S+\\s+// or next; /\\s[-+][a-z]/i and next; s/  #// or next; s/_/ /; print' .revbank.log | tail -n$n | perl -ple'\$_ = substr \$_, 0, $c'";
+    open my $fh, "<", ".revbank.log" or die $!;
+    my @lines;
+
+    while (defined($_ = readline $fh)) {
+        length($_) > 28 or next;
+        substr($_, 20, 8) eq 'CHECKOUT' or next;  # fast check
+
+        my ($dt, $c, $t_id, $u, $dir, $qty, $amount, undef, $desc) = split " ", $_, 9;
+        $c eq 'CHECKOUT' or next;  # real check after expensive split
+        RevBank::Users::is_hidden($u) and next;
+
+        shift @lines if @lines == $n;
+        push @lines, [$dt, $u, ($dir eq 'GAIN' ? "+ $amount" : $amount), $desc, $qty];
+    }
+    close $fh;
+
+    my $usercol = 1;
+    length($_->[1]) > $usercol and $usercol = length($_->[1]) for @lines;
+
+    for my $line (@lines) {
+        my $qty = pop @$line;
+        $line->[0] =~ s/_/ /;
+        $line->[1] = sprintf "%-${usercol}s", $line->[1];
+        $line->[2] = sprintf "%8s", $line->[2];
+        $line->[3] = "${qty}x $line->[3]" if $qty > 1;
+        print substr "@$line", 0, $c;
+    }
 
     return ACCEPT;
 }
