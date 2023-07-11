@@ -55,16 +55,27 @@ sub shame($self) {
     return ACCEPT;
 }
 
-sub _grep($u) {
+sub _grep($user) {
+    $user = lc $user;
     my @lines;
     open my $fh, "<", ".revbank.log" or die $!;
+
     while (defined($_ = readline $fh)) {
-        s/CHECKOUT\s+\S+\s+(\S+)\s+// or next;
-        lc($1) eq lc($u) or next;
-        s/  #// or next;
-        s/_/ /; 
-        push @lines, $_;
+        length($_) > 28 or next;
+        substr($_, 20, 8) eq 'CHECKOUT' or next;  # fast check
+
+        my ($dt, $c, $t_id, $u, $dir, $qty, $amount, undef, $desc) = split " ", $_, 9;
+        $c eq 'CHECKOUT' or next;  # real check after expensive split
+        lc($u) eq $user or next;
+
+        push @lines, sprintf "%s %8s %s%-s", (
+            $dt =~ s/_/ /r,
+            $dir eq 'GAIN' ? "+ $amount" : $amount,  # like R::A->string_flipped
+            $qty > 1 ? $qty . "x " : "",
+            $desc
+        );
     }
+
     return @lines;
 }
 
