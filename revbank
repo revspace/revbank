@@ -82,11 +82,11 @@ sub prompt($prompt, $plugins, $completions) {
     });
 
     if ($retry) {
-        my $preset = join " ", @retry[0 .. $#retry - 1];
-        my $cursor = length $preset;
-        $preset .= " " . join " ", @{ $retry[-1] };
-        $readline->insert_text($preset);
-        $readline->Attribs->{point} = $cursor;
+        my $trailing = "@{ pop @retry }";
+        my $rejected = pop @retry;
+        my $accepted = "@retry";
+        $readline->insert_text("$accepted $rejected $trailing");
+        $readline->Attribs->{point} = 1 + length $accepted;
         @retry = ();
         $retry = 0;
     }
