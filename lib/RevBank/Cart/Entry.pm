@@ -8,6 +8,14 @@ no warnings qw(experimental::signatures);
 use Carp qw(carp croak);
 use RevBank::Users;
 use List::Util ();
+use Scalar::Util ();
+
+# Workaround for @_ in signatured subs being experimental and controversial
+my $NONE = \do { my $dummy };
+sub _arg_provided($a) {
+    return 1 if not ref $a;
+    return Scalar::Util::refaddr($a) != Scalar::Util::refaddr($NONE) 
+}
 
 sub new($class, $amount, $description, $attributes = {}) {
     $amount = RevBank::Amount->parse_string($amount) if not ref $amount;
@@ -56,9 +64,9 @@ sub has_attribute($self, $key) {
     );
 }
 
-sub attribute($self, $key, $new = undef) {
+sub attribute($self, $key, $new = $NONE) {
     my $ref = \$self->{attributes}->{$key};
-    $$ref = $new if @_ > 2;
+    $$ref = $new if _arg_provided($new);
     return $$ref;
 }
 
