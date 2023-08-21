@@ -1,3 +1,19 @@
+# (2023-08-21) RevBank 3.9
+
+A tiny change that could break things: the shebang was changed from
+`#!/usr/bin/perl` to the more modern `#!/usr/bin/env perl`.
+
+In the unlikely event that your system has multiple perl executables in the
+search path of `PATH`, this change could mean that revbank now uses a different
+perl, in which case you may have to reinstall the required Perl libraries.
+
+Background: NixOS doesn't follow the previously uni(x)versal convention that,
+when Perl is available, an executable exists at `/usr/bin/perl`. The only
+stable paths that NixOS provides for shebangs are `#!/bin/sh` or
+`#!/usr/bin/env`. There were always pros and cons to switching the shebang to
+`env` (e.g. for use with perlbrew), but learning about Nix has tipped the
+scales for me. (The performance penalty is not relevant for RevBank.)
+
 # (2023-02-12) RevBank 3.8
 
 ## Update your `revbank.plugins`

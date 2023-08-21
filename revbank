@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 use v5.28;
 use warnings;
@@ -18,7 +18,7 @@ use RevBank::Global;
 use RevBank::Messages;
 use RevBank::Cart;
 
-our $VERSION = "3.8";
+our $VERSION = "3.9";
 our %HELP1 = (
     "abort" => "Abort the current transaction",
 );
