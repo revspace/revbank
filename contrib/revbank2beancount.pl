@@ -119,11 +119,11 @@ while (defined(my $line = readline $fh)) {
 			\s++ ([+-][\d.]++)  # account balance before transaction
 		]x or warn;
 
-		# This depends on the logic that revbank will *always*
-		# emit a BALANCE event for every account modified by a CHECKOUT event,
-		# and that transactions will be in chronological order in the log. That
-		# is, the first old balance will be the opening balance, regardless of
-		# the corresponding transaction id.
+		# This uses the fact that revbank will *always* emit a BALANCE event
+		# for every account modified by a CHECKOUT event, and that transactions
+		# will be in chronological order in the log. That is, the first old
+		# balance will be the opening balance, regardless of the corresponding
+		# transaction id.
 		$balances{$account} //= $balance;
 	}
 }
@@ -162,5 +162,5 @@ for my $id (@transaction_ids) {
 	print "\n";
 }
 
-# TO DO: read revbank.accounts and "open" beancount accounts for all accounts
+# TODO: read revbank.accounts and "open" beancount accounts for all accounts
 # that didn't have any transactions.
