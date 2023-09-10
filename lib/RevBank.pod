@@ -70,7 +70,7 @@ The concept of unsupervised 100% self-service access to a fully stocked refriger
 
 It may be possible to implement some semblance of security with a plugin (and by disabling plugins like C<take>), but that still wouldn't keep anyone from stealing drinks from the fridge. If you can't trust your users, RevBank is probably not the right tool for the job. And if you are in these unfortunate circumstances, you should really reconsider that unsupervised access to the fridge.
 
-This said, RevBank does come with a C<log> plugin, which enables external auditing of its use. With every balance change, the old and new balances are recorded. The log file is also very useful to reconstruct user mistakes when things don't add up.
+This said, RevBank does come with a C<log> plugin, which enables external auditing of its use. With every balance change, the old and new balances are recorded. The log file is also very useful to investigate user mistakes.
 
 Hardware can fail, software can fail, and users can fail. Make backups. Make lots of backups. Maybe once an hour, or even after every transaction. Don't just synchronize, but keep the old versions too.
 
