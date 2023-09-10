@@ -1,0 +1,79 @@
+=head1 NAME
+
+RevBank - Pre-paid bar tab for hackerspaces
+
+=head1 DESCRIPTION
+
+=head2 High-level architecture
+
+Since version 2, RevBank is loosely modeled after C<qpsmtpd>, which is an SMTP server in which the core speaks the SMTP protocol, but doesn't do anything with the commands it receives. Actually handling the commands is the responsibility of plugins. Without plugins, the software is useless.
+
+RevBank is interactive and stateful. Global state is provided in the form of a "shopping cart", a L<RevBank::Cart> object, which represents the ongoing, unfinished, transaction. The terms "cart", "unfinished transaction", and "current transaction" generally all refer to the same thing in the context of RevBank.
+
+In addition, RevBank provides the concept of accounts through L<RevBank::Users>. There are user accounts and internal accounts; internal accounts are used as contra accounts for I<double-entry bookkeeping>, and are hidden from the user interface. Accounts only have a name, a balance, and some timestamps; things like transaction histories are provided by plugins.
+
+Notably, the RevBank core does B<not> have any notion of "products". Support for buying products through RevBank is provided by plugins, like the included C<products> and C<market> plugins. It is easy to add another source of products by writing another plugin. A plugin contains arbitrary code and can do anything, including querying external resources.
+
+=head2 Data files
+
+All files are simple text files, generally whitespace and newline separated. While this isn't particularly "cool", there are many tools that work with them, like C<diff> and C<git> and C<vim>. That means a lot of functionality (such as editing a product list) doesn't require any specialized user interfaces. It also makes creating backups trivial.
+
+RevBank uses a single lock file, so you can safely use multiple processes. It doesn't keep any files open, making it safe to just kill C<revbank> at any moment (only the current transaction will be lost) or to edit some files with an external editor (not the files that RevBank writes to, though).
+
+RevBank does currently not behave well with non-ASCII data.
+
+=head2 The input loop
+
+RevBank is a user-interactive CLI, intended for use with a keyboard and a barcode scanner. The barcode scanner is configured as a virtual keyboard device; RevBank doesn't care if the input is given with the barcode scanner or the keyboard, and it is considered a feature that everything that can be typed, can be turned into a scannable barcode, and that any barcode data can be typed instead of scanned.
+
+Most barcode scanners virtually press the I<Enter> key after each scan, and RevBank is made with this in mind: any command parameters are typically presented as follow-up prompts.
+
+For advanced users, a more shell-like interface is provided: a command and its arguments can be given on a single line, separated by spaces. On the top-level prompt (i.e. not in follow-up prompts), the input is whitespace separated, and each of the "words" is added to a stack, from which subsequent prompts are fed. As long as there are words on the stack, the printing of further prompts is suppressed.
+
+There is no syntax for indicating the end of a command: every command has either a fixed number of arguments (follow-up questions), or its own specialized way to indicate the end of a variable length list.
+
+Similarly, the end of the "list of products" is not indicated by syntax, but by entering a username. Or, more technically correct: every product id is a command, and so is every username. The product id command adds an entry to the cart, the username command finalizes the transaction and empties the cart.
+
+=head3 abort
+
+The string C<abort> is hard-coded and will always abort the current transaction (i.e. reset the global state (cart)). This is intentional as users always need a "way out", and C<abort> is unlikely to be a valid response to any prompt anyway. (Just generate that C<abort> barcode externally, instead of with your print-a-barcode plugin...)
+
+=head2 Plugins
+
+All user input, except C<abort>, is handled by plugins. Without plugins, C<abort> is the only input that does something, and even then, it's just emptying an already empty shopping cart.
+
+Information about writing plugins is provided in L<RevBank::Plugins>.
+
+Commands and hooks can manipulate the cart to delete, add, or modify its entries.
+
+=head3 Commands
+
+For every command given on the top-level prompt of the input loop, the C<command> method of every plugin is queried until a plugin returns C<ACCEPT>, C<REJECT>, or C<ABORT>. All other plugins return C<NEXT> to indicate that the remaining plugins should be tried. A plugin can, however, do something with the input, and still return C<NEXT>. It can even manipulate the input before passing it on to the next plugin.
+
+Plugins are always used in the order specified in the configuration file C<revbank.plugins>, and the order in which they are defined is vital to a correctly functioning RevBank instance. Some, but not all, plugins will detect if other plugins they depend on, are loaded. In general, though, it is up to the administrator to carefully maintain the C<revbank.plugins> list.
+
+There can be overlap between plugins; C<cola> might be a valid product and also a valid username, in which case the user is out of luck if the C<products> plugin is specified before the C<users> plugin: they will not be able to complete a transaction. In practice, this does not present much of a problem, because product ids are typically numerical barcodes. It does happen, however, that there's a clash between a command and a username. A user with a nickname that is exactly equal to a command like C<help> or C<undo> is SOL unless the C<users> plugin is specified early in the list; this is not recommended, because it means that using C<adduser>, anyone can easily cause denial of service.
+
+Commands can request arguments by returning a reference to a function. This is then handled by the main input loop, which will either use words on its stack, or prompt for further input.
+
+There is no way for a command to declare its number of arguments (follow-up questions), which means that it is not possible to interpret RevBank input without executing it.
+
+=head3 Hooks
+
+All kinds of things in RevBank will "call hooks", which is a fancy way of saying they'll try to call a certain method, for each and every plugin. With commands, the intention is that one command will be "the one" to handle the command, but with hooks, I<every> plugin's hook method is called. The only way around that is returning ABORT, which will kill the entire unfinished transaction.
+
+=head1 SECURITY
+
+RevBank is insecure by design. It does not ship with any authentication or authorization mechanism, nor was it designed with such things in mind.
+
+The concept of unsupervised 100% self-service access to a fully stocked refrigerator is in itself insecure. It probably does not scale well to a huge number of people, but it's proven to serve small communities well. It's primarily based on trust, or what's sometimes referred to as the "honor system".
+
+It may be possible to implement some semblance of security with a plugin (and by disabling plugins like C<take>), but that still wouldn't keep anyone from stealing drinks from the fridge. If you can't trust your users, RevBank is probably not the right tool for the job. And if you are in these unfortunate circumstances, you should really reconsider that unsupervised access to the fridge.
+
+This said, RevBank does come with a C<log> plugin, which enables external auditing of its use. With every balance change, the old and new balances are recorded. The log file is also very useful to reconstruct user mistakes when things don't add up.
+
+Hardware can fail, software can fail, and users can fail. Make backups. Make lots of backups. Maybe once an hour, or even after every transaction. Don't just synchronize, but keep the old versions too.
+
+=head1 AUTHOR
+
+Juerd Waalboer

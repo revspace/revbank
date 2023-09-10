@@ -4,8 +4,8 @@
 
 Type `help`.
 
-Even more helpful text is available on the [the RevBank page on the RevSpace
-wiki](https://revspace.nl/RevBank).
+More detailed help is available in Dutch on the [the RevBank page on the
+RevSpace wiki](https://revspace.nl/RevBank).
 
 ## Upgrading
 
@@ -74,7 +74,7 @@ plugins `deposit_methods`, `cash`, and `skim`.
 ## Documentation
 
 End-user documentation is provided through the `help` command. For RevSpace
-visitors, some additional end-user documentation is available at
+visitors, some additional end-user documentation is available in Dutch at
 https://revspace.nl/RevBank.
 
 RevBank can be used without RTFM, but some documentation is provided to
@@ -87,8 +87,15 @@ describe the inner workings in more detail:
 - [RevBank::Plugins](lib/RevBank/Plugins.pod) - writing plugins
 - [RevBank::TextEditor](lib/RevBank/TextEditor.pod) - internal pager and editor
 
+The plugins are mostly undocumented, but some have useful hints in the source
+files, and some have actual documentation:
+
+- [products](plugins/products.pod)
+- [statiegeld](plugins/statiegeld.pod)
+- [statiegeld\_tokens](plugins/statiegeld_tokens.pod)
+
 > Note: internal links between POD files are all broken in GitHub's rendering,
-> because GitHub wrongly assumes that any Perl package lives on CPAN.
+> because GitHub wrongly assumes that every Perl package lives on CPAN.
 
 ## Exiting revbank
 
