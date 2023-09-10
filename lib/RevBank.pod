@@ -56,11 +56,11 @@ There can be overlap between plugins; C<cola> might be a valid product and also 
 
 Commands can request arguments by returning a reference to a function. This is then handled by the main input loop, which will either use words on its stack, or prompt for further input.
 
-There is no way for a command to declare its number of arguments (follow-up questions), which means that it is not possible to interpret RevBank input without executing it.
+There is no way for a command to declare its number of arguments (follow-up questions), which means that it is not possible to interpret RevBank input without executing it. This also means that it is not safe to replay the log file in a different version or configuration (e.g. in lieu of restoring a backup).
 
 =head3 Hooks
 
-All kinds of things in RevBank will "call hooks", which is a fancy way of saying they'll try to call a certain method, for each and every plugin. With commands, the intention is that one command will be "the one" to handle the command, but with hooks, I<every> plugin's hook method is called. The only way around that is returning ABORT, which will kill the entire unfinished transaction.
+All kinds of things in RevBank will "call hooks", which is a fancy way of saying they'll try to call a certain method, for each and every plugin. With commands, the intention is that one plugin will be "the one" to handle the command, but with hooks, I<every> plugin's hook method is called. The only way around that is returning ABORT, which will kill the entire unfinished transaction.
 
 =head1 SECURITY
 
