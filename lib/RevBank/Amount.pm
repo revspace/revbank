@@ -2,8 +2,8 @@ package RevBank::Amount;
 
 use v5.28;
 use warnings;
-use feature qw(signatures);
-no warnings qw(experimental::signatures);
+use experimental 'isa';         # stable since v5.32
+use experimental 'signatures';  # stable since v5.36
 
 use Carp qw(carp croak);
 use Scalar::Util;
@@ -13,7 +13,7 @@ our $C = __PACKAGE__;
 
 sub _coerce {
     for (@_) {
-        unless (ref and UNIVERSAL::isa($_, $C)) {
+        unless ($_ isa $C) {
             croak "Unsupported operation on $C with " . ref if ref;
             croak "Unsupported operation on $C with undef" if not defined;
 

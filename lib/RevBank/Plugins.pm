@@ -2,8 +2,7 @@ package RevBank::Plugins;
 
 use v5.28;
 use warnings;
-use feature qw(signatures);
-no warnings qw(experimental::signatures);
+use experimental 'signatures';  # stable since v5.36
 
 use RevBank::Eval;
 use RevBank::Plugin;
