@@ -25,7 +25,7 @@ Debian:  apt install libterm-readline-gnu-perl libcurses-ui-perl
 Generic: cpan Term::ReadLine::Gnu Curses::UI
 ```
 
-2. Clone the repository, run revbank :)
+2. Clone the repository, run `./revbank` :)
 
 ## Configuring
 
@@ -35,7 +35,7 @@ git working tree - in that case, copy `revbank.*` to the intended working
 directory, and symlink `plugins`. But you can also just change the files and
 deal with merge conflicts later, if you prefer.
 
-*RevBank just works out of the box* if you're in a hurry, but there's a lot you
+**RevBank just works out of the box** if you're in a hurry, but there's a lot you
 could customize.
 
 - `revbank.plugins`: enable or disable plugins here.
@@ -71,9 +71,24 @@ If you want RevBank to indicate how much money it thinks the cash box should
 contain after every cash transaction, you'll probably want to enable the
 plugins `deposit_methods`, `cash`, and `skim`.
 
-## Writing plugins
+## Documentation
 
-Read [RevBank::Plugins](lib/RevBank/Plugins.pod) and [RevBank::Amount](lib/RevBank/Amount.pod).
+End-user documentation is provided through the `help` command. For RevSpace
+visitors, some additional end-user documentation is available at
+https://revspace.nl/RevBank.
+
+RevBank can be used without RTFM, but some documentation is provided to
+describe the inner workings in more detail:
+
+- [RevBank](lib/RevBank.pod) - technical overview
+- [RevBank::Amount](lib/RevBank/Amount.pod) - fixed decimal numbers
+- [RevBank::FileIO](lib/RevBank/FileIO.pod) - reading and writing files
+- [RevBank::Global](lib/RevBank/Global.pod) - constants and utility functions
+- [RevBank::Plugins](lib/RevBank/Plugins.pod) - writing plugins
+- [RevBank::TextEditor](lib/RevBank/TextEditor.pod) - internal pager and editor
+
+> Note: internal links between POD files are all broken in GitHub's rendering,
+> because GitHub wrongly assumes that any Perl package lives on CPAN.
 
 ## Exiting revbank
 
