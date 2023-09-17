@@ -1,0 +1,4 @@
+sub command($self, $cart, $command, @) {
+	return REDO, $1 if $command =~ /^angel-(.*)/;
+	return NEXT;
+}
