@@ -1,0 +1,34 @@
+use List::Util qw(sum);
+
+my @regexes = (
+	qr[^https?://.*?/01/(\d{14})\b],     # GS1 Digital Link with GTIN-14
+	qr[^https?://.*?/01/0(\d{13})\b],    # GS1 Digital Link with GTIN-13
+	qr[^https?://.*?/01/00(\d{12})\b],   # GS1 Digital Link with GTIN-12
+	qr[^https?://.*?/01/0{6}(\d{8})\b],  # GS1 Digital Link with GTIN-8
+
+	qr[^\(01\)(\d{14})\b],     # GS1 Element String with GTIN-14
+	qr[^\(01\)0(\d{13})\b],    # GS1 Element String with GTIN-13
+	qr[^\(01\)00(\d{12})\b],   # GS1 Element String with GTIN-12
+	qr[^\(01\)0{6}(\d{8})\b],  # GS1 Element String with GTIN-8
+
+	qr[^https://\w+url\.com/(?:q/|q/srn|srn)(\d{13})],  # spam with GTIN-13
+);
+
+sub command ($self, $cart, $command, @) {
+	$self->{orig_command} //= $command;
+	$self->{regexes} //= [ @regexes ];
+
+	while (my $regex = shift @{ $self->{regexes} }) {
+		if ($self->{orig_command} =~ $regex) {
+			my $gtin = $1;
+
+			my @digits = reverse split //, $gtin;
+			my $checksum = (10 - sum(map $digits[$_] * ($_ % 2 ? 3 : 1), 1..$#digits) % 10) % 10;
+			$digits[0] == $checksum or next;
+
+			return REDO, $gtin;
+		}
+	}
+
+	return NEXT;
+}

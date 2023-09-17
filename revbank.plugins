@@ -46,5 +46,6 @@ products           # matches product IDs (barcodes)
 market             # also matches product IDs
 users              # matches usernames
 #regex_angel        # matches SHA2017/MCH2022 angel badges
-url                # matches URLs
+regex_gtin         # matches GTINs in URLs and element strings
+url                # matches other URLs
 #deprecated_raw     # matches amounts
