@@ -45,8 +45,13 @@ sub hook_abort($class, $cart, @) {
     say "\e[1;4mABORTING TRANSACTION.\e[0m";
 }
 
-sub hook_invalid_input($class, $cart, $word, @) {
-    say "$word: No such product, user, or command.";
+sub hook_invalid_input($class, $cart, $origword, $lastword, $allwords, @) {
+    say "$origword: No such product, user, or command.";
+    my @other = splice @$allwords, 1;
+    if (@other) {
+        $other[-1] =~ s/^/ and / if @other > 1;
+        say "(Also tried as " . join(@other > 2 ? ", " : "", @other) . ".)";
+    }
 }
 
 sub hook_reject($class, $plugin, $reason, $abort, @) {

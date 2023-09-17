@@ -200,9 +200,10 @@ OUTER: for (;;) {
             abort if grep $_ eq 'abort', @words;
 
             my $origword = my $word = shift @words;
+            my @allwords = ($origword);
             push @retry, $word;
 
-            PLUGIN: for my $plugin (@plugins) {
+            ALL_PLUGINS: { PLUGIN: for my $plugin (@plugins) {
                 my ($rv, @rvargs) = eval { $plugin->$method($cart, $word) };
                 if ($@) {
                     call_hooks "plugin_fail", $plugin->id, $@;
@@ -224,6 +225,13 @@ OUTER: for (;;) {
                 }
                 if ($rv == ABORT) {
                     abort(@rvargs);
+                }
+                if ($rv == REDO) {
+                    $word = $rvargs[0];
+                    call_hooks "redo", $plugin->id, $origword, $word;
+                    push @allwords, $word;
+
+                    redo ALL_PLUGINS;
                 }
                 if ($rv == REJECT) {
                     my ($reason) = @rvargs;
@@ -253,11 +261,11 @@ OUTER: for (;;) {
                 call_hooks "plugin_fail", $plugin->id, "Invalid return value";
                 abort;
             }
-            call_hooks "invalid_input", $cart, $origword, $word;
+            call_hooks "invalid_input", $cart, $origword, $word, \@allwords;
             @retry = ();
             abort if @words;
             redo OUTER;
-        }
+        } }
     }
 }
 
