@@ -2,8 +2,7 @@
 
 sub command($self, $cart, $command, @) {
     if ($command =~ m[^https?://]) {
-        print "This is not a browser...";
-        return ACCEPT;
+        print "This is not a browser...\n";
     }
     return NEXT;
 }
