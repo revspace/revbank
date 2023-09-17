@@ -10,6 +10,7 @@ sub read_products() {
     state $mtime;
 
     return \%products if $mtime and $mtime == -M $filename;
+    %products = ();
     $mtime = -M $filename;
 
     my $line = 0;
