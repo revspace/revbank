@@ -6,6 +6,12 @@ my @regexes = (
 	qr[^https?://.*?/01/00(\d{12})\b],   # GS1 Digital Link with GTIN-12
 	qr[^https?://.*?/01/0{6}(\d{8})\b],  # GS1 Digital Link with GTIN-8
 
+	# "Compressed" GS1 Digital Links are not supported, as the current draft
+	# specification is insanely complex: it involves base64 and hexadecimal
+	# strings, binary data that isn't octet-aligned, and a vast number of
+	# lookup tables, all of which are needed just to extract the GTIN. One can
+	# only hope that this scheme to save a few bytes will never catch on.
+
 	qr[^\(01\)(\d{14})\b],     # GS1 Element String with GTIN-14
 	qr[^\(01\)0(\d{13})\b],    # GS1 Element String with GTIN-13
 	qr[^\(01\)00(\d{12})\b],   # GS1 Element String with GTIN-12
