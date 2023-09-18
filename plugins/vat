@@ -2,26 +2,28 @@ sub _read_vat {
 	my %vat;
 	for my $line (slurp "revbank.vat") {
 		my ($match, $vataccount, $pct) = split " ", $line;
-		$vat{$match} = { user => $vataccount, pct => $pct };
+		$vat{lc $match} = { user => $vataccount, pct => $pct };
 	}
 	return \%vat;
 }
 
 sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
-	my $vat = _read_vat;
+	my $config = _read_vat;
 
 	for my $entry ($cart->entries) {
 		my @contras = $entry->contras;
 
 		for my $contra ($entry->contras) {
-			my $vat = $vat->{ $contra->{user} } or next;
+			my $vat = $config->{ lc $contra->{user} } or next;
 
 			my $amount = RevBank::Amount->new(
 				$contra->{amount}->cents * $vat->{pct} / (100 + $vat->{pct})
 			);
 
-			$entry->add_contra($contra->{user}, -$amount, "$vat->{pct}% VAT");
-			$entry->add_contra($vat->{user},    +$amount, "$vat->{pct}% VAT");
+			my $desc = "VAT ($vat->{pct}% * $contra->{amount})";
+			my $display = RevBank::Users::is_hidden($contra->{user}) ? undef : $desc;
+			$entry->add_contra($contra->{user}, -$amount, $desc, $display);
+			$entry->add_contra($vat->{user},    +$amount, $desc);
 		}
 	}
 }
