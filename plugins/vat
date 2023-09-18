@@ -11,8 +11,6 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 	my $config = _read_vat;
 
 	for my $entry ($cart->entries) {
-		my @contras = $entry->contras;
-
 		for my $contra ($entry->contras) {
 			my $vat = $config->{ lc $contra->{user} } or next;
 
