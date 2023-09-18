@@ -1,0 +1,61 @@
+=head1 NAME
+
+vat - RevBank plugin for keeping a VAT administration
+
+=head1 SYNOPSIS
+
+C<revbank.vat>
+
+	+sales/products         +btw/laag 9
+	+sales/products/hoogbtw +btw/hoog 21
+	+sales/market           +btw/hoog 21
+	lasercutter             +btw/hoog 21
+
+C<revbank.products>
+
+	123123123   1.00      Example product that gets the default contra
+	42424242    1.00@+sales/products/hoogbtw  Example with high VAT rate
+
+=head1 DESCRIPTION
+
+With this plugin, and a properly configured C<revbank.vat> file, RevBank will
+subtract the appropriate VAT amount from the revenue account and collect that
+in the indicated VAT accounts.
+
+C<revbank.vat> is a whitespace separated file with three columns. The first
+column is the account to match, the second column is the account to collect VAT
+in, the third is the VAT rate (percentage).
+
+VAT is hidden from the user interface, and only recorded internally, except
+when the matched account is a regular account (does not begin with C<-> or
+C<+>).
+
+Note that in The Netherlands, hackerspaces will generally be able to use the
+I<vrijstelling voor kantines> and I<vrijstelling voor fondsenwervende
+activiteiten>. If you pick what you sell carefully, you may not need a BTW/VAT
+administration at all.
+
+=head1 CAVEATS
+
+You should test extensively before using this plugin in production. Please let
+me know how well it works, because you are probably the first to actually use
+this plugin.
+
+There is no configuration for a default VAT rate, so you have to carefully look
+for every sales account that requires it and list each one.
+
+Only the contras are matched, e.g. in the example from the synopsis, a C<give>
+to C<lasercutter> will incur VAT, but when someone impersonates C<lasercutter>
+and does a C<take> from a user from the perspective from C<lasercutter>, no VAT
+is counted. This is a feature, and no regular actual user should ever use it
+like that, but you should be aware of this subtlety and monitor the log file
+for mistakes.
+
+Negative amounts will get negative VAT (e.g. a C<take> from C<lasercutter> in
+the example from the synopsis).
+
+=head1 DISCLAIMER
+
+RevBank is not certified or audited tax administration software. You need to
+configure it according to local tax laws; don't just copy the example
+configuration. Use at your own risk.
