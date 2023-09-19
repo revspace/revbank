@@ -17,7 +17,12 @@ my @regexes = (
 	qr[^\(01\)00(\d{12})\b],   # GS1 Element String with GTIN-12
 	qr[^\(01\)0{6}(\d{8})\b],  # GS1 Element String with GTIN-8
 
-	qr[^https://\w+url\.com/(?:q/|q/srn|srn)(\d{13})],  # spam with GTIN-13
+	qr[^01(\d{14})(?=\d|$)],     # GS1-128 (without FNC) with GTIN-14
+	qr[^010(\d{13})(?=\d|$)],    # GS1-128 (without FNC) with GTIN-13
+	qr[^0100(\d{12})(?=\d|$)],   # GS1-128 (without FNC) with GTIN-12
+	qr[^010{6}(\d{8})(?=\d|$)],  # GS1-128 (without FNC) with GTIN-8
+
+	qr[^https://\w+url\.com/(?:q/|q/srn|srn)(\d{13})]i,  # spam with GTIN-13
 );
 
 sub command ($self, $cart, $command, @) {
