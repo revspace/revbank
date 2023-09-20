@@ -14,13 +14,15 @@ repeat
 deduplicate  # wants to be after 'repeat'
 sigint
 #stock
+#vat         # configure before using
 #warnings
 window_title
 
 # Then, specific commands:
 
+adduser_note
 adduser
-#cash       # cash tracking also requires deposit_methods to make sense
+#cash             # cash tracking also requires deposit_methods to make sense
 deposit
 #deposit_methods  # Extra options for 'deposit'. Edit/configure first!
 #deposit_iban_qr  # QR code display, edit/configure first! (needs qrencode(1))
@@ -29,7 +31,7 @@ edit
 give
 grandtotal
 help
-#skim       # cash tracking also requires deposit_methods to make sense
+#skim             # cash tracking also requires deposit_methods to make sense
 split
 take
 tail
@@ -40,8 +42,8 @@ withdraw
 
 # Then, plugins that apply heuristics
 
-statiegeld         # wants to be before 'products'; matches product IDs
-statiegeld_tokens
+#statiegeld         # wants to be before 'products'; matches product IDs
+#statiegeld_tokens
 products           # matches product IDs (barcodes)
 market             # also matches product IDs
 users              # matches usernames
