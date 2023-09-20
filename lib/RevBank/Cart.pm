@@ -134,7 +134,7 @@ sub checkout($self, $user) {
 
         RevBank::Plugins::call_hooks("checkout_done", $self, $user, $transaction_id);
 
-        sleep 1;  # look busy (and ensure new id for next transaction :))
+        sleep 1;  # look busy
     };
 
     $self->empty;
