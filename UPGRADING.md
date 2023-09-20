@@ -14,11 +14,11 @@ file called `.revbank.nextid`.
 
 ### Option 1: continue with large IDs but increment by 1 from now on
 
-**If you don't write a `.revbank.nextid` file,** RevBank will create one for you, but you might not like it.
-It will generate one more timestamp based ID and then increment that for
-subsequent transactions. This has the advantage of not having the one-time
-break of monotonicity, but you will be stuck with the long IDs and they will no
-longer convey time information.
+**If you don't write a `.revbank.nextid` file,** RevBank will create one for
+you, but you might not like it. It will generate one more timestamp based ID
+and then increment that for subsequent transactions. This has the advantage of
+not having the one-time break of monotonicity, but you will be stuck with the
+long IDs and they will no longer convey time information.
 
 ### Option 2: beginning a new sequence
 
@@ -84,11 +84,11 @@ documentation in `plugins/vat.pod` first.
 
 To support GS1 Digital Links and other GS1 barcodes. The DL are a new way for
 QR codes that contain product IDs and other metadata while also being usable
-for promotional stuff. At least one popular brand of soft drinks is already using them.
-There's a huge standard that describes these codes, but basically, they're URLs
-with /01/ and a 14-digit product ID in them. Enabling this plugin is probably
-useful and harmless; add it to `revbank.plugins` *after* plugins that deal with
-product IDs like `products` and `market`.
+for promotional stuff. At least one popular brand of soft drinks is already
+using them. There's a huge standard that describes these codes, but basically,
+they're URLs with /01/ and a 14-digit product ID in them. Enabling this plugin
+is probably useful and harmless; add it to `revbank.plugins` *after* plugins
+that deal with product IDs like `products` and `market`.
 
 ### `regex_angel`
 
