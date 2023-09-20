@@ -1,3 +1,118 @@
+# (2023-09-20) RevBank 4.0.0
+
+## You must pick a transaction ID style
+
+Transaction IDs are now sequential for better auditability. In previous
+versions, they were timestamps (unix time minus 1.3e9).
+
+Because of this change, you must restart *every* running RevBank instance or
+else the transaction IDs will no longer be monotonic between processes, which
+would be bad.
+
+You should chose which transaction IDs you want, and write your choice to a
+file called `.revbank.nextid`.
+
+### Option 1: continue with large IDs but increment by 1 from now on
+
+**If you don't write a `.revbank.nextid` file,** RevBank will create one for you, but you might not like it.
+It will generate one more timestamp based ID and then increment that for
+subsequent transactions. This has the advantage of not having the one-time
+break of monotonicity, but you will be stuck with the long IDs and they will no
+longer convey time information.
+
+### Option 2: beginning a new sequence
+
+Anything that works with Perl's `++` operator will work, and that gives a few
+options. If you want to start over with transaction ID **1**, write that to the
+file:
+
+```sh
+echo 1 > .revbank.nextid
+```
+
+You can also use padding zeroes if you like. They will safely overflow to use
+an extra digit after all-nines is reached:
+
+```sh
+echo 00001 > .revbank.nextid
+```
+
+(You can also use alphanumeric IDs, but I'm not sure if you should.)
+
+Or, if you still have all the logs from since you started using RevBank, you
+can pretend RevBank has always had simple incremental transaction IDs and use
+the number of distinct transaction IDs from the log file as the basis for the
+next ID:
+
+```sh
+# This is my personal preference
+
+perl -lane'BEGIN { $max = time() - 1.3e9 }
+    /^\d+$/ and $_ > 0 and $_ < $max and $x{$_}++ for @F[1, 2];
+    }{ print 1 + keys %x' .revbank.log > .revbank.nextid
+
+# Note: use multiple filenames (e.g. .revbank.log*) if you rotate log files
+# (like when you have yearly logs).
+```
+
+This is safe because the timestamp based IDs were huge and are unlikely to
+overlap at least the next few decades.
+
+### Option 3: keeping the legacy transaction ID scheme (for now)
+
+Finally, for those who really don't want to change the scheme now, the old
+system can be retained by writing the special-cased value `LEGACY`. This
+feature will be supported at least until 2024-01-01, but might be removed after
+if nobody tries to convince me otherwise.
+
+```sh
+echo LEGACY > .revbank.nextid
+```
+
+## Update `revbank.plugins`
+
+There are a few new plugins that you may wish to enable. Some have been around
+longer than RevBank 3.9, but haven't been mentioned in UPGRADING.md before.
+
+### `vat`
+
+Automatically calculate and set aside VAT ("BTW" in Dutch) on generated
+revenue. You will probably not need this. Before enabling this plugin, read the
+documentation in `plugins/vat.pod` first.
+
+### `regex_gtin`
+
+To support GS1 Digital Links and other GS1 barcodes. The DL are a new way for
+QR codes that contain product IDs and other metadata while also being usable
+for promotional stuff. One popular brand of soft drinks is already using them.
+There's a huge standard that describes these codes, but basically, they're URLs
+with /01/ and a 14-digit product ID in them. Enabling this plugin is probably
+useful and harmless; add it to `revbank.plugins` *after* plugins that deal with
+product IDs like `products` and `market`.
+
+### `regex_angel`
+
+Replaces custom SHA2017/MCH2022 angel badge hacks. Add after `users` in
+`revbank.plugins` after removing your custom plugin for `angel-` barcodes.
+
+### `adduser_note`
+
+Add *before* `adduser` in `revbank.plugins`. This will inform new users that
+RevBank is insecure by design and what implications that can have. Enabling
+this plugin is recommended.
+
+### `statiegeld` and `statiegeld_tokens`
+
+Charge and refund container deposit return ("statiegeld" in Dutch). Read the
+documentation in `plugins/statiegeld.pod` and `plugins/statiegeld_tokens.pod`
+for instructions.
+
+### `cash_drawer`
+
+If you have an electronic cash drawer, copy or change this plugin and add code
+to trigger it whenever something is done that involves cash.
+
+
 # (2023-08-21) RevBank 3.9
 
 A tiny change that could break things: the shebang was changed from

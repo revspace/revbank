@@ -1,13 +1,20 @@
 # revbank - Banking for hackerspace visitors
 
-## Using revbank (for end users)
+## Using RevBank (for end users)
 
 Type `help`.
 
 More detailed help is available in Dutch on the [the RevBank page on the
 RevSpace wiki](https://revspace.nl/RevBank).
 
-## Upgrading
+### Exiting revbank
+
+Exiting is not supported because it's designed to run continuously on its main
+terminal. But if you run it from a shell, you can probably stop it using ctrl+Z
+and then kill the process (e.g. `kill %1`). RevBank does not keep any files
+open, so it's safe to kill when idle.
+
+## Upgrading RevBank
 
 When upgrading from a previous version, please refer to the file
 [UPGRADING.md](UPGRADING.md) because there might be incompatible changes that
@@ -16,7 +23,7 @@ require your attention.
 In general, upgrading is done by committing any changed files and then doing a
 `git pull`.
 
-## Installing
+## Installing RevBank
 
 1. Install the dependencies:
 
@@ -27,7 +34,7 @@ Generic: cpan Term::ReadLine::Gnu Curses::UI
 
 2. Clone the repository, run `./revbank` :)
 
-## Configuring
+## Configuring RevBank
 
 `revbank` uses data files from the _working directory_ from which it runs. You
 can use that to your advantage, if you don't want to change anything in your
@@ -37,6 +44,27 @@ deal with merge conflicts later, if you prefer.
 
 **RevBank just works out of the box** if you're in a hurry, but there's a lot you
 could customize.
+
+### Pick a transaction ID scheme
+
+If you skip this step, RevBank will use a large timestamp as a safe fallback.
+
+You can use any string that Perl can increment with the ++ operator:
+
+```sh
+# Simple, recommended:
+echo 1 > .revbank.nextid
+# or
+echo 00001 > .revbank.nextid
+# or
+echo AAAA > .revbank.nextid
+```
+
+This should be done only once. RevBank will increment the number. If you do
+wish to start a new sequence, you should clear `.revbank.undo` first if there
+is any chance that the sequences will overlap.
+
+### Other configuration
 
 - `revbank.plugins`: enable or disable plugins here.
 - `revbank.accounts`: if you're migrating from another system, you can add the
@@ -93,13 +121,8 @@ files, and some have actual documentation:
 - [products](plugins/products.pod)
 - [statiegeld](plugins/statiegeld.pod)
 - [statiegeld\_tokens](plugins/statiegeld_tokens.pod)
+- [vat](plugins/vat.pod)
 
 > Note: internal links between POD files are all broken in GitHub's rendering,
 > because GitHub wrongly assumes that every Perl package lives on CPAN.
 
-## Exiting revbank
-
-Exiting is not supported because it's designed to run continuously. But if you
-run it from a shell, you can probably stop it using ctrl+Z and then kill the
-process (e.g. `kill %1`). RevBank does not keep any files open, so it's safe
-to kill when idle.
