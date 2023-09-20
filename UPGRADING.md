@@ -84,7 +84,7 @@ documentation in `plugins/vat.pod` first.
 
 To support GS1 Digital Links and other GS1 barcodes. The DL are a new way for
 QR codes that contain product IDs and other metadata while also being usable
-for promotional stuff. One popular brand of soft drinks is already using them.
+for promotional stuff. At least one popular brand of soft drinks is already using them.
 There's a huge standard that describes these codes, but basically, they're URLs
 with /01/ and a 14-digit product ID in them. Enabling this plugin is probably
 useful and harmless; add it to `revbank.plugins` *after* plugins that deal with
