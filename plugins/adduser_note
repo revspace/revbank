@@ -1,0 +1,12 @@
+sub command($self, $cart, $command, @) {
+	if ($command eq 'adduser') {
+		print <<'END';
+NOTE: This system is insecure by design. Other users can see your transactions,
+or pay using your account. We trust each other not to abuse this power.
+
+END
+
+	}
+	return NEXT;
+}
+
