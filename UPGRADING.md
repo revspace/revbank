@@ -9,7 +9,7 @@ Because of this change, you must restart *every* running RevBank instance or
 else the transaction IDs will no longer be monotonic between processes, which
 would be bad.
 
-You should chose which transaction IDs you want, and write your choice to a
+You should choose which transaction IDs you want, and write your choice to a
 file called `.revbank.nextid`.
 
 ### Option 1: continue with large IDs but increment by 1 from now on
