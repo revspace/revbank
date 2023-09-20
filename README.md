@@ -64,6 +64,9 @@ This should be done only once. RevBank will increment the number. If you do
 wish to start a new sequence, you should clear `.revbank.undo` first if there
 is any chance that the sequences will overlap.
 
+(Note: letters in transaction IDs are supported, but may not be compatible with
+local laws or external accounting software.)
+
 ### Other configuration
 
 - `revbank.plugins`: enable or disable plugins here.
