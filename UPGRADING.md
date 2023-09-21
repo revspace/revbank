@@ -112,6 +112,16 @@ for instructions.
 If you have an electronic cash drawer, copy or change this plugin and add code
 to trigger it whenever something is done that involves cash.
 
+## Deprecation note
+
+RevBank has supported "doubly entry bookkeeping" since version 3.4 last year.
+For backwards compatibility with custom plugins, support for unbalanced
+transactions was retained.
+
+Support for unbalanced transactions will be removed after 2024-06-10, after a
+period of 2 years after the introduction of balanced transactions. If you're
+using custom plugins, grep your log file for the text "UNBALANCED ENTRY" to see
+if changes are needed.
 
 # (2023-08-21) RevBank 3.9
 
@@ -245,8 +255,9 @@ libcurses-ui-perl).
 
 # (2022-06-11) RevBank 3.4
 
-RevBank now has built-in hidden accounts and balanced transactions. These
-accounts will be made automatically, and hidden from the user interface.
+RevBank now has built-in hidden accounts and balanced transactions
+(double-entry bookkeeping). These accounts will be made automatically, and
+hidden from the user interface.
 
 ## Update external scripts
 
