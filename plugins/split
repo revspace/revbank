@@ -8,7 +8,7 @@ sub _select_split($cart) {
     grep $_->{amount} < 0, $cart->entries
 }
 
-sub command :Tab(take,steal,split) ($self, $cart, $command, @) {
+sub command :Tab(split) ($self, $cart, $command, @) {
     $command eq 'split' or return NEXT;
 
     $self->{users} = [];
