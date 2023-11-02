@@ -9,9 +9,10 @@ beep_terminal
 #cash_drawer
 idle
 #json
-restart
 repeat
 deduplicate  # wants to be after 'repeat'
+restart
+sighup
 sigint
 #stock
 #vat         # configure before using
