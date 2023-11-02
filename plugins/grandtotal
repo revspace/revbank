@@ -10,7 +10,7 @@ sub command :Tab(grandtotal) ($self, $cart, $command, @) {
 
     for my $line (slurp 'revbank.accounts') {
         my ($username, $balance) = split " ", $line;
-        next if RevBank::Users::is_hidden($username);
+        next if RevBank::Users::is_special($username);
 
         my $credit = $balance;
         $neg += $credit if $credit < 0;

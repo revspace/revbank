@@ -7,17 +7,33 @@ use experimental 'signatures';  # stable since v5.36
 use RevBank::Global;
 use RevBank::Plugins;
 use Carp ();
+use List::Util ();
 
 my $filename = "revbank.accounts";
 
 sub _read() {
     my @users;
     /\S/ and push @users, [split " "] for slurp $filename;
-    return { map { lc($_->[0]) => $_ } @users };
+
+    my %users;
+    for (@users) {
+        my $name = $_->[0];
+        if ($name =~ /^\*/) {
+            # user-accessible special account: support without * prefix
+            $users{ lc($name) =~ s/^\*//r } = $_;
+
+            # also support literal account name with * prefix
+            $users{ lc($name) } = $_;
+        } else {
+            # hidden or normal account
+            $users{ lc($name) } = $_;
+        }
+    }
+    return \%users;
 }
 
 sub names() {
-    return map $_->[0], values %{ _read() };
+    return List::Util::uniqstr map $_->[0], values %{ _read() };
 }
 
 sub balance($username) {
@@ -71,6 +87,10 @@ sub update($username, $delta, $transaction_id) {
 
 sub is_hidden($username) {
     return $username =~ /^[-+]/;
+}
+
+sub is_special($username) {
+    return $username =~ /^[-+*]/;
 }
 
 sub parse_user($username) {
