@@ -5,7 +5,7 @@ HELP  "list" => "List accounts and balances";
 HELP  "log" => "View transaction log";
 HELP  "shame" => "Display Hall of Shame (negative balances)";
 
-sub command :Tab(list,ls,shame,USERS) ($self, $cart, $command, @) {
+sub command :Tab(list,ls,shame,log,USERS) ($self, $cart, $command, @) {
     return $self->list  if $command eq 'list';
     return $self->list  if $command eq 'ls';
     return $self->shame if $command eq 'shame';
