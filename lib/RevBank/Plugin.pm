@@ -3,16 +3,42 @@ package RevBank::Plugin;
 use v5.28;
 use warnings;
 use experimental 'signatures';  # stable since v5.36
+use attributes;
 
 require RevBank::Global;
 
 sub new($class) {
     return bless { }, $class;
 }
+
 sub command($self, $cart, $command, @) {
     return RevBank::Global::NEXT();
 }
 
+sub Tab($self, $method) {
+    my %completions;
+
+    my $attr = attributes::get(
+        ref $method ? $method : $self->can($method)
+    ) or return;
+
+    my ($tab) = $attr =~ /Tab \( (.*?) \)/x;
+    for my $keyword (split /\s*,\s*/, $tab) {
+        if ($keyword =~ /^&(.*)/) {
+            my $method = $1;
+            @completions{ $self->$method } = ();
+        } else {
+            $completions{ $keyword }++;
+        }
+    }
+
+    if (delete $completions{USERS}) {
+        $completions{$_}++ for grep !RevBank::Users::is_hidden($_),
+            RevBank::Users::names();
+    }
+
+    return keys %completions;
+}
 
 1;
 

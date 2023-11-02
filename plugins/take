@@ -43,7 +43,7 @@ sub arg :Tab(USERS) ($self, $cart, $arg, @) {
 }
 
 # finish
-sub reason :Tab(bbq,NOABORT) ($self, $cart, $reason, @) { 
+sub reason :Tab(bbq) ($self, $cart, $reason, @) { 
     return REJECT, "'$reason' is a username, not a description :)."
         if parse_user($reason);
     return REJECT, "'$reason' is an amount, not a description :)."

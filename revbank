@@ -5,9 +5,8 @@ use warnings;
 use feature qw(signatures);
 no warnings "experimental::signatures";
 
-use attributes;
 use IO::Select;
-use List::Util ();
+use List::Util qw(uniq);
 use Term::ReadLine;
 require Term::ReadLine::Gnu;  # The other one sucks.
 
@@ -163,30 +162,8 @@ OUTER: for (;;) {
             call_hooks "prompt", $cart, $prompt;
             my $split_input = !ref($method) && $method eq 'command';
 
-            my %completions = qw(abort 1);
-            for my $plugin (@plugins) {
-                my $attr = attributes::get(
-                    ref $method ? $method : $plugin->can($method)
-                ) or next;
-                my ($tab) = $attr =~ /Tab \( (.*?) \)/x;
-                for my $keyword (split /\s*,\s*/, $tab) {
-                    if ($keyword =~ /^&(.*)/) {
-                        my $method = $1;
-                        @completions{ $plugin->$method } = ();
-                    } else {
-                        $completions{ $keyword }++;
-                    }
-                }
-            }
-            if (delete $completions{USERS}) {
-                $completions{$_}++ for grep !RevBank::Users::is_hidden($_),
-                    RevBank::Users::names;
-            }
-            if (delete $completions{NOABORT}) {
-                delete $completions{abort};
-            }
-
-            my $input = prompt $prompt, \@plugins, [ keys %completions ];
+            my @completions = uniq 'abort', map $_->Tab($method), @plugins;
+            my $input = prompt $prompt, \@plugins, \@completions;
 
             call_hooks "input", $cart, $input, $split_input;
 
