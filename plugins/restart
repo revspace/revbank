@@ -1,12 +1,13 @@
 #!perl
 
+
 HELP "restart" => "Attempt to restart the RevBank shell";
 
 sub command :Tab(restart) ($self, $cart, $command, @) {
     return NEXT if $command ne 'restart';
 
-    no warnings;
     call_hooks("restart_exec");
+    no warnings qw(exec);
     exec $0;
     call_hooks("restart_survived");
 
@@ -16,8 +17,8 @@ sub command :Tab(restart) ($self, $cart, $command, @) {
 sub hook_input($class, $cart, $input, $split_input, @) {
     return if defined $input;
 
-    no warnings;
     call_hooks("restart_restart");
+    no warnings qw(exec);
     exec $0;
     call_hooks("restart_survived");
 }
