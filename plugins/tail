@@ -18,6 +18,8 @@ sub command :Tab(tail) ($self, $cart, $command, @) {
         RevBank::Users::is_hidden($u) and next;
 
         shift @lines if @lines == $n;
+
+        $qty = 1 if $qty eq 'EUR';  # log files before commit 63f81e37 (2019-11-05)
         push @lines, [$dt, $u, ($dir eq 'GAIN' ? "+ $amount" : $amount), $desc, $qty];
     }
     close $fh;

@@ -68,6 +68,8 @@ sub _grep($user) {
         $c eq 'CHECKOUT' or next;  # real check after expensive split
         lc($u) eq $user or next;
 
+        $qty = 1 if $qty eq 'EUR';  # log files before commit 63f81e37 (2019-11-05)
+
         push @lines, sprintf "%s %8s %s%-s", (
             $dt =~ s/_/ /r,
             $dir eq 'GAIN' ? "+ $amount" : $amount,  # like R::A->string_flipped
