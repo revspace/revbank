@@ -17,22 +17,23 @@ sub _read() {
 
     my %users;
     for (@users) {
-        my $name = $_->[0];
-        if ($name =~ /^\*/) {
-            # user-accessible special account: support without * prefix
-            $users{ lc($name) =~ s/^\*//r } = $_;
+        my $name = lc $_->[0];
 
-            # also support literal account name with * prefix
-            $users{ lc($name) } = $_;
-        } else {
-            # hidden or normal account
-            $users{ lc($name) } = $_;
+        exists $users{$name} and die "$filename: duplicate entry '$name'\n";
+        $users{$name} = $_;
+
+        if ($name =~ s/^\*//) {
+            # user-accessible special account: support without * prefix
+            exists $users{$name} and die "$filename: duplicate entry '$name'\n";
+            $users{$name} = $_;
         }
     }
     return \%users;
 }
 
 sub names() {
+    # uniq because *foo causes population of keys '*foo' and 'foo', with
+    # ->[0] both being 'foo'. However, the keys are lowercase, not canonical.
     return List::Util::uniqstr map $_->[0], values %{ _read() };
 }
 
@@ -45,6 +46,8 @@ sub since($username) {
 }
 
 sub create($username) {
+    die "Account already exists" if exists _read()->{ lc $username };
+
     my $now = now();
     append $filename, "$username 0.00 $now\n";
     RevBank::Plugins::call_hooks("user_created", $username);
@@ -52,12 +55,14 @@ sub create($username) {
 }
 
 sub update($username, $delta, $transaction_id) {
+    my $account = assert_user($username) or die "No such user ($username)";
+
     my $old = RevBank::Amount->new(0);
     my $new = RevBank::Amount->new(0);
 
     rewrite $filename, sub($line) {
         my @a = split " ", $line;
-        if (lc $a[0] eq lc $username) {
+        if (lc $a[0] eq lc $account) {
             $old = RevBank::Amount->parse_string($a[1]);
             die "Fatal error: invalid balance in revbank:accounts:$.\n"
                 if not defined $old;
@@ -73,7 +78,7 @@ sub update($username, $delta, $transaction_id) {
             $since = "0\@" . now() if $newc == 0 and (!$since or $oldc != 0);
 
             return sprintf "%-16s %9s %s %s\n", (
-                $username, $new->string("+"), now(), $since
+                $account, $new->string("+"), now(), $since
             );
         } else {
             return $line;
@@ -81,7 +86,7 @@ sub update($username, $delta, $transaction_id) {
     };
 
     RevBank::Plugins::call_hooks(
-        "user_balance", $username, $old, $delta, $new, $transaction_id
+        "user_balance", $account, $old, $delta, $new, $transaction_id
     );
 }
 
@@ -109,7 +114,7 @@ sub assert_user($username) {
         ? $users->{ lc $username }->[0]
         : (is_hidden($username)
             ? create($username)
-            : Carp::croak("Account '$username' does not exist")
+            : Carp::croak("No such user ($username)")
         );
 }
 
