@@ -1,3 +1,19 @@
+# (2023-11-05) RevBank 4.2.0
+
+Accounts that begin with `*` are now special: like hidden accounts, they do not
+count towards the grand total, but unlike hidden accouns, they can be used as
+normal user accounts too.
+
+The intended application is for liabilities accounts that are also used
+directly for revenues and expenses.
+
+They can be used with or without the `*` prefix, e.g. the account
+`*lasercutter` can also be used as `lasercutter`. Such accounts cannot be
+created from within the software: to create a user-accessible special account,
+you need to edit `revbank.accounts` manually.
+
+When upgrading, check that no accounts beginning with `*` already exist.
+
 # (2023-09-20) RevBank 4.0.0
 
 ## You must pick a transaction ID style
