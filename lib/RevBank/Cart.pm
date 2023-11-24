@@ -28,13 +28,7 @@ sub add_entry($self, $entry) {
 }
 
 sub add($self, $amount, $description, $data = {}) {
-    Carp::croak "Non-hash data argument; possibly a deprecated call style"
-        if not ref $data;
-
-    # Old pre-v3 call styles:
-    # ->add(undef, ...)  => just remove the "undef,"
-    # ->add($user, ...)  => use $cart->add(...)->add_contra($user, ...)
-    # ->add($entry)      => use $cart->add_entry($entry)
+    ref $data or Carp::croak "Non-hash data argument";
 
     return $self->add_entry(RevBank::Cart::Entry->new($amount, $description, $data));
 }
