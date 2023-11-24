@@ -78,9 +78,8 @@ sub size($self) {
 
 sub checkout($self, $user) {
     if ($self->entries('refuse_checkout')) {
-        warn "Refusing to finalize deficient transaction.\n";
         $self->display;
-        return;
+        die "Refusing to finalize deficient transaction";
     }
 
     $user = RevBank::Users::assert_user($user);
@@ -108,7 +107,9 @@ sub checkout($self, $user) {
             $transaction_id = time() - 1300000000;
         }
 
-        RevBank::Plugins::call_hooks("checkout_prepare", $self, $user, $transaction_id);
+        RevBank::Plugins::call_hooks("checkout_prepare", $self, $user, $transaction_id)
+            or die "Refusing to finalize after failed checkout_prepare";
+
         for my $entry (@$entries) {
             $entry->sanity_check;
             $entry->user($user) if not $entry->user;
@@ -135,11 +136,9 @@ sub checkout($self, $user) {
         RevBank::Plugins::call_hooks("checkout_done", $self, $user, $transaction_id);
 
         sleep 1;  # look busy
+
+        $self->empty;
     };
-
-    $self->empty;
-
-    return 1;
 }
 
 sub entries($self, $attribute = undef) {

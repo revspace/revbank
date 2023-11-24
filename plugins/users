@@ -17,7 +17,7 @@ sub command :Tab(list,ls,shame,log,USERS) ($self, $cart, $command, @) {
 
     return $self->balance($user) if not $cart->size;
 
-    $cart->checkout($user) or return REJECT, "Checkout failed.";
+    $cart->checkout($user);
 
     return ACCEPT;
 }

@@ -73,7 +73,7 @@ sub with_lock :prototype(&) ($code) {
 		$rv = $code->() if not $list_context;
 	};
 	release_lock;
-	croak $@ =~ s/\n$/, called/r if $@;
+	croak $@ =~ s/\.?\n$/, rethrown/r if $@;
 	return @rv if $list_context;
 	return $rv if not $list_context;
 }

@@ -17,7 +17,7 @@ use RevBank::Global;
 use RevBank::Messages;
 use RevBank::Cart;
 
-our $VERSION = "4.2.1";
+our $VERSION = "4.2.2";
 our %HELP1 = (
     "abort" => "Abort the current transaction",
 );
@@ -183,18 +183,18 @@ OUTER: for (;;) {
             ALL_PLUGINS: { PLUGIN: for my $plugin (@plugins) {
                 my ($rv, @rvargs) = eval { $plugin->$method($cart, $word) };
                 if ($@) {
-                    call_hooks "plugin_fail", $plugin->id, $@;
+                    call_hooks "plugin_fail", $plugin->id, "$method: $@";
                     abort;
                 }
                 if (not defined $rv) {
-                    call_hooks "plugin_fail", $plugin->id, "No return code";
+                    call_hooks "plugin_fail", $plugin->id, "$method: No return code";
                     abort;
                 }
                 if (not ref $rv) {
                     $prompt = $rv;
                     @plugins = $plugin;
                     ($method) = @rvargs;
-                    call_hooks "plugin_fail", $plugin->id, "No method supplied"
+                    call_hooks "plugin_fail", $plugin->id, "$method: No method supplied"
                         if not ref $method;
 
                     abort "Incomplete command." if $one_off and not @words;
@@ -231,11 +231,11 @@ OUTER: for (;;) {
                 }
                 if ($rv == NEXT) {
                     next PLUGIN if $method eq 'command';
-                    call_hooks "plugin_fail", $plugin->id, "Only 'command' "
-                        . "should ever return NEXT.";
+                    call_hooks "plugin_fail", $plugin->id, "$method: "
+                        . "Only 'command' should ever return NEXT.";
                     abort;
                 }
-                call_hooks "plugin_fail", $plugin->id, "Invalid return value";
+                call_hooks "plugin_fail", $plugin->id, "$method: Invalid return value";
                 abort;
             }
             call_hooks "invalid_input", $cart, $origword, $word, \@allwords;

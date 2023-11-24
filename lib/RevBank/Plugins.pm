@@ -20,17 +20,25 @@ sub _read_file($fn) {
 sub call_hooks {
     my $hook = shift;
     my $method = "hook_$hook";
+    my $success = 1;
 
     for my $class (@plugins) {
          if ($class->can($method)) {
-            my ($rv, @message) = $class->$method(@_);
+            my ($rv, @message) = eval { $class->$method(@_) };
 
-            if (defined $rv and ref $rv) {
+            if ($@) {
+                $success = 0;
+                call_hooks("plugin_fail", $class->id, "$class->$method died: $@");
+            } elsif (defined $rv and ref $rv) {
                 main::abort(@message) if $rv == ABORT;
-                warn "$class->$method returned an unsupported value.\n";
+
+                $success = 0;
+                call_hooks("plugin_fail", $class->id, "$class->$method returned an unsupported value");
             }
         }
     }
+
+    return $success;
 };
 
 sub register(@new_plugins) {

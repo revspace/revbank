@@ -158,7 +158,7 @@ Be careful to avoid infinite loops if you add new stuff.
 
 =item hook_checkout_prepare($class, $cart, $user, $transaction_id, @)
 
-Called when the transaction is about to be processed. In this phase, the cart and its entries can still be manipulated.
+Called when the transaction is about to be processed. In this phase, the cart and its entries can still be manipulated. If the hook throws an exception, the transaction is aborted.
 
 =item hook_checkout($class, $cart, $user, $transaction_id, @)
 
