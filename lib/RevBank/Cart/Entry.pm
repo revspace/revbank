@@ -241,9 +241,11 @@ sub sanity_check($self) {
                 @contras
                 ? "sum of entry with contras ($sum) != 0.00"
                 : "transaction has no contras"
-            ) . ". This will probably be a fatal error in a future version of revbank.\n"
+            ) . ". This will be a fatal error in a future version of revbank.\n"
             . "The unbalanced entry is:\n" . join("\n", $self->as_printable)
-        )
+        );
+
+        warn "$self->{caller} has created an unbalanced entry, which is deprecated. Support for unbalanced entries will be removed in a future version of RevBank.\n";
     }
 
     return 1;
