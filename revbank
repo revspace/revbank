@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-use v5.28;
+use v5.32;
 use warnings;
 use feature qw(signatures);
 no warnings "experimental::signatures";

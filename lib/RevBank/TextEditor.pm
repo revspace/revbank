@@ -1,6 +1,6 @@
 package RevBank::TextEditor;
 
-use v5.28;
+use v5.32;
 use warnings;
 use experimental 'signatures';  # stable since v5.36
 
