@@ -29,7 +29,26 @@ sub import {
         defined $amount or return undef;
         length  $amount or return undef;
 
-        $amount = RevBank::Amount->parse_string($amount) // return undef;
+        my @split = grep /\S/, split /([+-])/, $amount;
+
+        my $posneg = 1;
+        $amount = RevBank::Amount->new(0);
+        for my $token (@split) {
+            if ($token eq '-') {
+                $posneg = $posneg == -1 ? 1 : -1;
+            } elsif ($token eq '+') {
+                next if $posneg == -1;  # -+
+                $posneg ||= 1;
+                next;
+            } else {
+                $posneg or return undef;  # two terms in a row
+                my $term = RevBank::Amount->parse_string($token) // return undef;
+                $amount += $posneg * $term;
+                $posneg = 0;
+            }
+        }
+        $posneg and return undef;  # last token must be term
+
         if ($amount->cents < 0) {
             die "For our sanity, no negative amounts, please :).\n";
         }
