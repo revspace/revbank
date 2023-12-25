@@ -2,7 +2,7 @@
 
 use v5.32;
 use warnings;
-use feature qw(signatures);
+use feature qw(signatures isa);
 no warnings "experimental::signatures";
 
 use IO::Select;
@@ -17,14 +17,14 @@ use RevBank::Global;
 use RevBank::Messages;
 use RevBank::Cart;
 
-our $VERSION = "4.3.0";
+our $VERSION = "5.0.0-beta";
 our %HELP1 = (
     "abort" => "Abort the current transaction",
 );
 
-my @words;
-my $retry;
-my @retry;
+my @words;  # input
+my $retry;  # reason (text)
+my @retry;  # (@accepted, $rejected, [@trailing])
 
 my $one_off = 0;
 
@@ -84,6 +84,7 @@ sub prompt($prompt, $plugins, $completions) {
         my @trailing = @{ pop @retry };
         my @rejected = pop @retry;
         my @accepted = @retry;
+        s/\0SEPARATOR/;/ for @accepted, @rejected, @trailing;
         $readline->insert_text(join " ", @accepted, @rejected, @trailing);
         $readline->Attribs->{point} = @accepted ? 1 + length "@accepted" : 0;
         @retry = ();
@@ -131,7 +132,7 @@ RevBank::Plugins->load;
 call_hooks("startup");
 
 OUTER: for (;;) {
-    if (not @words) {
+    if (not @words or $words[0] eq "\0SEPARATOR") {
         call_hooks("cart_changed", $cart) if $cart->changed;
         print "\n";
     }
@@ -169,7 +170,10 @@ OUTER: for (;;) {
 
             length $input or redo PROMPT;
 
-            @words = ($split_input ? split(" ", $input) : $input);
+            @words = ($split_input
+                ? map { $_ eq ';' ? "\0SEPARATOR" : $_ } grep length, split(/\s+|(;)/, $input)
+                : $input
+            );
         }
 
         WORD: for (;;) {
@@ -181,8 +185,23 @@ OUTER: for (;;) {
             push @retry, $word;
 
             ALL_PLUGINS: { PLUGIN: for my $plugin (@plugins) {
+                next WORD if $word eq "\0SEPARATOR";
+
+                $cart->prohibit_checkout(
+                    @words && $words[0] ne "\0SEPARATOR",
+                    "unexpected trailing input (use ';' to separate transactions)."
+                );
+
                 my ($rv, @rvargs) = eval { $plugin->$method($cart, $word) };
-                if ($@) {
+                if ($@ isa 'RevBank::Cart::CheckoutProhibited') {
+                    @words or die "Internal inconsistency";  # other cause than trailing input
+
+                    push @retry, shift @words;  # reject next word (first of trailing)
+                    push @retry, [@words];
+                    @words = ();
+                    $retry = $@->reason;
+                    redo OUTER;
+                } elsif ($@) {
                     call_hooks "plugin_fail", $plugin->id, "$method: $@";
                     abort;
                 }
@@ -191,13 +210,22 @@ OUTER: for (;;) {
                     abort;
                 }
                 if (not ref $rv) {
+                    abort "Incomplete command." if $one_off and not @words;
+
+                    if (@words and $words[0] eq "\0SEPARATOR") {
+                        push @retry, shift @words;  # reject the ';'
+                        push @retry, [@words];
+                        @words = ();
+                        $retry = "Incomplete command (expected: $rv)";
+                        redo OUTER;
+                    }
+
                     $prompt = $rv;
                     @plugins = $plugin;
                     ($method) = @rvargs;
                     call_hooks "plugin_fail", $plugin->id, "$method: No method supplied"
                         if not ref $method;
 
-                    abort "Incomplete command." if $one_off and not @words;
                     next WORD;
                 }
                 if ($rv == ABORT) {
@@ -212,7 +240,6 @@ OUTER: for (;;) {
                 }
                 if ($rv == REJECT) {
                     my ($reason) = @rvargs;
-                    #abort if @words;
                     if (@words) {
                         call_hooks "retry", $plugin->id, $reason, @words ? 1 : 0;
                         push @retry, [@words];

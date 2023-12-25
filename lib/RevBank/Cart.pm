@@ -11,6 +11,12 @@ use RevBank::Users;
 use RevBank::FileIO;
 use RevBank::Cart::Entry;
 
+{
+    package RevBank::Cart::CheckoutProhibited;
+    sub new($class, $reason) { return bless \$reason, $class; }
+    sub reason($self) { return $$self; }
+}
+
 sub new($class) {
     return bless { entries => [] }, $class;
 }
@@ -70,7 +76,21 @@ sub size($self) {
     return scalar @{ $self->{entries} };
 }
 
+sub prohibit_checkout($self, $bool, $reason) {
+    if ($bool) {
+        $self->{prohibited} = $reason;
+    } else {
+        delete $self->{prohibited};
+    }
+}
+
 sub checkout($self, $user) {
+    if ($self->{prohibited}) {
+        die RevBank::Cart::CheckoutProhibited->new(
+            "Cannot complete transaction: $self->{prohibited}"
+        );
+    }
+
     if ($self->entries('refuse_checkout')) {
         $self->display;
         die "Refusing to finalize deficient transaction";
