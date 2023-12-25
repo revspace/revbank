@@ -37,9 +37,7 @@ sub import {
             if ($token eq '-') {
                 $posneg = $posneg == -1 ? 1 : -1;
             } elsif ($token eq '+') {
-                next if $posneg == -1;  # -+
                 $posneg ||= 1;
-                next;
             } else {
                 $posneg or return undef;  # two terms in a row
                 my $term = RevBank::Amount->parse_string($token) // return undef;
