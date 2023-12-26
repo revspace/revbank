@@ -43,6 +43,11 @@ transactions.
   new Perl features and disables some old ones. Specifically, the old-style
   "indirect object notation" is disabled, which means that `new Foo(...)`
   should be rewritten as `Foo->new(...)`.
+* `$cart->checkout` now throws an exception if there is unprocessed input in
+  the queue (the user can use `;` if it was intentional). There were always
+  reasons a checkout could fail, but now it is much more likely. Things that
+  should only happen if the checkout succeeds, should be put *after* the call,
+  or in a hook.
 
 # (2023-11-05) RevBank 4.2.0
 
