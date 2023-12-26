@@ -1,3 +1,51 @@
+# (???) RevBank 5.0.0
+
+This version comes with breaking changes to the command line syntax, to shield
+overconfident users of the interface for advanced users from several classes of
+common mistakes, and to add support for quoted and escaped strings to this
+interface.
+
+Basically, you can now use `;` to separate multiple commands on a single line
+of input, and in some cases this is mandatory.
+
+## Limited set of characters allowed in usernames and product IDs
+
+Historically, RevBank has allowed almost every character as a valid character,
+because it wasn't known if these would show up in barcodes. In more than 13
+years of real world use, though, it seems that barcodes and usernames with
+"special" characters are incredibly uncommon.
+
+Usernames must now only contain the characters from the set `A-Za-z0-9_-`.
+Existing usernames with special characters can be used by quoting the username.
+
+Since `'`, `"`, `\`, and `;` now have special meanings, they are no longer
+supported in product IDs. In theory, they could be quoted or escaped, but
+barcode scanners don't know that.
+
+## Update scripts that run revbank commands
+
+When providing multiple commands on a single line, RevBank now requires a
+separating `;` after commands that finalize transactions, and after commands
+that take arguments.
+
+End-users are guided interactively to deal with the change, but automated
+commands require changing. Specifically, add a `;` between a multi-word command
+and the final username (e.g. `give *lasercutter 10; xyzzy`) and in between
+transactions.
+
+## Update your custom plugins
+
+* The undocumented feature `ROLLBACK_UNDO` is gone. Use `return ABORT` in a
+  function called `hook_undo` instead.
+* Plugins are now evaluated with an implicit `use v5.32;` which enables many
+  new Perl features and disables some old ones. Specifically, the old-style
+  "indirect object notation" is disabled, which means that `new Foo(...)`
+  should be rewritten as `Foo->new(...)`.
+
+A future Perl version bump to `v5.36` (expected in 2025 when Debian Bookworm
+becomes oldstable) will disable "bareword filehandles", so you may want to
+change `open FOO` to `open my $foo` in preparation for that change.
+
 # (2023-11-05) RevBank 4.2.0
 
 Accounts that begin with `*` are now special: like hidden accounts, they do not
