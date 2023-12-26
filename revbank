@@ -28,26 +28,6 @@ my @retry;  # (@accepted, $rejected, [@trailing])
 
 my $one_off = 0;
 
-if (@ARGV) {
-    # Non-interactive like in sh: -c command_string
-    @ARGV >= 1 and $ARGV[0] eq '-c' or die "$0 has no switches, except -c.";
-
-    $one_off = 1;
-
-    @words = split " ", $ARGV[1];
-    push @words, @ARGV[3 .. $#ARGV] if @ARGV > 3;
-    push @words, "help" if not @words;
-}
-
-$| = 1;
-
-my $readline = Term::ReadLine->new($0);
-
-my $select = IO::Select->new;
-$select->add(\*STDIN);
-
-my $cart = RevBank::Cart->new;
-
 sub split_input($input) {
     $input =~ s/\s+$//;
 
@@ -85,6 +65,26 @@ sub split_input($input) {
     return @terms;
 }
 
+if (@ARGV) {
+    # Non-interactive like in sh: -c command_string
+    @ARGV >= 1 and $ARGV[0] eq '-c' or die "$0 has no switches, except -c.";
+
+    $one_off = 1;
+
+    @words = split_input($ARGV[1]);
+    @words and not ref $words[0] or die "Syntax error.\n";
+    push @words, @ARGV[3 .. $#ARGV] if @ARGV > 3;
+    push @words, "help" if not @words;
+}
+
+$| = 1;
+
+my $readline = Term::ReadLine->new($0);
+
+my $select = IO::Select->new;
+$select->add(\*STDIN);
+
+my $cart = RevBank::Cart->new;
 
 sub prompt($prompt, $plugins, $completions) {
     if ($prompt) {
