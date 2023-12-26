@@ -17,7 +17,7 @@ use RevBank::Global;
 use RevBank::Messages;
 use RevBank::Cart;
 
-our $VERSION = "5.0.0";
+our $VERSION = "5.0.1";
 our %HELP1 = (
     "abort" => "Abort the current transaction",
 );
@@ -57,11 +57,7 @@ sub split_input($input) {
     return \$pos if $pos < length($input);
 
     # End of string reached
-    for my $term (@terms) {
-        $term =
-              $term eq ';' ? "\0SEPARATOR"
-            : $term =~ s/\\(.)/$1/gr;
-    }
+    s/\\(.)/$1/g for @terms;
     return @terms;
 }
 
