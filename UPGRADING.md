@@ -1,4 +1,4 @@
-# (???) RevBank 5.0.0
+# (2023-12-26) RevBank 5.0.0
 
 This version comes with breaking changes to the command line syntax, to shield
 overconfident users of the interface for advanced users from several classes of
