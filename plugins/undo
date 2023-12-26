@@ -6,6 +6,11 @@ my $filename = ".revbank.undo";
 
 my @TAB;
 
+{
+    package RevBank::Plugin::undo::RollBackUndo;
+    sub new($class) { return bless [], $class; }
+}
+
 sub command :Tab(undo) ($self, $cart, $command, @) {
     $command eq 'undo' or return NEXT;
 
@@ -72,14 +77,25 @@ sub undo :Tab(&tab) ($self, $cart, $tid, @) {
 
             eval { $cart->checkout('-undo') };
 
-            if ($@ and $@ =~ "ROLLBACK_UNDO") {
+            if ($@ isa RevBank::Plugin::undo::RollbackUndo) {
                 # Undo the undo... :)
                 spurt $filename, slurp $backup;
 
                 # can't 'return ABORT' here; it would return from with_lock
                 $aborted = 1;
+            } elsif ($@ isa RevBank::Cart::CheckoutProhibited) {
+                my $reason = $@->reason;
+
+                # Undo the undo... :)
+                spurt $filename, slurp $backup;
+
+                $aborted = 1;
+                warn "$reason\n";
+            } elsif ($@ and ref $@) {
+                # Re-throw exception object
+                die $@;
             } elsif ($@) {
-                # Re-throw exception
+                # Re-throw exception string
                 die "(undo file BACKUP at $backup.)\n$@";
             } else {
                 unlink $backup;

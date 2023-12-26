@@ -62,8 +62,9 @@ sub load($class) {
         RevBank::Eval::clean_eval(qq[
             use strict;
             use warnings;
-            use feature qw(signatures state);
-            no warnings 'experimental::signatures';
+            use v5.32;
+            use experimental 'signatures';
+            use experimental 'isa';
             package $package;
             BEGIN { RevBank::Global->import; }
             our \@ISA = qw(RevBank::Plugin);
