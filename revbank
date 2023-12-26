@@ -57,14 +57,19 @@ sub split_input($input) {
     while (
         $input =~ m[
             \G \s*
-            (?| ' ( (?: \\. | [^\\']  )* ) '   (?=\s|;|$)
-              | " ( (?: \\. | [^\\"]  )* ) "   (?=\s|;|$)
-              |   ( (?: \\. | [^\\;'"\s] )+ )  (?=\s|;|$)
-              |   (;)
+            (?| (') ( (?: \\. | [^\\']  )* ) '   (?=\s|;|$)
+              | (") ( (?: \\. | [^\\"]  )* ) "   (?=\s|;|$)
+              | ()  ( (?: \\. | [^\\;'"\s] )+ )  (?=\s|;|$)
+              | ()  (;)
             )
         ]xg
     ) {
-        push @terms, $1;
+        push @terms, (
+              (not $1) && $2 eq ";" ? "\0SEPARATOR"
+            : (not $1) && $2 eq "abort" ? "\0ABORT"
+            : $1 && $2 eq "abort" ? "abort"
+            : $2
+        );
         $pos = pos($input) || 0;
     }
 
@@ -225,18 +230,22 @@ OUTER: for (;;) {
                     redo PROMPT;
                 }
             } else {
+                $input = "\0ABORT" if $input =~ /^\s*abort\s*$/;
                 @words = $input;
             }
         }
 
         WORD: for (;;) {
             redo PROMPT if not @words;
-            abort if grep $_ eq 'abort', @words;
+            abort if grep $_ eq "\0ABORT", @words;
 
             my $origword = my $word = shift @words;
             my @allwords = ($origword);
 
             next WORD if $word eq "\0SEPARATOR";
+
+            abort if $method eq "command" and $word eq "abort";  # here, even when quoted
+
             push @retry, $word;
 
             ALL_PLUGINS: { PLUGIN: for my $plugin (@plugins) {

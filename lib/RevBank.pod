@@ -28,15 +28,17 @@ RevBank is a user-interactive CLI, intended for use with a keyboard and a barcod
 
 Most barcode scanners virtually press the I<Enter> key after each scan, and RevBank is made with this in mind: any command parameters are typically presented as follow-up prompts.
 
-For advanced users, a more shell-like interface is provided: a command and its arguments can be given on a single line, separated by spaces. On the top-level prompt (i.e. not in follow-up prompts), the input is whitespace separated, and each of the "words" is added to a stack, from which subsequent prompts are fed. As long as there are words on the stack, the printing of further prompts is suppressed.
+For advanced users, a more shell-like interface is provided: a command and its arguments can be given on a single line, separated by spaces. On the top-level prompt (i.e. not in follow-up prompts), the input is whitespace separated, and each of the terms is added to a stack, from which subsequent prompts are fed. At that level, terms can be quoted with C<'single'> or C<"double"> quotes, and C<\> escapes the subsequent character. As long as there are words on the stack, the printing of further prompts is suppressed.
 
-There is no syntax for indicating the end of a command: every command has either a fixed number of arguments (follow-up questions), or its own specialized way to indicate the end of a variable length list.
+Multiple commands on a single line can be separated with C<;>. This is required after a command that finalizes a transaction (like a bare username after adding products), or between a command that takes arguments and a command that follows it.
+
+There is no syntax for indicating the end of a command in the simple mode. Every command has either a fixed number of arguments (follow-up questions), or its own specialized way to indicate the end of a variable length list.
 
 Similarly, the end of the "list of products" is not indicated by syntax, but by entering a username. Or, more technically correct: every product id is a command, and so is every username. The product id command adds an entry to the cart, the username command finalizes the transaction and empties the cart.
 
 =head3 abort
 
-The string C<abort> is hard-coded and will always abort the current transaction (i.e. reset the global state (cart)). This is intentional as users always need a "way out", and C<abort> is unlikely to be a valid response to any prompt anyway. (Just generate that C<abort> barcode externally, instead of with your print-a-barcode plugin...)
+The string C<abort> is hard-coded and will always abort the current transaction (i.e. reset the global state (cart)). This is intentional as users always need a "way out", and C<abort> is unlikely to be a valid response to any prompt anyway. (The "advanced" input method lets you quote it, like C<"abort">, although that is probably only useful for a print-a-barcode plugin...)
 
 =head2 Plugins
 
