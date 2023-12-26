@@ -48,6 +48,39 @@ $select->add(\*STDIN);
 
 my $cart = RevBank::Cart->new;
 
+sub split_input($input) {
+    $input =~ s/\s+$//;
+
+    my @terms;
+    my $pos = 0;
+
+    while (
+        $input =~ m[
+            \G \s*
+            (?| ' ( (?: \\. | [^\\']  )* ) '   (?=\s|;|$)
+              | " ( (?: \\. | [^\\"]  )* ) "   (?=\s|;|$)
+              |   ( (?: \\. | [^\\;'"\s] )+ )  (?=\s|;|$)
+              |   (;)
+            )
+        ]xg
+    ) {
+        push @terms, $1;
+        $pos = pos($input) || 0;
+    }
+
+    # End of string not reached
+    return \$pos if $pos < length($input);
+
+    # End of string reached
+    for my $term (@terms) {
+        $term =
+              $term eq ';' ? "\0SEPARATOR"
+            : $term =~ s/\\(.)/$1/gr;
+    }
+    return @terms;
+}
+
+
 sub prompt($prompt, $plugins, $completions) {
     if ($prompt) {
         $prompt =~ s/$/:/ if $prompt !~ /[?>](?:\x01[^\x02]*\x02)?$/;
@@ -81,11 +114,16 @@ sub prompt($prompt, $plugins, $completions) {
     });
 
     if ($retry) {
-        my @trailing = @{ pop @retry };
+        my $word_based = ref($retry[-1]);
+        my @trailing = $word_based ? @{ pop @retry } : ();
         my @rejected = pop @retry;
         my @accepted = @retry;
         s/\0SEPARATOR/;/ for @accepted, @rejected, @trailing;
-        $readline->insert_text(join " ", @accepted, @rejected, @trailing);
+        $readline->insert_text(
+            $word_based
+            ? join(" ", @accepted, @rejected, @trailing)
+            : join("", @accepted, @rejected)
+        );
         $readline->Attribs->{point} = @accepted ? 1 + length "@accepted" : 0;
         @retry = ();
         $retry = 0;
@@ -170,10 +208,22 @@ OUTER: for (;;) {
 
             length $input or redo PROMPT;
 
-            @words = ($split_input
-                ? map { $_ eq ';' ? "\0SEPARATOR" : $_ } grep length, split(/\s+|(;)/, $input)
-                : $input
-            );
+            if ($split_input) {
+                @words = split_input($input);
+                if (ref $words[0]) {
+                    my $pos = ${ $words[0] };
+                    @retry = @words = ();
+                    $retry = "Syntax error.";
+                    if ($input =~ /['"]/) {
+                        $retry .= " (Quotes must be at beginning and end of terms only.)";
+                    }
+                    push @retry, substr($input, 0, $pos) if $pos > 0;
+                    push @retry, substr($input, $pos);
+                    redo PROMPT;
+                }
+            } else {
+                @words = $input;
+            }
         }
 
         WORD: for (;;) {
