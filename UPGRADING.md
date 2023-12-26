@@ -42,10 +42,6 @@ transactions.
   "indirect object notation" is disabled, which means that `new Foo(...)`
   should be rewritten as `Foo->new(...)`.
 
-A future Perl version bump to `v5.36` (expected in 2025 when Debian Bookworm
-becomes oldstable) will disable "bareword filehandles", so you may want to
-change `open FOO` to `open my $foo` in preparation for that change.
-
 # (2023-11-05) RevBank 4.2.0
 
 Accounts that begin with `*` are now special: like hidden accounts, they do not
