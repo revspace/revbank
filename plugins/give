@@ -19,21 +19,22 @@ sub amount($self, $cart, $input, @) {
     $self->{amount} = parse_amount($input)
         or return REJECT, "$input: Invalid amount.";
 
-    return "Why are you giving $self->{amount} to $self->{beneficiary}, or enter your username to end", \&reason;
+    return "Short description ('x' for no message)", \&reason;
 }
 
 sub reason :Tab(whatevah) ($self, $cart, $input, @) {
+    return REJECT, "'$input' is a username, not a description :)."
+        if parse_user($input);
+    return REJECT, "'$input' is an amount, not a description :)."
+        if parse_amount($input);
+
     my $beneficiary = $self->{beneficiary};
     my $amount = $self->{amount};
-
-    my $user = parse_user($input);
-    my $reason = $user ? "" : " ($input)";
+    my $reason = $input =~ /^x?$/ ? "" : " ($input)";
 
     $cart
         ->add(-$amount, "Given to $beneficiary" . $reason)
         ->add_contra($beneficiary, +$amount, "Received from \$you" . $reason);
-
-    $cart->checkout($user) if $user;
 
     return ACCEPT;
 }
