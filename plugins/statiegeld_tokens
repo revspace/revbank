@@ -115,7 +115,7 @@ sub _warn($message) {
 	warn "\e[31;1mSorry,\e[0m $message\n";
 }
 
-sub _handle_undo($cart) {
+sub hook_undo($class, $cart) {
 	# Undoing properly is hard. We can easily void tokens, but we can't restore
 	# them. That would requires duplicating all of the undo logic that exists
 	# for account balances, but for tokens. Too much work for something that I
@@ -127,10 +127,13 @@ sub _handle_undo($cart) {
 			next if $contra->{amount} < 0;
 			next if List::Util::none { $contra->{user} eq $_ } _addon_accounts;
 
-			_warn "deposit refunds cannot be undone.";
-			die "ROLLBACK_UNDO";
+			return ABORT, "Sorry, deposit refunds cannot be undone.";
 		}
+	}
+}
 
+sub _handle_undo($cart) {
+	for my $entry ($cart->entries) {
 		# Undo buying: void specific tokens
 		my $undo_tid = $entry->attribute('undo_transaction_id')
 			or die "Plugin error: broken '-undo' transaction";

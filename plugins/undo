@@ -6,11 +6,6 @@ my $filename = ".revbank.undo";
 
 my @TAB;
 
-{
-    package RevBank::Plugin::undo::RollBackUndo;
-    sub new($class) { return bless [], $class; }
-}
-
 sub command :Tab(undo) ($self, $cart, $command, @) {
     $command eq 'undo' or return NEXT;
 
@@ -43,7 +38,7 @@ sub command :Tab(undo) ($self, $cart, $command, @) {
 
 sub tab { @TAB }
 
-my $doing_undo = 0;  # Ugly but works, just like the rest of this plugin
+our $doing_undo = 0;  # Ugly but works, just like the rest of this plugin
 
 sub undo :Tab(&tab) ($self, $cart, $tid, @) {
     my $description = "Undo $tid";
@@ -51,13 +46,8 @@ sub undo :Tab(&tab) ($self, $cart, $tid, @) {
     my $found = 0;
     my $aborted = 0;
 
-    with_lock {
-        my $backup = "$filename.bak.$$";
-        spurt $backup, slurp $filename;  # copy for rollback
-
-        # Immediately remove from file, to avoid double undo when something
-        # crashes.
-        rewrite $filename, sub($line) {
+    return with_lock {
+        for my $line (slurp $filename) {
             if ($line =~ /^\Q$tid\E\s/) {
                 my (undef, $user, $delta) = split " ", $line;
 
@@ -65,49 +55,35 @@ sub undo :Tab(&tab) ($self, $cart, $tid, @) {
                 $entry->{FORCE_UNBALANCED} = 1;
 
                 $entry->add_contra($user, $delta, "Undo $tid");
+            }
+        }
+
+        $cart->size or return ABORT, "Transaction ID '$tid' not found in undo log.";
+
+        call_hooks("undo", $cart) or return ABORT;
+
+        local $doing_undo = 1;  # don't allow undoing undos
+        $cart->checkout('-undo');
+
+        return ACCEPT;
+    };
+}
+
+sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
+    $username eq '-undo' or return;
+
+    for my $entry ($cart->entries) {
+        my $undo_tid = $entry->attribute('undo_transaction_id')
+            or die "Plugin error: broken '-undo' transaction";
+
+        rewrite $filename, sub($line) {
+            if ($line =~ /^\Q$undo_tid\E\s/) {
                 return undef;  # remove line
             } else {
                 return $line;
             }
         };
-
-        if ($cart->size) {
-            $found = 1;
-            $doing_undo = 1;  # don't allow undoing undos
-
-            eval { $cart->checkout('-undo') };
-
-            if ($@ isa RevBank::Plugin::undo::RollbackUndo) {
-                # Undo the undo... :)
-                spurt $filename, slurp $backup;
-
-                # can't 'return ABORT' here; it would return from with_lock
-                $aborted = 1;
-            } elsif ($@ isa RevBank::Cart::CheckoutProhibited) {
-                my $reason = $@->reason;
-
-                # Undo the undo... :)
-                spurt $filename, slurp $backup;
-
-                $aborted = 1;
-                warn "$reason\n";
-            } elsif ($@ and ref $@) {
-                # Re-throw exception object
-                die $@;
-            } elsif ($@) {
-                # Re-throw exception string
-                die "(undo file BACKUP at $backup.)\n$@";
-            } else {
-                unlink $backup;
-            }
-
-            $doing_undo = 0;
-        }
-    };
-
-    return ABORT, "Undo prohibited." if $aborted;
-    return ACCEPT if $found;
-    return ABORT, "Transaction ID '$tid' not found in undo log.";
+    }
 }
 
 sub hook_user_balance($class, $username, $old, $delta, $new, $transaction_id, @) {
