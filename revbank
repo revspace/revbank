@@ -215,7 +215,10 @@ OUTER: for (;;) {
                     @retry = @words = ();
                     $retry = "Syntax error.";
                     if ($input =~ /['"]/) {
-                        $retry .= " (Quotes must be at beginning and end of terms only.)";
+                        $retry .= " (Quotes must match and (only) be at both ends of a term.)";
+                        if (($input =~ tr/'//) == 1 and $input !~ /"/) {
+                            $retry .= "\nDid you mean: " . $input =~ s/'/\\'/r;
+                        }
                     }
                     push @retry, substr($input, 0, $pos) if $pos > 0;
                     push @retry, substr($input, $pos);
