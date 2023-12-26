@@ -15,12 +15,14 @@ because it wasn't known if these would show up in barcodes. In more than 13
 years of real world use, though, it seems that barcodes and usernames with
 "special" characters are incredibly uncommon.
 
-Usernames must now only contain the characters from the set `A-Za-z0-9_-`.
-Existing usernames with special characters can be used by quoting the username.
+Since `' " \ ;` now have special meanings, they are no longer supported in
+product IDs. In theory, they could be quoted or escaped, but barcode scanners
+don't know that. Existing users with those characters in their names can
+continue to use their accounts by quoting or escaping them.
 
-Since `'`, `"`, `\`, and `;` now have special meanings, they are no longer
-supported in product IDs. In theory, they could be quoted or escaped, but
-barcode scanners don't know that.
+New usernames must now only contain the characters from the set 
+`A-Z a-z 0-9 _ - + / ^ * [] {}` and the first character must not be any of
+`- + / ^ *`.
 
 ## Update scripts that run revbank commands
 

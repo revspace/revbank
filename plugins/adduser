@@ -15,13 +15,13 @@ sub command :Tab(adduser) ($self, $cart, $command, @) {
 }
 
 sub username($self, $cart, $name, @) {
-    return REJECT, "Sorry, whitespace is not allowed."
-        if $name =~ /\s/;
+    return REJECT, "Sorry, only A-Z a-z 0-9 _ - + / ^ * [] {} are allowed."
+        if $name !~ /^[A-Za-z0-9_\-+\/\^*\[\]{}-]+\z/;
 
-    return REJECT, "Sorry, invalid first character."
-        if $name =~ /^[-+*]/;
+    return REJECT, "Sorry, - + / ^ * are not allowed as the first character."
+        if $name =~ /^[-+*\/\^]/;
 
-    return REJECT, "That's too numeric to be a user name."
+    return REJECT, "Sorry, that's too numeric to be a user name."
         if defined parse_amount($name);
 
     return REJECT, "That name already exists."
