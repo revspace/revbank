@@ -118,7 +118,7 @@ sub string_flipped($self, $sep = " ") {
     return sprintf(
         "%s%s%d.%02d",
         $$self > 0 ? "+" : "",
-        $sep,
+        $$self > 0 ? $sep : "",
         abs($$self) / 100,
         abs($$self) % 100,
     );
