@@ -151,7 +151,7 @@ sub as_printable($self) {
             $description = $fromto;
         }
         push @s, sprintf(
-            "%s%13s %s%s",
+            "%s%15s %s%s",
             ($self->{highlight} || $c->{highlight} ? $HI : $LO),
             ($self->{amount} > 0 ? $c->{amount}->string_flipped("") : $c->{amount}->string),
             $description,
