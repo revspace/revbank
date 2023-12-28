@@ -22,7 +22,7 @@ sub Tab($self, $method) {
         ref $method ? $method : $self->can($method)
     ) or return;
 
-    my ($tab) = $attr =~ /Tab \( (.*?) \)/x;
+    my ($tab) = $attr =~ /Tab \( (.*?) \)/x or return;
     for my $keyword (split /\s*,\s*/, $tab) {
         if ($keyword =~ /^&(.*)/) {
             my $method = $1;
@@ -42,6 +42,14 @@ sub Tab($self, $method) {
     }
 
     return keys %completions;
+}
+
+sub AllChars($self, $method) {
+    my $attr = attributes::get(
+        ref $method ? $method : $self->can($method)
+    ) or return;
+
+    return !!($attr =~ /AllChars/);
 }
 
 1;

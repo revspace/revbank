@@ -17,7 +17,7 @@ use RevBank::Global;
 use RevBank::Messages;
 use RevBank::Cart;
 
-our $VERSION = "5.0.1";
+our $VERSION = "5.1.0";
 our %HELP1 = (
     "abort" => "Abort the current transaction",
 );
@@ -27,6 +27,9 @@ my $retry;  # reason (text)
 my @retry;  # (@accepted, $rejected, [@trailing])
 
 my $one_off = 0;
+
+my %escapes = (a => "\a", r => "\r", n => "\n", t => "\t", 0 => "\0");
+my %unescapes = reverse %escapes;
 
 sub split_input($input) {
     $input =~ s/\s+$//;
@@ -57,7 +60,7 @@ sub split_input($input) {
     return \$pos if $pos < length($input);
 
     # End of string reached
-    s/\\(.)/$1/g for @terms;
+    s[\\(.)]{ $escapes{$1} // $1 }ge for @terms;
     return @terms;
 }
 
@@ -119,7 +122,19 @@ sub prompt($prompt, $plugins, $completions) {
         my @trailing = $word_based ? @{ pop @retry } : ();
         my @rejected = pop @retry;
         my @accepted = @retry;
-        s/\0SEPARATOR/;/ for @accepted, @rejected, @trailing;
+
+        if ($word_based) {
+            # Reconstruct quotes and escapes
+            for (@accepted, @rejected, @trailing) {
+                s/([;'"\\])/\\$1/g;
+                s/\0SEPARATOR/;/;
+
+                my $unescapes = join "", keys %unescapes;
+                s/([$unescapes])/\\$unescapes{$1}/g;
+                $_ = "'$_'" if /\s/ or $_ eq "abort";
+            }
+        }
+
         $readline->insert_text(
             $word_based
             ? join(" ", @accepted, @rejected, @trailing)
@@ -251,7 +266,13 @@ OUTER: for (;;) {
                     "unexpected trailing input (use ';' to separate transactions)."
                 );
 
-                my ($rv, @rvargs) = eval { $plugin->$method($cart, $word) };
+                my ($rv, @rvargs) =
+
+                    ($word =~ /[^\x20-\x7f]/ and $method eq 'command' || !$plugin->AllChars($method))
+
+                    ? (REJECT, "Unexpected control character in input.")
+                    : eval { $plugin->$method($cart, $word) };
+
                 if ($@ isa 'RevBank::Cart::CheckoutProhibited') {
                     @words or die "Internal inconsistency";  # other cause than trailing input
 
