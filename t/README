@@ -1,0 +1,3 @@
+To run all tests, run from the parent directory:
+
+	prove -Ilib t
