@@ -34,12 +34,22 @@ are '"foo"', [qw/foo/];
 
 are "foo bar",           [qw/foo bar/];
 are "foo bar baz",       [qw/foo bar baz/];
-are "'foo' 'bar' 'baz'", [qw/foo bar baz/];
+are "'foo' 'bar' \"baz\"", [qw/foo bar baz/];
 
 are "foo;bar",   ['foo', "\0SEPARATOR", 'bar'];
 are "foo ;bar",  ['foo', "\0SEPARATOR", 'bar'];
 are "foo; bar",  ['foo', "\0SEPARATOR", 'bar'];
 are "foo ; bar", ['foo', "\0SEPARATOR", 'bar'];
+
+are "'foo';bar",   ['foo', "\0SEPARATOR", 'bar'];
+are "'foo' ;bar",  ['foo', "\0SEPARATOR", 'bar'];
+are "'foo'; bar",  ['foo', "\0SEPARATOR", 'bar'];
+are "'foo' ; bar", ['foo', "\0SEPARATOR", 'bar'];
+
+are "foo;'bar'",   ['foo', "\0SEPARATOR", 'bar'];
+are "foo ;'bar'",  ['foo', "\0SEPARATOR", 'bar'];
+are "foo; 'bar'",  ['foo', "\0SEPARATOR", 'bar'];
+are "foo ; 'bar'", ['foo', "\0SEPARATOR", 'bar'];
 
 are "foo\\;bar",   [qw/foo;bar/];
 are "foo \\;bar",  [qw/foo ;bar/];
@@ -58,6 +68,7 @@ are 'foo\\\\\\\\bar', ["foo\\\\bar"];
 
 are "abort", ["\0ABORT"];
 are "'abort'", [qw/abort/];
+are '"abort"', [qw/abort/];
 
 are "\\", 0;
 are "'foo", 0;
