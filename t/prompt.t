@@ -72,13 +72,20 @@ are '"abort"', [qw/abort/];
 
 are "\\", 0;
 are "'foo", 0;
-are "foo'", 0;
-are "foo'bar", 0;
 
-are "bar 'foo", 3;
-are "bar foo'", 3;
-are "bar foo'bar", 3;
+#    0123
+are "foo'", 3;
+#    0123
+are "foo'bar", 3;
 
-are "foo 'bar'\"baz\"", 3;
+#    01234
+are "bar 'foo", 4;
+#    01234567
+are "bar foo'", 7;
+#    01234567
+are "bar foo'bar", 7;
+
+#    0123456789
+are "foo 'bar'\"baz\"", 9;
 
 done_testing;

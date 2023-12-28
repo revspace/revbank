@@ -18,7 +18,7 @@ use RevBank::Messages;
 use RevBank::Cart;
 use RevBank::Prompt;
 
-our $VERSION = "5.1.0";
+our $VERSION = "5.1.1";
 our %HELP1 = (
     "abort" => "Abort the current transaction",
 );
@@ -101,10 +101,9 @@ OUTER: for (;;) {
                     }
                 }
 
-                $default = $word_based
-                    ? join(" ", @accepted, @rejected, @trailing)
-                    : join("", @accepted, @rejected);
-                $pos = @accepted ? 1 + length "@accepted" : 0;
+                my $sep = $word_based ? " " : "";
+                $default = join($sep, @accepted, @rejected, @trailing);
+                $pos = @accepted ? length "@accepted$sep" : 0;
 
                 @retry = ();
                 $retry = 0;
@@ -122,14 +121,17 @@ OUTER: for (;;) {
                 @words = RevBank::Prompt::split_input($input);
                 if (ref $words[0]) {
                     my $pos = ${ $words[0] };
+
                     @retry = @words = ();
                     $retry = "Syntax error.";
+
                     if ($input =~ /['"]/) {
                         $retry .= " (Quotes must match and (only) be at both ends of a term.)";
                         if (($input =~ tr/'//) == 1 and $input !~ /"/) {
                             $retry .= "\nDid you mean: " . $input =~ s/'/\\'/r;
                         }
                     }
+
                     push @retry, substr($input, 0, $pos) if $pos > 0;
                     push @retry, substr($input, $pos);
                     redo PROMPT;

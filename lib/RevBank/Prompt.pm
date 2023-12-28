@@ -21,13 +21,16 @@ sub split_input($input) {
 
     my @terms;
     my $pos = 0;
+    my $lastpos = 0;
+
+    my sub _P($nudge = 0) { $pos = pos($input) + $nudge; }
 
     while (
         $input =~ m[
             \G \s*+
-            (?| (') ( (?: \\. | [^\\']  )*+ ) '   (?=\s|;|$)
-              | (") ( (?: \\. | [^\\"]  )*+ ) "   (?=\s|;|$)
-              | ()  ( (?: \\. | [^\\;'"\s] )++ )  (?=\s|;|$)
+            (?| (') (?{_P -1}) ( (?: \\. | [^\\']  )*+ ) ' (?{_P}) (?=\s|;|$)
+              | (") (?{_P -1}) ( (?: \\. | [^\\"]  )*+ ) " (?{_P}) (?=\s|;|$)
+              | ()  ( (?: \\. | [^\\;'"\s] )++ )           (?{_P}) (?=\s|;|$)
               | ()  (;)
             )
         ]xg
@@ -38,11 +41,12 @@ sub split_input($input) {
             : $1 && $2 eq "abort" ? "abort"
             : $2
         );
-        $pos = pos($input) || 0;
+        $lastpos = pos($input) || 0;
+        $pos ||= $lastpos;
     }
 
     # End of string not reached
-    return \$pos if $pos < length($input);
+    return \$pos if $lastpos < length($input);
 
     # End of string reached
     s[\\(.)]{ $escapes{$1} // $1 }ge for @terms;
