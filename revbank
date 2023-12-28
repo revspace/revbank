@@ -16,6 +16,7 @@ use RevBank::Plugins;
 use RevBank::Global;
 use RevBank::Messages;
 use RevBank::Cart;
+use RevBank::Prompt;
 
 our $VERSION = "5.1.0";
 our %HELP1 = (
@@ -23,46 +24,8 @@ our %HELP1 = (
 );
 
 my @words;  # input
-my $retry;  # reason (text)
-my @retry;  # (@accepted, $rejected, [@trailing])
 
 my $one_off = 0;
-
-my %escapes = (a => "\a", r => "\r", n => "\n", t => "\t", 0 => "\0");
-my %unescapes = reverse %escapes;
-
-sub split_input($input) {
-    $input =~ s/\s+$//;
-
-    my @terms;
-    my $pos = 0;
-
-    while (
-        $input =~ m[
-            \G \s*+
-            (?| (') ( (?: \\. | [^\\']  )*+ ) '   (?=\s|;|$)
-              | (") ( (?: \\. | [^\\"]  )*+ ) "   (?=\s|;|$)
-              | ()  ( (?: \\. | [^\\;'"\s] )++ )  (?=\s|;|$)
-              | ()  (;)
-            )
-        ]xg
-    ) {
-        push @terms, (
-              (not $1) && $2 eq ";" ? "\0SEPARATOR"
-            : (not $1) && $2 eq "abort" ? "\0ABORT"
-            : $1 && $2 eq "abort" ? "abort"
-            : $2
-        );
-        $pos = pos($input) || 0;
-    }
-
-    # End of string not reached
-    return \$pos if $pos < length($input);
-
-    # End of string reached
-    s[\\(.)]{ $escapes{$1} // $1 }ge for @terms;
-    return @terms;
-}
 
 if (@ARGV) {
     # Non-interactive like in sh: -c command_string
@@ -70,7 +33,7 @@ if (@ARGV) {
 
     $one_off = 1;
 
-    @words = split_input($ARGV[1]);
+    @words = RevBank::Prompt::split_input($ARGV[1]);
     @words and not ref $words[0] or die "Syntax error.\n";
     push @words, @ARGV[3 .. $#ARGV] if @ARGV > 3;
     push @words, "help" if not @words;
@@ -78,112 +41,14 @@ if (@ARGV) {
 
 $| = 1;
 
-my $readline = Term::ReadLine->new($0);
-
-my $select = IO::Select->new;
-$select->add(\*STDIN);
-
 my $cart = RevBank::Cart->new;
-
-sub prompt($prompt, $plugins, $completions) {
-    if ($prompt) {
-        $prompt =~ s/$/:/ if $prompt !~ /[?>](?:\x01[^\x02]*\x02)?$/;
-        $prompt .= " ";
-    } else {
-        # \x01...\x02 = zero width markers for readline
-        # \e[...m     = ansi escape (32 = green, 1 = bright)
-        $prompt = "\x01\e[32;1m\x02>\x01\e[0m\x02 ";
-    }
-
-    my @matches;
-    $readline->Attribs->{completion_entry_function} = sub {
-        my ($word, $state) = @_;
-        return undef if $word eq "";
-        @matches = grep /^\Q$word\E/i, @$completions if $state == 0;
-        return shift @matches;
-    };
-
-    # Term::ReadLine::Gnu (1.37) does not expose rl_completion_case_fold,
-    # but it can be assigned through the corresponding .inputrc command.
-    $readline->parse_and_bind("set completion-ignore-case on");
-
-    my $done;
-    my $input;
-
-    print "$retry\n" if $retry;
-    $readline->callback_handler_install($prompt, sub {
-        $done = 1;
-        $input = shift;
-        $readline->callback_handler_remove;
-    });
-
-    if ($retry) {
-        my $word_based = ref($retry[-1]);
-        my @trailing = $word_based ? @{ pop @retry } : ();
-        my @rejected = pop @retry;
-        my @accepted = @retry;
-
-        if ($word_based) {
-            # Reconstruct quotes and escapes
-            for (@accepted, @rejected, @trailing) {
-                s/([;'"\\])/\\$1/g;
-                s/\0SEPARATOR/;/;
-
-                my $unescapes = join "", keys %unescapes;
-                s/([$unescapes])/\\$unescapes{$1}/g;
-                $_ = "'$_'" if /\s/ or $_ eq "abort";
-            }
-        }
-
-        $readline->insert_text(
-            $word_based
-            ? join(" ", @accepted, @rejected, @trailing)
-            : join("", @accepted, @rejected)
-        );
-        $readline->Attribs->{point} = @accepted ? 1 + length "@accepted" : 0;
-        @retry = ();
-        $retry = 0;
-    }
-    $readline->redisplay();
-
-    my $begin = my $time = time;
-    while (not $done) {
-        if ($::ABORT_HACK) {
-            # Global variable that a signal handling plugin can set.
-            # Do not use, but "return ABORT" instead.
-            my $reason = $::ABORT_HACK;
-            $::ABORT_HACK = 0;
-            abort($reason);
-        }
-        if ($select->can_read(.05)) {
-            $readline->callback_read_char;
-            $begin = $time;
-        }
-        if (time > $time) {
-            $time = time;
-            call_hooks(
-                "prompt_idle",
-                $cart,
-                (@$plugins > 1 ? undef : $plugins->[0]), # >1 plugin = main loop
-                $time - $begin,
-                $readline,
-            );
-        }
-    }
-
-    print "\e[0m";
-    defined $input or return;
-    $readline->addhistory($input);
-
-    $input =~ s/^\s+//;  # trim leading whitespace
-    $input =~ s/\s+$//;  # trim trailing whitespace
-
-    return $input;
-}
 
 RevBank::Plugins->load;
 
 call_hooks("startup");
+
+my $retry;  # reason (text)
+my @retry;  # (@accepted, $rejected, [@trailing])
 
 OUTER: for (;;) {
     if (not @words or $words[0] eq "\0SEPARATOR") {
@@ -218,14 +83,43 @@ OUTER: for (;;) {
             my $split_input = !ref($method) && $method eq 'command';
 
             my @completions = uniq 'abort', map $_->Tab($method), @plugins;
-            my $input = prompt $prompt, \@plugins, \@completions;
+
+            my $default = "";
+            my $pos = 0;
+
+            if ($retry) {
+                print "$retry\n";
+
+                my $word_based = ref($retry[-1]);
+                my @trailing = $word_based ? @{ pop @retry } : ();
+                my @rejected = pop @retry;
+                my @accepted = @retry;
+
+                if ($word_based) {
+                    for (@accepted, @rejected, @trailing) {
+                        $_ = RevBank::Prompt::reconstruct($_);
+                    }
+                }
+
+                $default = $word_based
+                    ? join(" ", @accepted, @rejected, @trailing)
+                    : join("", @accepted, @rejected);
+                $pos = @accepted ? 1 + length "@accepted" : 0;
+
+                @retry = ();
+                $retry = 0;
+            }
+
+            my $input = RevBank::Prompt::prompt(
+                $prompt, \@completions, $default, $pos, $cart, \@plugins
+            );
 
             call_hooks "input", $cart, $input, $split_input;
 
             length $input or redo PROMPT;
 
             if ($split_input) {
-                @words = split_input($input);
+                @words = RevBank::Prompt::split_input($input);
                 if (ref $words[0]) {
                     my $pos = ${ $words[0] };
                     @retry = @words = ();
