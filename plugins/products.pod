@@ -20,9 +20,8 @@ The configuration for this plugin lives in a text file called
 C<revbank.products>.
 
 Whitespace at the beginning or end of a line are ignored. Blank lines are
-ignored. Comments are lines that start with C<#> and are also ignored. Note
-that a whole line is either a comment or a data line; trailing comments are
-not supported and C<#> is a valid character in a product description.
+ignored. Comments are lines that start with C<#> and are also ignored.
+Trailing comments are supported.
 
 Data lines have whitespace-separated columns:
 

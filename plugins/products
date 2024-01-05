@@ -18,6 +18,7 @@ sub read_products() {
     for (slurp $filename) {
         $line++;
 
+        s/#.*$//g;  # remove comment
         s/^\s+|\s+$//g;  # trim
         next if /^#/;
         next if not length;
