@@ -13,12 +13,3 @@ sub command :Tab(restart) ($self, $cart, $command, @) {
 
     return ABORT, "exec() failed. You'll have to restart revbank yourself :P";
 }
-
-sub hook_input($class, $cart, $input, $split_input, @) {
-    return if defined $input;
-
-    call_hooks("restart_restart");
-    no warnings qw(exec);
-    exec $0;
-    call_hooks("restart_survived");
-}

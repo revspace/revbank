@@ -18,7 +18,7 @@ use RevBank::Messages;
 use RevBank::Cart;
 use RevBank::Prompt;
 
-our $VERSION = "5.1.1";
+our $VERSION = "5.1.2";
 our %HELP1 = (
     "abort" => "Abort the current transaction",
 );
@@ -112,6 +112,10 @@ OUTER: for (;;) {
             my $input = RevBank::Prompt::prompt(
                 $prompt, \@completions, $default, $pos, $cart, \@plugins
             );
+            if (not defined $input) {
+                # Controlling terminal gone
+                exit if eof STDIN;
+            }
 
             call_hooks "input", $cart, $input, $split_input;
 
