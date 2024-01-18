@@ -126,7 +126,7 @@ sub hook_input { # args via @_ for mutable alias
 	$S or return;
 
 	# Extra newline before new "Scan products for ..." line.
-	print "\n" if $input eq "" and $split_input; 
+	print "\n" if defined $input and $input eq "" and $split_input; 
 
 	# Hijack 'help' command so it never reaches the 'help' plugin.
 	if ($split_input and $input eq "help") {
