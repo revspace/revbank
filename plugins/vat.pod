@@ -13,8 +13,8 @@ C<revbank.vat>
 
 C<revbank.products>
 
-	123123123   1.00      Example product that gets the default contra
-	42424242    1.00@+sales/products/hoogbtw  Example with high VAT rate
+	123123123   1.00      "Example product that gets the default contra"
+	42424242    1.00@+sales/products/hoogbtw  "Example with high VAT rate"
 
 =head1 DESCRIPTION
 

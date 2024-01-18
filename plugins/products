@@ -13,16 +13,61 @@ sub read_products() {
     %products = ();
     $mtime = -M $filename;
 
-    my $line = 0;
+    my $linenr = 0;
+    my $warnings = 0;
 
-    for (slurp $filename) {
-        $line++;
+    for my $line (slurp $filename) {
+        $linenr++;
 
-        s/^\s+|\s+$//g;  # trim
-        next if /^#/;
-        next if not length;
+        next if $line =~ m[
+            ^\s*\#    # comment line
+            |
+            ^\s*$     # empty line, or only whitespace
+        ]x;
 
-        my ($ids, $p, $desc) = split " ", $_, 3;
+        my @split = RevBank::Prompt::split_input($line);
+
+        if (grep /\0SEPARATOR/, @split) {
+            warn "Invalid character in $filename line $linenr.\n";
+            next;
+        }
+        if (grep /\0/, @split) {
+            warn "Invalid value in $filename line $linenr.\n";
+            next;
+        }
+
+        my ($ids, $p, $desc, @extra) = @split;
+
+        my @addon_ids;
+        my %tags;
+
+        my $compat = 0;
+        if (@split == 1 and ref $split[0]) {
+            $compat = 1;
+        } else {
+            for (@extra) {
+                if (/^\+(.*)/) {
+                    push @addon_ids, $1;
+                } elsif (/^\#(\w+)(=(.*))/) {
+                    $tags{$1} = $2 ? $3 : 1;
+                } else {
+                    $compat = 1;
+                    last;
+                }
+            }
+        }
+
+        if ($compat) {
+            $warnings++;
+            warn "$filename line $linenr: can't parse as new format; assuming old format.\n" if $warnings < 4;
+            warn "Too many warnings; suppressing the rest. See UPGRADING.md for instructions.\n" if $warnings == 4;
+
+            ($ids, $p, $desc) = split " ", $line, 3;
+
+            @addon_ids = ();
+            unshift @addon_ids, $1 while $desc =~ s/\s+ \+ (\S+)$//x;
+        }
+
         my @ids = split /,/, $ids;
 
         $p ||= "invalid";
@@ -35,21 +80,17 @@ sub read_products() {
 
         if ($percent) {
             if (grep !/^\+/, @ids) {
-                warn "Percentage invalid for non-addon at $filename line $line.\n";
+                warn "Percentage invalid for non-addon at $filename line $linenr.\n";
                 next;
             }
             $price = 0 + $price;
         } else {
             $price = eval { parse_amount($price) };
             if (not defined $price) {
-                warn "Invalid price for '$ids[0]' at $filename line $line.\n";
+                warn "Invalid price for '$ids[0]' at $filename line $linenr.\n";
                 next;
             }
         }
-
-        my @addon_ids;
-        unshift @addon_ids, $1 while $desc =~ s/\s+ \+ (\S+)$//x;
-
         $products{$_} = {
             id          => $ids[0],
             price       => $sign * $price,
@@ -57,7 +98,8 @@ sub read_products() {
             description => $desc,
             contra      => $contra || $default_contra,
             _addon_ids  => \@addon_ids,
-            line        => $line,
+            line        => $linenr,
+            tags        => \%tags,
         } for @ids;
     }
 

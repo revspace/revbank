@@ -6,11 +6,11 @@ statiegeld - RevBank plugin for return deposits
 
 revbank.products:
 
-	clubmate     1.40                   Club-Mate bottle +sb
-	cola         0.90                   Cola can +sc
-	+sb          0.15@+statiegeld       Bottle deposit
-	+sc          0.25@+statiegeld       Can deposit
-	matecrate    1.50@+statiegeld       Mate crate (empty)
+	clubmate     1.40                   "Club-Mate bottle" +sb
+	cola         0.90                   "Cola can" +sc
+	+sb          0.15@+statiegeld       "Bottle deposit"
+	+sc          0.25@+statiegeld       "Can deposit"
+	matecrate    1.50@+statiegeld       "Mate crate (empty)"
 
 =head1 DESCRIPTION
 

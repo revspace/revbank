@@ -1,3 +1,79 @@
+# When upgrading, always:
+
+1. Make sure nobody is using RevBank.
+2. Make a backup of your RevBank data and code repo(s).
+3. Read this file :)
+
+# (2024-01-20) RevBank 6.0.0
+
+Note that the changes to `revbank.products` do NOT apply to `revbank.market`
+and other files.
+
+## Update your `revbank.products` file
+
+TL;DR: Product descriptions now need `"quotes"` around them.
+
+This version comes with breaking changes to the `revbank.products` syntax, to
+expand the capabilities of the file in a more future-proof way. Bitlair
+(Hackerspace Amersfoort) has requested a way to add metadata to products for
+automation, which together with recent other additions to the format, made
+clear a more structured approach was needed.
+
+The line format for the products file is now like the input format of the
+command line interface. This means that if product descriptions contain spaces,
+as they typically do, quotes are needed around them. You can pick between
+`"double"` and `'single'` quotes. Any backslashes and quotes within the same
+kind of quotes need escaping by adding a `\` in front, e.g. `\"` and `\\`.
+
+```
+# Old format:
+product_id    0.42    Can't think of a good description +addon1 +addon2
+
+# New format, recommended style:
+product_id    0.42    "Can't think of a good description" +addon1 +addon2
+
+# Automatically generated? You may wish to quote all fields:
+"product_id" "0.42" "Can't think of a good description" "+addon1" "+addon2"
+
+# Escaping also works:
+product_id 0.42 Can\'t\ think\ of\ a\ good\ description +addon1 +addon2
+```
+
+To convert your `revbank.products` file to the recommended style automatically,
+you could use:
+
+```sh
+# The following is one command. It was obviously not optimized for readability :)
+
+perl -i.backupv6 -ple'unless (/^\s*#/ or /^\s*$/) {
+  my ($pre, $desc) = /(^\s*\S+\s+\S+\s*)(.*)/; $pre .= " " if $pre !~ /\s$/;
+  my @a; unshift @a, $1 while $desc =~ s/\s\+(\S+)$//;
+  $desc =~ s/([\"\\])/\\$1/g; $_ = "$pre\"$desc\"";
+  for my $a (@a) { $_ .= " +$a" }
+}' revbank.products
+```
+
+Note that this will leave commented lines unchanged! If those contain disabled
+products, you'll have to add the quotes yourself.
+
+## New feature: hashtags in `revbank.products`
+
+After the description field, you can add hashtag fields. These begin with `#`
+and may take the form of a lone `#hashtag`, or they may be used as a
+`#key=value` pair. The hashtags can be read by plugins. Out of the box, they
+currently do nothing.
+
+```
+8711327538481  0.80  "Ola Liuk"   #ah=wi162664 #q=8
+8712100340666  0.45  "Ola Raket"  #ah=wi209562 #q=12
+5000112659184,5000112658873  0.95  "Coca-Cola Cola Zero Sugar (33 cl)" #sligro +sb
+
+# equivalent:
+"8711327538481" "0.80" "Ola Liuk" "#ah=wi162664" "#q=8"
+```
+
+See https://github.com/bitlair/revbank-inflatinator/ for a possible use of adding metadata.
+
 # (2023-12-26) RevBank 5.0.0
 
 This version comes with breaking changes to the command line syntax, to shield
@@ -231,19 +307,25 @@ list from within RevBank, add `edit` to `revbank.plugins`.
 
 ## Check your `revbank.products`
 
-There's new syntax for `revbank.products`: addons. Check that your lines don't
-have `+foo` at the end, where `foo` can be anything.
+> Added 2024-01-20 v6.0.0: if you're upgrading to v6.0.0 from a version before
+> v3.6, instead of following these instructions, you can just add quotes to the
+> descriptions (when using the perl oneliner from the v6.0.0 upgrade
+> instructions, check if any `+something` that got placed outside of the quotes
+> should have been within the quotes.)
 
-Also check that you don't have any product ids that start with `+`; those can
-no longer be entered as this syntax now has special semantics.
+~~There's new syntax for `revbank.products`: addons. Check that your lines don't
+have `+foo` at the end, where `foo` can be anything.~~
 
-So these don't work as before:
+~~Also check that you don't have any product ids that start with `+`; those can
+no longer be entered as this syntax now has special semantics.~~
+
+~~So these don't work as before:~~
 
     example_id      1.00  Example product +something
     +something      1.00  Product id that starts with plus
     example,+alias  1.00  Alias that starts with plus
 
-These will keep working as they were:
+~~These will keep working as they were:~~
 
     example_id1     1.00  Example product+something
     example_id2     1.00  Example product + something

@@ -4,10 +4,14 @@ products - RevBank plugin for selling products
 
 =head1 SYNOPISIS
 
-	8710447032756              0.80          Festini Peer
-	4029764001807,clubmate     1.40          Club-Mate +half +pf
-	pf                         0.15@+pfand   Pfand NRW-Flasche
-	+half                      -50%          50% discount \o/
+	# Comments are lines that begin with a # character.
+	# Empty lines are ignored.
+
+	8710447032756          0.80        "Festini Peer"
+	4029764001807,clubmate 1.40        "Club-Mate" +half +pf
+	pf                     0.15@+pfand "Pfand NRW-Flasche"
+	+half                  -50%        "50% discount \\o/"
+	123                    0.42        "Hashtag example" #tag #tag2=42
 
 =head1 DESCRIPTION
 
@@ -63,9 +67,15 @@ C<revbank.products>. User accounts are liability accounts.)
 
 =head2 Description
 
-The description may contain whitespace.
+The description, like other columns, may contain whitespace, but to use
+whitespace, either the entire field "needs quotes" around it, or the whitespace
+can be escaped with backslashes.
 
-=head2 Addons
+It is suggested to always use quotes around the description.
+
+=head2 Additional fields
+
+=head3 Addons
 
 Addons are products that are added as part of the main product. They are
 specified after the description, with a C<+> sign that has whitespace before
@@ -76,9 +86,9 @@ the product id C<foo> is used instead. The difference is that a product id
 C<+foo> can only be used as an addon for another product, while C<foo> can be
 used either as an addon or a manually entered as a standalone product.
 
-	example_id          2.20     Example product +first +second
-	+first              1.20     First thing
-	second              0.80     Second thing
+	example_id          2.20     "Example product" +first +second
+	+first              1.20     "First thing"
+	second              0.80     "Second thing"
 
 In this example, the final price of the example product will be 4.20. It is not
 possible to buy the first thing separate, but it is possible to buy the second
@@ -97,7 +107,7 @@ listed as a component named "Product".
 A product can have multiple addons. Addon products themselves can also have
 further addons, but circular recursion is not supported.
 
-=head3 Percentage addons
+=head4 Percentage addons
 
 As a special case, an addon's price can be a percentage. In this case, the
 price is calculated from the sum of the the product components I<up to that
@@ -105,12 +115,41 @@ point> that have I<the same contra account> as the percentage addon.
 
 So, given the following example,
 
-	example_id          0.90          Example product +some_fee +discount
-	+some_fee           0.15@+fees    Some fee; might be a bottle deposit
-	+discount           -50%          Special offer discount!
+	example_id          0.90          "Example product" +some_fee +discount
+	+some_fee           0.15@+fees    "Some fee; might be a bottle deposit"
+	+discount           -50%          "Special offer discount!"
 
 only 0.45 is discounted, because the 0.15 has a different contra account. While
 complicated, this is probably what you want in most cases. There is currently
 no way to apply a discount to the product with all of its addons.
 
 A percentage addon must have a product_id that begins with C<+>.
+
+=head3 Tags
+
+Additional metadata can be given in additional fields that begin with C<#> and
+the name of the tag, optionally followed by C<=> and a value to turn it into a
+key/value pair. If no value is specified, a value of C<1> is used.
+
+The name of a hashtag must contain only C<A-Z a-z 0-9 _> characters. There must
+not be whitespace after the C<#> or around the C<=>.
+
+Like all the fields, the field can be quoted to contain whitespace. Note,
+however, that the quotes must be placed around the entire field, not just the
+value part.
+
+	ht1         0.42           "Just one hashtag" #tag
+	ht2         0.42           "Two hashtags!" #tag #key=value
+	ht3         0.42           "Surprising syntax" "#x=spaces in value"
+
+Tags can be accessed by custom plugins, but are currently ignored by upstream
+RevBank and its plugins.
+
+=head3 Other additional fields
+
+When any field is added after the description, that does not begin with C<+> or
+C<#>, RevBank currently assumes it's the old syntax (which is not described in
+the current version of this document!), and parses it using the old semantics
+while showing a warning.
+
+This compatibility feature will be removed from a future version of RevBank.
