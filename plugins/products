@@ -48,7 +48,7 @@ sub read_products() {
             for (@extra) {
                 if (/^\+(.*)/) {
                     push @addon_ids, $1;
-                } elsif (/^\#(\w+)(=(.*))/) {
+                } elsif (/^\#(\w+)(=(.*))?/) {
                     $tags{$1} = $2 ? $3 : 1;
                 } else {
                     $compat = 1;
