@@ -6,6 +6,7 @@ use feature qw(signatures isa);
 no warnings "experimental::signatures";
 
 use List::Util qw(uniq);
+use POSIX qw(ttyname);
 
 use FindBin qw($RealBin);
 use lib "$RealBin/lib";
@@ -15,7 +16,7 @@ use RevBank::Messages;
 use RevBank::Cart;
 use RevBank::Prompt;
 
-our $VERSION = "6.0.1";
+our $VERSION = "6.0.2";
 our %HELP1 = (
     "abort" => "Abort the current transaction",
 );
@@ -34,7 +35,11 @@ if (@ARGV) {
     @words and not ref $words[0] or die "Syntax error.\n";
     push @words, @ARGV[3 .. $#ARGV] if @ARGV > 3;
     push @words, "help" if not @words;
+} elsif (not ttyname fileno STDIN) {
+    warn "\e[31;1mNo controlling terminal, things will be borken!\n";
+    warn "Use ssh -t (or RequestTTY in .ssh/config) for interactive sessions.\e[m\n";
 }
+
 
 $| = 1;
 
@@ -110,8 +115,7 @@ OUTER: for (;;) {
                 $prompt, \@completions, $default, $pos, $cart, \@plugins
             );
             if (not defined $input) {
-                # Controlling terminal gone
-                exit if eof STDIN;
+                exit if not ttyname fileno STDIN;  # Controlling terminal gone
             }
 
             call_hooks "input", $cart, $input, $split_input;
