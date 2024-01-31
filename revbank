@@ -5,10 +5,7 @@ use warnings;
 use feature qw(signatures isa);
 no warnings "experimental::signatures";
 
-use IO::Select;
 use List::Util qw(uniq);
-use Term::ReadLine;
-require Term::ReadLine::Gnu;  # The other one sucks.
 
 use FindBin qw($RealBin);
 use lib "$RealBin/lib";
