@@ -91,16 +91,20 @@ sub read_products() {
                 next;
             }
         }
-        $products{$_} = {
-            id          => $ids[0],
-            price       => $sign * $price,
-            percent     => $percent,
-            description => $desc,
-            contra      => $contra || $default_contra,
-            _addon_ids  => \@addon_ids,
-            line        => $linenr,
-            tags        => \%tags,
-        } for @ids;
+        for my $id (@ids) {
+            warn "Product '$id' redefined at $filename line $linenr (original at line $products{$id}{line}).\n" if exists $products{$id};
+
+            $products{$id} = {
+                id          => $ids[0],
+                price       => $sign * $price,
+                percent     => $percent,
+                description => $desc,
+                contra      => $contra || $default_contra,
+                _addon_ids  => \@addon_ids,
+                line        => $linenr,
+                tags        => \%tags,
+            };
+        }
     }
 
     PRODUCT: for my $product (values %products) {
