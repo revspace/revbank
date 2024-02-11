@@ -5,7 +5,6 @@ use warnings;
 use feature qw(signatures isa);
 no warnings "experimental::signatures";
 
-use IO::Select;
 use List::Util qw(uniq);
 use Term::ReadLine;
 require Term::ReadLine::Gnu;  # The other one sucks.
@@ -64,9 +63,6 @@ sub reconstruct($word) {
 sub prompt($prompt, $completions = [], $default = "", $pos = 0, $cart = undef, $plugins = []) {
     state $readline = Term::ReadLine->new($0);
 
-    my $select = IO::Select->new;
-    $select->add(\*STDIN);
-
     if ($prompt) {
         $prompt =~ s/$/:/ if $prompt !~ /[?>](?:\x01[^\x02]*\x02)?$/;
         $prompt .= " ";
@@ -88,31 +84,18 @@ sub prompt($prompt, $completions = [], $default = "", $pos = 0, $cart = undef, $
     # but it can be assigned through the corresponding .inputrc command.
     $readline->parse_and_bind("set completion-ignore-case on");
 
-    my $done;
-    my $input;
-
-    $readline->callback_handler_install($prompt, sub {
-        $done = 1;
-        $input = shift;
-        $readline->callback_handler_remove;
-    });
-
     $readline->insert_text($default);
     $readline->Attribs->{point} = $pos;
-    $readline->redisplay();
 
     my $begin = my $time = time;
-    while (not $done) {
+
+    $readline->Attribs->{event_hook} = sub {
         if ($::ABORT_HACK) {
             # Global variable that a signal handling plugin can set.
             # Do not use, but "return ABORT" instead.
             my $reason = $::ABORT_HACK;
             $::ABORT_HACK = 0;
             main::abort($reason);
-        }
-        if ($select->can_read(.05)) {
-            $readline->callback_read_char;
-            $begin = $time;
         }
         if (time > $time) {
             $time = time;
@@ -124,10 +107,15 @@ sub prompt($prompt, $completions = [], $default = "", $pos = 0, $cart = undef, $
                 $readline,
             );
         }
-    }
+    };
+
+    $readline->ornaments(0);
+    my $input = $readline->readline($prompt);
 
     print "\e[0m";
-    defined $input or return;
+
+    return undef if not defined $input;
+
     $readline->addhistory($input);
 
     $input =~ s/^\s+//;  # trim leading whitespace
