@@ -124,6 +124,7 @@ sub hook_input { # args via @_ for mutable alias
 	my ($class, $cart, $input, $split_input) = @_;
 
 	$S or return;
+	defined $input or return;
 
 	# Extra newline before new "Scan products for ..." line.
 	print "\n" if defined $input and $input eq "" and $split_input; 
