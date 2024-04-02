@@ -116,8 +116,6 @@ sub prompt($prompt, $completions = [], $default = "", $pos = 0, $cart = undef, $
 
     return undef if not defined $input;
 
-    $readline->addhistory($input);
-
     $input =~ s/^\s+//;  # trim leading whitespace
     $input =~ s/\s+$//;  # trim trailing whitespace
 
