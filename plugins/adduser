@@ -27,6 +27,9 @@ sub username($self, $cart, $name, @) {
     return REJECT, "That name already exists."
         if defined parse_user($name);
 
+    return REJECT, "That name is not available."
+        if defined parse_user($name, 1);
+
     for my $plugin (RevBank::Plugins->new) {
         my $id = $plugin->id;
 

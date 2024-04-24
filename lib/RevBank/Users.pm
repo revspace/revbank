@@ -98,13 +98,18 @@ sub is_special($username) {
     return $username =~ /^[-+*]/;
 }
 
-sub parse_user($username) {
+sub parse_user($username, $allow_invalid = 0) {
     return undef if is_hidden($username);
 
     my $users = _read();
-    return exists $users->{ lc $username }
-        ? $users->{ lc $username }->[0]
-        : undef;
+
+    exists $users->{ lc $username }
+        or return undef;
+
+    $allow_invalid or defined balance($username)
+        or return undef;
+
+    return $users->{ lc $username }->[0];
 }
 
 sub assert_user($username) {
