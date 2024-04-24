@@ -84,9 +84,6 @@ sub prompt($prompt, $completions = [], $default = "", $pos = 0, $cart = undef, $
     # but it can be assigned through the corresponding .inputrc command.
     $readline->parse_and_bind("set completion-ignore-case on");
 
-    $readline->insert_text($default);
-    $readline->Attribs->{point} = $pos;
-
     my $begin = my $time = time;
 
     $readline->Attribs->{event_hook} = sub {
@@ -109,8 +106,12 @@ sub prompt($prompt, $completions = [], $default = "", $pos = 0, $cart = undef, $
         }
     };
 
+    $readline->Attribs->{startup_hook} = sub {
+        $readline->Attribs->{point} = $pos;
+    };
+
     $readline->ornaments(0);
-    my $input = $readline->readline($prompt);
+    my $input = $readline->readline($prompt, $default);
 
     print "\e[0m";
 
