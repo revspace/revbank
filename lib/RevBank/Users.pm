@@ -13,7 +13,20 @@ my $filename = "revbank.accounts";
 
 sub _read() {
     my @users;
-    /\S/ and push @users, [split " "] for slurp $filename;
+    for my $line (slurp $filename) {
+        $line =~ /\S/ or next;
+        # Not using RevBank::Prompt::split_input to keep parsing by external
+        # scripts simple, since so many such scripts exist.
+
+        my @split = split " ", $line;
+
+        if ($split[1] =~ /^!/) {
+            # Special case: use rest of the line (see POD).
+            @split = split " ", $line, 2;
+        }
+
+        push @users, \@split;
+    }
 
     my %users;
     for (@users) {
@@ -103,24 +116,31 @@ sub parse_user($username, $allow_invalid = 0) {
 
     my $users = _read();
 
-    exists $users->{ lc $username }
-        or return undef;
+    my $user = $users->{ lc $username } or return undef;
+
+    if ($user->[1] =~ /^!(.*)/) {
+        warn "$username: Invalid account ($1).\n";
+    }
 
     $allow_invalid or defined balance($username)
         or return undef;
 
-    return $users->{ lc $username }->[0];
+    return $user->[0];
 }
 
 sub assert_user($username) {
     my $users = _read();
 
-    return exists $users->{ lc $username }
-        ? $users->{ lc $username }->[0]
-        : (is_hidden($username)
-            ? create($username)
-            : Carp::croak("No such user ($username)")
-        );
+    my $user = $users->{ lc $username };
+
+    if ($user) {
+        Carp::croak("Account $username can't be used") if not balance $username;
+        return $user->[0];
+    }
+
+    return create $username if is_hidden $username;
+
+    Carp::croak("No such user ($username)")
 }
 
 1;

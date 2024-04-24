@@ -80,6 +80,10 @@ Every account name must be unique. A file with duplicate names is not valid and 
 
 The account balance is a number with two decimal digits. Positive numbers may have a C<+> sign. Negative number have a C<-> sign.
 
+If the value in this field is not a valid number, the account is treated as non-existent by most of RevBank, while still being unavailable for C<adduser>.
+
+If the value begins with a C<!> character, the I<rest of the line> is taken as a description of why the account name is not available and printed as a warning when the account name is used.
+
 =item * Last use timestamp
 
 Local datetime of the last update of this account.

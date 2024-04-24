@@ -27,11 +27,7 @@ sub read_products() {
 
         my @split = RevBank::Prompt::split_input($line);
 
-        if (grep /\0SEPARATOR/, @split) {
-            warn "Invalid character in $filename line $linenr.\n";
-            next;
-        }
-        if (grep /\0/, @split) {
+        if (not @split or ref $split[0] or grep /\0/, @split) {
             warn "Invalid value in $filename line $linenr.\n";
             next;
         }
