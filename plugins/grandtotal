@@ -12,14 +12,14 @@ sub command :Tab(grandtotal) ($self, $cart, $command, @) {
         my ($username, $balance) = split " ", $line;
         next if RevBank::Users::is_special($username);
 
-        my $credit = $balance;
+        my $credit = RevBank::Amount->parse_string($balance) or next;
         $neg += $credit if $credit < 0;
         $pos += $credit if $credit > 0;
     }
 
-    printf "Total positive: %8.2f\n", $pos;
-    printf "Total negative: \e[31;1m%8.2f\e[0m\n", $neg;
-    printf "GRAND TOTAL:    \e[1m%8.2f\e[0m\n", $pos + $neg;
+    printf "Total positive: %8s\n", $pos;
+    printf "Total negative: \e[31;1m%8s\e[0m\n", $neg;
+    printf "GRAND TOTAL:    \e[1m%8s\e[0m\n", $pos + $neg;
 
     return ACCEPT;
 }
