@@ -134,7 +134,7 @@ sub assert_user($username) {
     my $user = $users->{ lc $username };
 
     if ($user) {
-        Carp::croak("Account $username can't be used") if not balance $username;
+        Carp::croak("Account $username can't be used") if not defined balance $username;
         return $user->[0];
     }
 
