@@ -8,6 +8,12 @@ use POSIX qw(strftime);
 use RevBank::Amount;
 use RevBank::FileIO;
 
+{
+    package RevBank::Exception::RejectInput;
+    sub new($class, $reason) { return bless \$reason, $class; }
+    sub reason($self) { return $$self; }
+}
+
 sub import {
     require RevBank::Plugins;
     require RevBank::Users;
@@ -48,10 +54,14 @@ sub import {
         $posneg and return undef;  # last token must be term
 
         if ($amount->cents < 0) {
-            die "For our sanity, no negative amounts, please :).\n";
+            die RevBank::Exception::RejectInput->new(
+                "For our sanity, no negative amounts, please :)."
+            );
         }
         if ($amount->cents > 99900) {
-            die "That's way too much money.\n";
+            die RevBank::Exception::RejectInput->new(
+                "That's way too much money."
+            );
         }
         return $amount;
     };

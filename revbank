@@ -17,7 +17,7 @@ use RevBank::Messages;
 use RevBank::Cart;
 use RevBank::Prompt;
 
-our $VERSION = "6.1.5";
+our $VERSION = "6.2.0";
 our %HELP1 = (
     "abort" => "Abort the current transaction",
 );
@@ -188,6 +188,9 @@ OUTER: for (;;) {
                     @words = ();
                     $retry = $@->reason;
                     redo OUTER;
+                } elsif ($@ isa 'RevBank::Exception::RejectInput') {
+                    $rv = REJECT;
+                    @rvargs = $@->reason;
                 } elsif ($@) {
                     call_hooks "plugin_fail", $plugin->id, "$mname$@";
                     abort;
