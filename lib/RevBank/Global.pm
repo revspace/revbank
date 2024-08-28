@@ -14,6 +14,32 @@ use RevBank::FileIO;
     sub reason($self) { return $$self; }
 }
 
+sub _parse_any_amount($amount) {
+    defined $amount or return undef;
+    length  $amount or return undef;
+
+    my @split = grep /\S/, split /([+-])/, $amount;
+
+    my $posneg = 1;
+    $amount = RevBank::Amount->new(0);
+    for my $token (@split) {
+        if ($token eq '-') {
+            $posneg = $posneg == -1 ? 1 : -1;
+        } elsif ($token eq '+') {
+            $posneg ||= 1;
+        } else {
+            $posneg or return undef;  # two terms in a row
+            my $term = RevBank::Amount->parse_string($token) // return undef;
+            $amount += $posneg * $term;
+            $posneg = 0;
+        }
+    }
+    $posneg and return undef;  # last token must be term
+
+    return $amount;
+
+}
+
 sub import {
     require RevBank::Plugins;
     require RevBank::Users;
@@ -31,27 +57,9 @@ sub import {
     *{"$caller\::append"}       = \&RevBank::FileIO::append;
     *{"$caller\::with_lock"}    = \&RevBank::FileIO::with_lock;
     *{"$caller\::parse_user"}   = \&RevBank::Users::parse_user;
-    *{"$caller\::parse_amount"} = sub ($amount) {
-        defined $amount or return undef;
-        length  $amount or return undef;
-
-        my @split = grep /\S/, split /([+-])/, $amount;
-
-        my $posneg = 1;
-        $amount = RevBank::Amount->new(0);
-        for my $token (@split) {
-            if ($token eq '-') {
-                $posneg = $posneg == -1 ? 1 : -1;
-            } elsif ($token eq '+') {
-                $posneg ||= 1;
-            } else {
-                $posneg or return undef;  # two terms in a row
-                my $term = RevBank::Amount->parse_string($token) // return undef;
-                $amount += $posneg * $term;
-                $posneg = 0;
-            }
-        }
-        $posneg and return undef;  # last token must be term
+    *{"$caller\::parse_any_amount"} = \&_parse_any_amount;
+    *{"$caller\::parse_amount" } = sub ($amount) {
+        $amount = _parse_any_amount($amount) // return undef;
 
         if ($amount->cents < 0) {
             die RevBank::Exception::RejectInput->new(

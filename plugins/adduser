@@ -21,8 +21,9 @@ sub username($self, $cart, $name, @) {
     return REJECT, "Sorry, - + / ^ * are not allowed as the first character."
         if $name =~ /^[-+*\/\^]/;
 
-    return REJECT, "Sorry, that's too numeric to be a user name."
-        if defined RevBank::Amount->parse_string($name);
+    my $num;
+    return REJECT, "Sorry, that evaluates to the amount $num and can't be an account name."
+        if defined($num = parse_any_amount($name));
 
     return REJECT, "That name is not available."
         if defined parse_user($name, 1);
