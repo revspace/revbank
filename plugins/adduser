@@ -22,7 +22,7 @@ sub username($self, $cart, $name, @) {
         if $name =~ /^[-+*\/\^]/;
 
     return REJECT, "Sorry, that's too numeric to be a user name."
-        if defined parse_amount($name);
+        if defined RevBank::Amount->parse_string($name);
 
     return REJECT, "That name is not available."
         if defined parse_user($name, 1);

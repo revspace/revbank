@@ -17,7 +17,7 @@ use RevBank::Messages;
 use RevBank::Cart;
 use RevBank::Prompt;
 
-our $VERSION = "6.2.0";
+our $VERSION = "6.2.1";
 our %HELP1 = (
     "abort" => "Abort the current transaction",
 );
@@ -158,6 +158,7 @@ OUTER: for (;;) {
             next WORD if $word eq "\0SEPARATOR";
 
             abort if $method eq "command" and $word eq "abort";  # here, even when quoted
+
 
             push @retry, $word;
 
