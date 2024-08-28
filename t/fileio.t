@@ -9,8 +9,12 @@ use RevBank::FileIO;
 # ChatGPT didn't realise that ::FileIO doesn't export its functions
 use RevBank::Global;
 
+sub _newtmp {
+    File::Temp->new(DIR => ".");  # Not /tmp because RevBank::FileIO only does cwd
+}
+
 subtest "slurp" => sub {
-    my $tmp = File::Temp->new();
+    my $tmp = _newtmp;
     my $data = "foo\nbar\nbaz\n";
     print $tmp $data;
     close $tmp;
@@ -19,7 +23,7 @@ subtest "slurp" => sub {
 };
 
 subtest "spurt" => sub {
-    my $tmp = File::Temp->new();
+    my $tmp = _newtmp;
     spurt($tmp->filename, "foo\nbar\nbaz\n");
     open my $fh, "<", $tmp->filename;
     local $/;
@@ -29,7 +33,7 @@ subtest "spurt" => sub {
 };
 
 subtest "append" => sub {
-    my $tmp = File::Temp->new();
+    my $tmp = _newtmp;
     spurt($tmp->filename, "foo\n");
     append($tmp->filename, "bar\n", "baz\n");
     open my $fh, "<", $tmp->filename;
@@ -40,7 +44,7 @@ subtest "append" => sub {
 };
 
 subtest "rewrite" => sub {
-    my $tmp = File::Temp->new();
+    my $tmp = _newtmp;
     spurt($tmp->filename, "foo\nbar\nbaz\n");
     rewrite($tmp->filename, sub {
         my ($line) = @_;
