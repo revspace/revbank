@@ -8,7 +8,6 @@ use experimental 'signatures';  # stable since v5.36
 use Carp qw(carp croak);
 use Scalar::Util;
 use POSIX qw(lround);
-use Math::BigInt;
 
 our $C = __PACKAGE__;
 
@@ -42,12 +41,12 @@ use overload (
     },
     "*" => sub ($a, $b, $swap) {
         $b = $b->_float_warn if ref $b;
-        $C->new($$a->as_float * ($b->can('float') ? $b->float : $b->can('as_float') ? $b->as_float : $b));
+        $C->new($$a * $b);
     },
     "/" => sub ($a, $b, $swap) {
         carp "Using floating-point arithmetic for $a/$b (use \$amount->float to suppress warning)";
         $b = $b->float if ref $b;
-        $C->new($$a->as_float / $b);
+        $C->new($$a / $b);
     },
     "<=>" => sub ($a, $b, $swap) {
         _coerce($a, $b);
@@ -60,15 +59,19 @@ use overload (
 );
 
 sub new($class, $cents) {
-    my $int = Math::BigInt->new($cents->can("as_int") ? $cents->as_int : $cents);
-    croak "Non-integer not supported" if $int->is_nan;
-    croak "Infinite number not supported" if $int->is_inf;
-
+    my $int = int sprintf "%d", $cents;
+    #carp "$cents rounded to $int cents" if $int != $cents;
     return bless \$int, $class;
 }
 
 sub new_from_float($class, $num) {
-    return $class->new((100 * Math::BigFloat->new($num))->bfround(0)->as_int);
+    return $class->new(lround 100 * sprintf "%.02f", $num);
+
+    # First, round the float with sprintf for bankers rounding, then
+    # multiply to get number of cents. However, 4.56 as a float is
+    # 4.55999... which with int would get truncated to 455, so lround is needed
+    # to get 456.
+    # Note: _l_round, because normal round gives the int *AS A FLOAT*; sigh.
 }
 
 sub parse_string($class, $str) {
@@ -85,7 +88,7 @@ sub parse_string($class, $str) {
     $cents *= 10 if length($cents) == 1;  # 4.2 -> 4.20
 
     return $class->new(
-        ($neg ? -1 : 1) * (100 * Math::BigInt->new($int) + $cents)
+        ($neg ? -1 : 1) * ($int * 100 + $cents)
     );
 }
 
@@ -94,7 +97,7 @@ sub cents($self) {
 }
 
 sub float($self) {
-    return $$self->as_float / 100;
+    return $$self / 100;
 }
 
 sub _float_warn($self) {
@@ -104,9 +107,9 @@ sub _float_warn($self) {
 
 sub string($self, $plus = "") {
     return sprintf(
-        "%s%s.%02d",
+        "%s%d.%02d",
         $$self < 0 ? "-" : $plus,
-        abs($$self) / 100,   # %s for bigint
+        abs($$self) / 100,
         abs($$self) % 100,
     );
 }
@@ -116,7 +119,7 @@ sub string_flipped($self, $sep = " ") {
         "%s%s%d.%02d",
         $$self > 0 ? "+" : "",
         $$self > 0 ? $sep : "",
-        abs($$self) / 100,  # %s for bigint
+        abs($$self) / 100,
         abs($$self) % 100,
     );
 }

@@ -40,12 +40,6 @@ cmp_ok(RevBank::Amount->parse_string("4 ")->cents, '==', 400);
 
 cmp_ok(RevBank::Amount->new_from_float(.425)->cents, '==', 42);
 
-
-my $big = "9" x 123;
-cmp_ok(RevBank::Amount->new($big)->cents, 'eq', $big);
-cmp_ok(RevBank::Amount->parse_string($big)->cents, 'eq', $big . "00");
-cmp_ok(RevBank::Amount->new_from_float($big)->cents, 'eq', $big . "00");
-
 # comparisons
 ok($a);
 ok(!RevBank::Amount->new(0));
@@ -142,8 +136,6 @@ like(warning { rand $a }, qr/float/);
 
 # Invalid amounts
 
-throws_ok(sub { RevBank::Amount->new(1.1) }, qr/Non-integer/);
-throws_ok(sub { RevBank::Amount->new("+Inf") }, qr/Infinite/);
 is(RevBank::Amount->parse_string("0.000"), undef);
 is(RevBank::Amount->parse_string("0.042"), undef);
 is(RevBank::Amount->parse_string("+0.042"), undef);
