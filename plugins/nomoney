@@ -137,9 +137,10 @@ sub hook_abort($class, $cart, @) {
 
 sub hook_checkout_done($class, $cart, $username, $transaction_id, @) {
 	my $n = $unresolved{$cart}->size or return;
-
 	print "\n";
+
 	_inform($unresolved{$cart}, $username);
+	delete $unresolved{$cart};
 
 	my $message = $n == 1 ? "THIS ENTRY WAS IGNORED" : "THESE ENTRIES WERE IGNORED";
 	say "\e[1;4m$message.\e[0m" if $n;
