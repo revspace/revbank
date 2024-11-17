@@ -33,7 +33,7 @@ sub reason :Tab(whatevah) ($self, $cart, $input, @) {
     my $reason = $input =~ /^x?$/ ? "" : " ($input)";
 
     $cart
-        ->add(-$amount, "Given to $beneficiary" . $reason)
+        ->add(-$amount, "Give to $beneficiary" . $reason)
         ->add_contra($beneficiary, +$amount, "Received from \$you" . $reason);
 
     return ACCEPT;

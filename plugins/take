@@ -54,7 +54,7 @@ sub reason :Tab(bbq) ($self, $cart, $reason, @) {
     my $total = $self->{total};
 
     my $users = join '/', @users;
-    my $entry = $cart->add($total, "Taken from $users ($reason)", { is_take => 1 });
+    my $entry = $cart->add($total, "Take from $users ($reason)", { is_take => 1 });
     for my $user (@users) {
         $entry->add_contra( $user, -$each, "Taken by \$you ($reason)" );
     }
