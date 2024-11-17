@@ -94,7 +94,7 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 		my %resolved_balances = %balances;
 		$resolved_balances{$_} += $resolved_deltas->{$_} for keys %$resolved_deltas;
 
-		ENTRY: for my $entry ($unresolved->entries) {
+		for my $entry ($unresolved->entries) {
 			my $single = RevBank::Cart->new;
 			$single->add_entry($entry);
 			my $trial_deltas = $single->deltas($username);
@@ -102,7 +102,7 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 			my %broke_users;
 			$entry->attribute('nomoney_users', \%broke_users);
 
-			ACCOUNT: for my $account (keys %$trial_deltas) {
+			for my $account (keys %$trial_deltas) {
 				next if RevBank::Users::is_special($account);
 				next if $trial_deltas->{$account} > 0;
 
