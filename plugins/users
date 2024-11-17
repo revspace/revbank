@@ -22,14 +22,6 @@ sub command :Tab(list,ls,shame,log,USERS) ($self, $cart, $command, @) {
     return ACCEPT;
 }
 
-sub hook_checkout($class, $cart, $user, $transaction_id, @) {
-    if ($cart->changed) {
-        say "Done:";
-        $cart->display;
-    }
-    say "Transaction ID: $transaction_id";
-}
-
 sub list($self) {
     require RevBank::TextEditor;
 

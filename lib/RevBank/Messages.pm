@@ -41,6 +41,14 @@ sub hook_cart_changed($class, $cart, @) {
     }
 }
 
+sub hook_checkout($class, $cart, $user, $transaction_id, @) {
+    if ($cart->changed) {
+        say "Done:";
+        $cart->display;
+    }
+    say "Transaction ID: $transaction_id";
+}
+
 sub hook_abort($class, $cart, @) {
     say "\e[1;4mABORTING TRANSACTION.\e[0m";
 }

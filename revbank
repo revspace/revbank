@@ -55,7 +55,7 @@ my $retry;  # reason (text)
 my @retry;  # (@accepted, $rejected, [@trailing])
 
 OUTER: for (;;) {
-    if (not @words or $words[0] eq "\0SEPARATOR") {
+    if (not @words) {
         call_hooks("cart_changed", $cart) if $cart->changed;
         print "\n";
     }
