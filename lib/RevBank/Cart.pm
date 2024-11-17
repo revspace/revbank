@@ -84,6 +84,18 @@ sub prohibit_checkout($self, $bool, $reason) {
     }
 }
 
+sub deltas($self, $user) {
+    my %deltas = ($user => RevBank::Amount->new(0));
+
+    for my $entry (@{ $self->{entries} }) {
+        $deltas{$_->{user}} += $_->{amount} * $entry->quantity
+            for $entry, $entry->contras;
+    }
+
+    return \%deltas;
+}
+
+
 sub checkout($self, $user) {
     if ($self->{prohibited}) {
         die RevBank::Cart::CheckoutProhibited->new(
@@ -133,18 +145,13 @@ sub checkout($self, $user) {
 
         RevBank::Plugins::call_hooks("checkout", $self, $user, $transaction_id);
 
-        my %deltas = ($user => RevBank::Amount->new(0));
+        my $deltas = $self->deltas($user);
 
-        for my $entry (@$entries) {
-            $deltas{$_->{user}} += $_->{amount} * $entry->quantity
-                for $entry, $entry->contras;
-        }
-
-        for my $account (reverse sort keys %deltas) {
+        for my $account (reverse sort keys %$deltas) {
             # The reverse sort is a lazy way to make the "-" accounts come last,
             # which looks nicer with the "cash" plugin.
-            RevBank::Users::update($account, $deltas{$account}, $transaction_id)
-                if $deltas{$account} != 0;
+            RevBank::Users::update($account, $deltas->{$account}, $transaction_id)
+                if $deltas->{$account} != 0;
         }
 
         RevBank::Plugins::call_hooks("checkout_done", $self, $user, $transaction_id);
