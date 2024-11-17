@@ -37,7 +37,7 @@ sub _inform($unresolved, $username, $skip_print = 0) {
 
 			printf(
 				"\e[31;1m%s have %s.\e[m (balance: %s)\n",
-				($account eq $username ? "You don't have" : "$account doesn't"),
+				($account eq $username ? "You don't" : "$account doesn't"),
 				abs($broke_users->{$account}),
 				($balance < 0 ? "\e[31;1m$balance\e[m" : $balance),
 			);
