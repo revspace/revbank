@@ -113,12 +113,11 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 				}
 			}
 
-			next if keys %broke_users;
-
-			# If this point is reached, resolve the entry
-			$cart->add_entry($entry);
-			$unresolved->delete($entry);
-			redo RESOLVE;
+			if (not %broke_users) {
+				$cart->add_entry($entry);
+				$unresolved->delete($entry);
+				redo RESOLVE;
+			}
 		}
 	}
 
