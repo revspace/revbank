@@ -9,6 +9,7 @@ beep_terminal
 #cash_drawer
 idle
 #json
+nomoney
 repeat
 deduplicate  # wants to be after 'repeat'
 restart

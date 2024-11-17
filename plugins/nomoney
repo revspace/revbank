@@ -1,0 +1,148 @@
+#!perl
+
+use List::Util qw(none);
+
+my @deny_plugins = (
+	"give",
+	#"market",
+	#"products",
+	"take",
+	#"unlisted",
+	"withdraw",
+);
+
+my $allow_multi_user = 1;
+
+sub _derive_plugin($symbol) {
+	return $1 if $symbol =~ /^RevBank::Plugin::(\w+)::/;
+	return;
+}
+
+my %unresolved;  # to keep state, keyed per real cart
+
+sub _inform($unresolved, $username, $skip_print = 0) {
+	call_hooks("beep");
+
+	say "Not possible:";
+	for my $entry ($unresolved->entries) {
+		unless ($skip_print) {
+			my @printable = $entry->as_printable;
+			print $printable[0], "\n";
+		}
+
+		my $broke_users = $entry->attribute('nomoney_users');
+
+		for my $account (sort keys %$broke_users) {
+			my $balance = RevBank::Users::balance($account);
+
+			printf(
+				"\e[31;1m%s have %s.\e[m (balance: %s)\n",
+				($account eq $username ? "You don't have" : "$account doesn't"),
+				abs($broke_users->{$account}),
+				($balance < 0 ? "\e[31;1m$balance\e[m" : $balance),
+			);
+		}
+	}
+}
+
+sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
+	my $unresolved = $unresolved{$cart} = RevBank::Cart->new;
+
+	my $deltas = $cart->deltas($username);
+	my %balances;
+
+	for my $account (keys %$deltas) {
+		next if $deltas->{$account} > 0;
+		next if RevBank::Users::is_special($account);
+
+		my $old = $balances{$account} = RevBank::Users::balance($account);
+		my $new = $old + $deltas->{$account};
+
+		if ($new < 0 and $new < $old) {
+			for my $entry ($cart->entries) {
+				my $plugin = $entry->attribute('plugin') // _derive_plugin($entry->{caller});
+				next if not $plugin;
+				next if none { $plugin eq $_ } @deny_plugins;
+
+				my @contra_users = grep {
+					not RevBank::Users::is_special($_)
+				} map {
+					$_->{user}
+				} $entry->contras;
+
+				next if $allow_multi_user and @contra_users > 1;
+				next if none { $account eq $_ } $entry->user // $username, @contra_users;
+
+				$unresolved->add_entry($entry);
+			}
+		}
+	}
+
+	return if not $unresolved->size;  # allow transaction as is
+
+	my $newline = 0;
+	if ($cart->changed) {
+		# Show original cart before changing it, if it hasn't before
+		say "Pending:";
+		$cart->display;
+		$newline = 1;
+	}
+	$cart->delete($_) for @{ $unresolved->{entries} };
+
+	RESOLVE: {
+		my $resolved_deltas = $cart->deltas($username);
+		my %resolved_balances = %balances;
+		$resolved_balances{$_} += $resolved_deltas->{$_} for keys %$resolved_deltas;
+
+		ENTRY: for my $entry ($unresolved->entries) {
+			my $single = RevBank::Cart->new;
+			$single->add_entry($entry);
+			my $trial_deltas = $single->deltas($username);
+
+			my %broke_users;
+			$entry->attribute('nomoney_users', \%broke_users);
+
+			ACCOUNT: for my $account (keys %$trial_deltas) {
+				next if RevBank::Users::is_special($account);
+				next if $trial_deltas->{$account} > 0;
+
+				my $trial_balance = $resolved_balances{$account} + $trial_deltas->{$account};
+				
+				if ($trial_balance < 0) {
+					$broke_users{$account} += $trial_deltas->{$account};
+				}
+			}
+
+			next if keys %broke_users;
+
+			# If this point is reached, resolve the entry
+			$cart->add_entry($entry);
+			$unresolved->delete($entry);
+			redo RESOLVE;
+		}
+	}
+
+	if (not $cart->size) {
+		print "\n" if $newline;
+		_inform($unresolved, $username, 1);
+		return ABORT;
+	}
+
+	return;
+}
+
+sub hook_abort($class, $cart, @) {
+	delete $unresolved{$cart};
+	return;
+}
+
+sub hook_checkout_done($class, $cart, $username, $transaction_id, @) {
+	my $n = $unresolved{$cart}->size or return;
+
+	print "\n";
+	_inform($unresolved{$cart}, $username);
+
+	my $message = $n == 1 ? "THIS ENTRY WAS IGNORED" : "THESE ENTRIES WERE IGNORED";
+	say "\e[1;4m$message.\e[0m" if $n;
+	return;
+}
