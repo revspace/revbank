@@ -18,8 +18,6 @@ sub _derive_plugin($symbol) {
 	return;
 }
 
-my %unresolved;  # to keep state, keyed per real cart
-
 sub _inform($unresolved, $username, $skip_print = 0) {
 	call_hooks("beep");
 
@@ -44,6 +42,8 @@ sub _inform($unresolved, $username, $skip_print = 0) {
 		}
 	}
 }
+
+my %unresolved;  # to share state between hooks, keyed per real cart
 
 sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 	my $unresolved = $unresolved{$cart} = RevBank::Cart->new;
