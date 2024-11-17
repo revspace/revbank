@@ -58,23 +58,23 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 		my $old = $balances{$account} = RevBank::Users::balance($account);
 		my $new = $old + $deltas->{$account};
 
-		if ($new < 0 and $new < $old) {
-			for my $entry ($cart->entries) {
-				my $plugin = $entry->attribute('plugin') // _derive_plugin($entry->{caller});
-				next if not $plugin;
-				next if none { $plugin eq $_ } @deny_plugins;
+		next if $new >= 0 or $new > $old;
 
-				my @contra_users = grep {
-					not RevBank::Users::is_special($_)
-				} map {
-					$_->{user}
-				} $entry->contras;
+		for my $entry ($cart->entries) {
+			my $plugin = $entry->attribute('plugin') // _derive_plugin($entry->{caller});
+			next if not $plugin;
+			next if none { $plugin eq $_ } @deny_plugins;
 
-				next if $allow_multi_user and @contra_users > 1;
-				next if none { $account eq $_ } $entry->user // $username, @contra_users;
+			my @contra_users = grep {
+				not RevBank::Users::is_special($_)
+			} map {
+				$_->{user}
+			} $entry->contras;
 
-				$unresolved->add_entry($entry);
-			}
+			next if $allow_multi_user and @contra_users > 1;
+			next if none { $account eq $_ } $entry->user // $username, @contra_users;
+
+			$unresolved->add_entry($entry);
 		}
 	}
 
@@ -82,13 +82,14 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 
 	my $newline = 0;
 	if ($cart->changed) {
-		# Show original cart before changing it, if it hasn't before
+		# Show original cart before changing it, if it hasn't been shown before
 		say "Pending:";
 		$cart->display;
 		$newline = 1;
 	}
 	$cart->delete($_) for @{ $unresolved->{entries} };
 
+	# Find entries that can be done, by brute force, and add them back.
 	RESOLVE: {
 		my $resolved_deltas = $cart->deltas($username);
 		my %resolved_balances = %balances;
