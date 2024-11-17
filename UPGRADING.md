@@ -4,6 +4,36 @@
 2. Make a backup of your RevBank data and code repo(s).
 3. Read this file :)
 
+# (2024-10-18) RevBank 7.0.0
+
+Support for unbalanced entries has been removed, ensuring a pure double-entry
+bookkeeping system. Grep your log for the string `UNBALANCED` if you're not
+sure that all your custom plugins are already well-behaved. Note that since
+unbalanced transactions are no longer supported, transactions from before that
+change can't be reverted with `undo`.
+
+There are no other changes in this version.
+
+Since all transactions are now balanced, the sum of all the balances is
+`revbank.accounts` will remain fixed forever. It is recommended to make that
+sum equal to `0.00` (only once) by adding a dummy account which acts a
+retroactive opening balance:
+
+```sh
+perl -Ilib -MRevBank::Amount -lane'$sum += RevBank::Amount->parse_string($F[1])
+}{ printf "-deposits/balance %s\n", -$sum if $sum;' revbank.accounts >> revbank.accounts
+```
+
+From that point forward, the sum of all the values in the second column of the
+`revbank.accounts` file should forever be 0.00; if it's not, either someone
+tampered with the file or there is data corruption, and the cause should be
+investigated and corrected.
+
+```sh
+perl -Ilib -MRevBank::Amount -lane'$sum += RevBank::Amount->parse_string($F[1])
+}{ print $sum' revbank.accounts
+```
+
 # (2024-01-20) RevBank 6.0.0
 
 Note that the changes to `revbank.products` do NOT apply to `revbank.market`

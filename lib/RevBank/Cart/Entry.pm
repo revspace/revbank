@@ -203,49 +203,28 @@ sub user($self, $new = undef) {
 }
 
 sub sanity_check($self) {
-    # Turnover and journals were implicit contras in previous versions of
-    # revbank, but old plugins may need upgrading to the new dual-entry system,
-    # so (for now) a zero sum is not required.
-
     my @contras = $self->contras;
 
     my $sum = RevBank::Amount->new(
         List::Util::sum(map $_->{amount}->cents, $self, @contras)
     );
 
-    # Although unbalanced transactiens are still allowed, a transaction with
-    # contras should at least not try to issue money that does not exist.
-    if ($sum > 0 and @contras and not $self->{FORCE_UNBALANCED}) {
+    if ($sum != 0) {
         local $ENV{REVBANK_DEBUG} = 1;
         my $message = join("\n",
             "BUG! (probably in $self->{caller})",
-            "This adds up to creating money that does not exist:",
+            "Unbalanced transactions are not possible in double-entry bookkeeping.",
             $self->as_printable,
             (
-                $sum == 2 * $self->{amount}
-                ? "Hint for the developer: contras for positive value should be negative values and vice versa."
+                !@contras
+                ? "Use \$entry->add_contra to balance the transaction."
+                : abs($sum) == 2 * abs($self->{amount})
+                ? "Contras for positive value should be negative values and vice versa."
                 : ()
             ),
-            "Cowardly refusing to create $sum out of thin air"
         );
         RevBank::Plugins::call_hooks("log_error", "UNBALANCED ENTRY $message");
         croak $message;
-    }
-
-    if ($sum != 0) {
-        local $ENV{REVBANK_DEBUG} = 1;
-        my $forced = $self->{FORCE_UNBALANCED} ? " (FORCED)" : "";
-        RevBank::Plugins::call_hooks(
-            "log_warning",
-            "UNBALANCED ENTRY$forced in $self->{caller}: " . (
-                @contras
-                ? "sum of entry with contras ($sum) != 0.00"
-                : "transaction has no contras"
-            ) . ". This will be a fatal error in a future version of revbank.\n"
-            . "The unbalanced entry is:\n" . join("\n", $self->as_printable)
-        );
-
-        warn "$self->{caller} has created an unbalanced entry, which is deprecated. Support for unbalanced entries will be removed in a future version of RevBank.\n";
     }
 
     return 1;

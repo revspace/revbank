@@ -52,7 +52,6 @@ sub undo :Tab(&tab) ($self, $cart, $tid, @) {
                 my (undef, $user, $delta) = split " ", $line;
 
                 $entry ||= $cart->add(0, $description, { undo_transaction_id => $tid });
-                $entry->{FORCE_UNBALANCED} = 1;
 
                 $entry->add_contra($user, $delta, "Undo $tid");
             }
