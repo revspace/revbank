@@ -1,0 +1,30 @@
+#!perl
+
+my $cost = 2.50;
+
+sub command :Tab(lasercutter) ($self, $cart, $command, @) {
+    $command eq 'lasercutter' or return NEXT;
+
+    return "How long did you use the machine? (h:mm)", \&time
+}
+
+sub time ($self, $cart, $time, @) {
+    my ($h, $m) = $time =~ /^\s*([0-9]*)(?:[:.]([0-9]+))?\s*$/;
+
+    $h ||= 0;
+    $m ||= 0;
+
+    $h or $m or return REJECT, "Invalid time.";
+
+    print "Note: rounding up to next multiple of 0:15.\n" if $m % 15;
+    my $q = $h * 4 + int($m / 15) + ($m % 15 ? 1 : 0);
+
+    # reformat rounded time
+    $time = int($q / 4) . ":" . sprintf("%02d", ($q % 4) * 15);
+
+    $cart
+        ->add($q * $cost, "Lasercutter usage ($time)")
+        ->add_contra("+sales/lasercutter", -$q * $cost, "\$you used lasercutter ($time)");
+
+    return ACCEPT;
+}
