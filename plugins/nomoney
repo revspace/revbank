@@ -22,23 +22,33 @@ sub _inform($unresolved, $username, $skip_print = 0) {
 	call_hooks("beep");
 
 	say "Not possible:";
+
 	for my $entry ($unresolved->entries) {
 		unless ($skip_print) {
-			my @printable = $entry->as_printable;
-			print $printable[0], "\n";
+			my $line = ($entry->as_printable)[0];
+			say $line;
+
+			$line =~ s/^\s+//;
+			call_hooks("log_info", "nomoney: $line");
 		}
 
 		my $broke_users = $entry->attribute('nomoney_users');
 
 		for my $account (sort keys %$broke_users) {
 			my $balance = RevBank::Users::balance($account);
-
-			printf(
-				"\e[31;1m%s have %s.\e[m (balance: %s)\n",
+			
+			my $m = sprintf(
+				"%s have %s",
 				($account eq $username ? "You don't" : "$account doesn't"),
 				abs($broke_users->{$account}),
+			);
+			my $b = sprintf(
+				"(balance: %s)",
 				($balance < 0 ? "\e[31;1m$balance\e[m" : $balance),
 			);
+
+			say "\e[31;1m$m\e[m $b";
+			call_hooks("log_info", "nomoney: $m $b");
 		}
 	}
 }
