@@ -1,13 +1,19 @@
 #!perl
 
 my $timeout = 10;
+my $text_displayed = 0;
+
+sub hook_prompt($class, $cart, $prompt, @) {
+    $text_displayed = 0;
+}
 
 sub hook_prompt_idle($class, $cart, $plugin, $seconds, $readline, @) {
     return unless $seconds >= $timeout and $cart->size and not $plugin;
 
     call_hooks("beep");
 
-    return if $seconds > $timeout;  # text only once
+    return if $text_displayed;
+    $text_displayed = 1;
 
     my $text = $readline->copy_text;
     my $point = $readline->{point};

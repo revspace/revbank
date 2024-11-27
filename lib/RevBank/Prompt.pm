@@ -62,6 +62,7 @@ sub reconstruct($word) {
 
 sub prompt($prompt, $completions = [], $default = "", $pos = 0, $cart = undef, $plugins = []) {
     state $readline = Term::ReadLine->new($0);
+    my $attribs = $readline->Attribs;
 
     if ($prompt) {
         $prompt =~ s/$/:/ if $prompt !~ /[?>](?:\x01[^\x02]*\x02)?$/;
@@ -73,7 +74,7 @@ sub prompt($prompt, $completions = [], $default = "", $pos = 0, $cart = undef, $
     }
 
     my @matches;
-    $readline->Attribs->{completion_entry_function} = sub {
+    $attribs->{completion_entry_function} = sub {
         my ($word, $state) = @_;
         return undef if $word eq "";
         @matches = grep /^\Q$word\E/i, @$completions if $state == 0;
@@ -86,7 +87,7 @@ sub prompt($prompt, $completions = [], $default = "", $pos = 0, $cart = undef, $
 
     my $begin = my $time = time;
 
-    $readline->Attribs->{event_hook} = sub {
+    $attribs->{event_hook} = sub {
         if ($::ABORT_HACK) {
             # Global variable that a signal handling plugin can set.
             # Do not use, but "return ABORT" instead.
@@ -94,6 +95,13 @@ sub prompt($prompt, $completions = [], $default = "", $pos = 0, $cart = undef, $
             $::ABORT_HACK = 0;
             main::abort($reason);
         }
+
+        state $last_pos = 0;
+        if ($attribs->{point} != $last_pos) {
+            $begin = time;
+            $last_pos = $attribs->{point};
+        }
+
         if (time > $time) {
             $time = time;
             call_hooks(
@@ -106,8 +114,8 @@ sub prompt($prompt, $completions = [], $default = "", $pos = 0, $cart = undef, $
         }
     };
 
-    $readline->Attribs->{startup_hook} = sub {
-        $readline->Attribs->{point} = $pos;
+    $attribs->{startup_hook} = sub {
+        $attribs->{point} = $pos;
     };
 
     $readline->ornaments(0);
