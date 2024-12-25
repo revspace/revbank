@@ -1,6 +1,6 @@
 #!perl
-
 use List::Util;
+use RevBank::Products;
 
 HELP void => "Destroy deposit tokens";
 
@@ -220,7 +220,7 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 		$tokens_changed++;
 	}
 	for my $type (keys %warnings_by_type) {
-		my $products = RevBank::Plugin::products::read_products();
+		my $products = read_products;
 		my $addon = $products->{"+$type"} // $products->{$type};
 		my $avail = $had_num_tokens_by_type{$type} // 0;
 		my $only =

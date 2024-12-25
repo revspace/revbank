@@ -1,5 +1,6 @@
 #!perl
 use List::Util;
+use RevBank::Products;
 
 our @addon_accounts = ("+statiegeld");
 my $nope = "Sorry, no deposit on that product.\n";
@@ -9,8 +10,7 @@ our $S = ($ENV{REVBANK_STATIEGELD} // 0) == 1;
 sub statiegeld_product($product) {
 	if (not ref $product) {
 		# $product is a product id string; look up in product list
-		my $products = RevBank::Plugin::products::read_products();
-		$product = $products->{$product} or return;
+		$product = read_products->{$product} or return;
 	}
 
 	# Called 'addons' here but also includes the queried product itself,
