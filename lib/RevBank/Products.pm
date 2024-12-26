@@ -133,11 +133,12 @@ sub read_products($filename = "revbank.products", $default_contra = "+sales/prod
                 next PRODUCT;
             }
 
-            my $addon = { %{ $products{$addon_id} } };  # shallow copy to overwrite ->{price} later
+            my $addon = $products{$addon_id};
             if (not $addon) {
                 warn "Addon '$addon_id' does not exist for '$product->{id}' at $filename line $product->{line}.\n";
                 next PRODUCT;
             }
+            $addon = { %$addon }; # shallow copy to overwrite ->{price} later
 
             push @{ $product->{addons} }, $addon;
             push @addon_ids, @{ $addon->{_addon_ids} };
