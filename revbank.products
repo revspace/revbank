@@ -44,9 +44,9 @@ contributie    30.00@+sales/contributie  "Membership 1 month"
 
 # For use with the statiegeld plugin:
 # (Nothing but descriptions should be changed after using these addons.)
-+sb             0.15@+statiegeld    "Deposit can"
-+sf             0.15@+statiegeld    "Deposit bottle"
-+sF             0.25@+statiegeld    "Deposit large bottle"
-+sm             0.15@+statiegeld    "Deposit Mehrwegpfand"
-#+se             0.25@+statiegeld    "Statiegeld Einwegpfand"
-+smk,matekrat   1.50@+statiegeld    "Deposit crate w/o bottles"
++sb             0.15@+statiegeld    "Deposit can" #OPAQUE
++sf             0.15@+statiegeld    "Deposit bottle" #OPAQUE
++sF             0.25@+statiegeld    "Deposit large bottle" #OPAQUE
++sm             0.15@+statiegeld    "Deposit Mehrwegpfand" #OPAQUE
+#+se             0.25@+statiegeld    "Statiegeld Einwegpfand" #OPAQUE
++smk,matekrat   1.50@+statiegeld    "Deposit crate w/o bottles" #OPAQUE
