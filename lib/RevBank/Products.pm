@@ -144,8 +144,9 @@ sub read_products($filename = "revbank.products", $default_contra = "+sales/prod
     }
 
     # Calculate tag and total price
-    PRODUCT: for my $product (values %products) {
-        next if $product->{id} =~ /^\+/;
+    PRODUCT: for my $id (keys %products) {
+        next if $id =~ /^\+/;
+        my $product = $products{$id};
 
         my $tag_price = $product->{price} || 0;
         my $hidden = 0;
