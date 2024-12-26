@@ -1,0 +1,156 @@
+=head1 NAME
+
+RevBank::Products - Product list
+
+=head1 SYNOPISIS
+
+	# Comments are lines that begin with a # character.
+	# Empty lines are ignored.
+
+	8710447032756          0.80        "Festini Peer"
+	4029764001807,clubmate 1.40        "Club-Mate" +half +pf
+	pf                     0.15@+pfand "Pfand NRW-Flasche"
+	+half                  -50%        "50% discount \\o/"
+	123                    0.42        "Hashtag example" #tag #tag2=42
+
+=head1 DESCRIPTION
+
+This module implements a products database, based on a text file. It supports
+additional fees, discounts, compound products, and optional metadata that can
+be read by plugins.
+
+=head1 CONFIGURATION
+
+The configuration for this plugin lives in a text file called
+C<revbank.products>.
+
+Whitespace at the beginning or end of a line are ignored. Blank lines are
+ignored. Comments are lines that start with C<#> and are also ignored. Note
+that a whole line is either a comment or a data line; trailing comments are
+not supported and C<#> is a valid character in a product description.
+
+Data lines have whitespace-separated columns:
+
+=head2 Product ids
+
+One or more product ids, separated by commas (no whitespace before or after the
+commas). There is no way to have a comma or whitespace in a product id, but
+every other printable character is valid.
+
+The first product id on the line is considered canonical, the rest are aliases.
+
+Note: if a product id is the same as another RevBank command (e.g. a username),
+the first plugin that accepts the command will "win"; the precedence order is
+defined by the C<revbank.plugins> configuration file. However, when a product
+id appears multiple times within C<revbank.products>, the I<last> one is used.
+
+Product ids that begin with C<+> can only be used as addons. When entered as
+user input, it will be ignored by the C<products> plugin.
+
+=head2 Price
+
+The price of the product. This is the price to be deducted from the user's
+account when they check out with this product in the cart. When it is a
+negative number, the user will instead have money added to their account when
+"buying" this product.
+
+Optionally, the price can be augmented with an C<@> sign and the name of the
+contra account. When no contra account is specified, C<+sales/products> is used.
+Internal accounts (that start with C<-> or C<+>) are created automatically. A
+regular account can also be used, but has to exist before the product can be
+used.
+
+(Note on internal accounts because they aren't documented elsewhere: liability
+and revenue accounts begin with C<+>, asset and expense accounts begin with
+C<->. The C<+> accounts typically grow larger over time, while C<-> accounts
+typically go negative. In general, you would use a C<+> account in
+C<revbank.products>. User accounts are liability accounts.)
+
+=head2 Description
+
+The description, like other columns, may contain whitespace, but to use
+whitespace, either the entire field "needs quotes" around it, or the whitespace
+can be escaped with backslashes.
+
+It is suggested to always use quotes around the description.
+
+=head2 Additional fields
+
+=head3 Addons
+
+Addons are products that are added as part of the main product. They are
+specified after the description, with a C<+> sign that has whitespace before
+it, and no whitespace after it.
+
+When specifying an addon C<+foo>, and no product with the id C<+foo> exists,
+the product id C<foo> is used instead. The difference is that a product id
+C<+foo> can only be used as an addon for another product, while C<foo> can be
+used either as an addon or a manually entered as a standalone product.
+
+	example_id          2.20     "Example product" +first +second
+	+first              1.20     "First thing"
+	second              0.80     "Second thing"
+
+In this example, the final price of the example product will be 4.20. It is not
+possible to buy the first thing separate, but it is possible to buy the second
+thing separate.
+
+The addon product must be specified in C<revbank.products>; market products
+cannot be used as addons.
+
+When a product has addons, it becomes a compound product. This can be used to
+separate a product into individual counter accounts for bookkeeping purposes,
+to add a bottle deposit, or to add other additional fees or discounts.
+
+When a compound product has a bare price that isn't 0.00, the bare price is
+listed as a component named "Product".
+
+A product can have multiple addons. Addon products themselves can also have
+further addons, but circular recursion is not supported.
+
+=head4 Percentage addons
+
+As a special case, an addon's price can be a percentage. In this case, the
+price is calculated from the sum of the the product components I<up to that
+point> that have I<the same contra account> as the percentage addon.
+
+So, given the following example,
+
+	example_id          0.90          "Example product" +some_fee +discount
+	+some_fee           0.15@+fees    "Some fee; might be a bottle deposit"
+	+discount           -50%          "Special offer discount!"
+
+only 0.45 is discounted, because the 0.15 has a different contra account. While
+complicated, this is probably what you want in most cases. There is currently
+no way to apply a discount to the product with all of its addons.
+
+A percentage addon must have a product_id that begins with C<+>.
+
+=head3 Tags
+
+Additional metadata can be given in additional fields that begin with C<#> and
+the name of the tag, optionally followed by C<=> and a value to turn it into a
+key/value pair. If no value is specified, a value of C<1> is used.
+
+The name of a hashtag must contain only C<A-Z a-z 0-9 _> characters. There must
+not be whitespace after the C<#> or around the C<=>.
+
+Like all the fields, the field can be quoted to contain whitespace. Note,
+however, that the quotes must be placed around the entire field, not just the
+value part.
+
+	ht1         0.42           "Just one hashtag" #tag
+	ht2         0.42           "Two hashtags!" #tag #key=value
+	ht3         0.42           "Surprising syntax" "#x=spaces in value"
+
+Tags can be accessed by custom plugins, but are currently ignored by upstream
+RevBank and its plugins.
+
+=head3 Other additional fields
+
+When any field is added after the description, that does not begin with C<+> or
+C<#>, RevBank currently assumes it's the old syntax (which is not described in
+the current version of this document!), and parses it using the old semantics
+while showing a warning.
+
+This compatibility feature will be removed from a future version of RevBank.
