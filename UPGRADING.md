@@ -1,8 +1,67 @@
-# When upgrading, always:
+# Upgrade procedure
 
-1. Make sure nobody is using RevBank.
-2. Make a backup of your RevBank data and code repo(s).
-3. Read this file :)
+1. Stop any running `revbank` instances, or at least make sure nobody will be
+   using RevBank during the upgrade.
+2. **Make a backup** of your RevBank data and code repo(s).
+3. Read this file :) to see if you need to change anything. Check your current
+   version and read everything pertaining to newer versions, from oldest to newest (top).
+4. Use `git pull --rebase` in the right directory. Don't ignore its output,
+   because you may need to manually resolve merge conflicts.
+5. (Re)start `revbank`. If the old version was still running, use the `restart`
+   command before issuing any other commands.
+
+The standard deprecation cycle is 2 years. **It is recommended that you upgrade
+RevBank at least once a year.**
+
+While you're at it, upgrade the rest of your system too. RevBank currently
+supports Perl versions down to 5.32 (2020), which is in Debian 11 "bullseye"
+(oldstable). Once Debian 13 "trixie" is released as stable (expected in 2025)
+and 12 "bookworm" becomes the new oldstable, RevBank will begin to require Perl
+5.36 (2022).
+
+# (2024-12-26) RevBank 8.0.0
+
+Another breaking change, another major version upgrade due to semantic versioning!
+
+## Breaking change:
+
+This is very unlikely to affect anyone, but still: `percent` addons (like
+discounts) applied by `read_products` now have the calculated price in
+`->{price}`, and the percent amount was moved to `->{percent}`, which was
+previously just a boolean.
+
+This change has had no deprecation cycle because I don't think anyone would be
+using this in custom code. But if you did use this feature in a custom plugin
+(wow, I really want to know all about it!), just change `price` to `percent`
+where appropriate.
+
+## Non-breaking changes:
+
+* `RevBank::Plugins::products::read_products` was moved to
+  `RevBank::Products::read_products`, but the old symbol still works.
+
+* `read_products` gained some additional features, such as price tag
+  calculations. Top-level products now have `->{tag_price}`, `->{hidden_fees}`,
+  and `->{total_price}` in addition to the existing base price which is still
+  in `->{price}`.
+
+* Because `read_products` is now in a module, you can `use RevBank::Products;`
+  in your own scripts so you don't have to write your own parser for
+  `revbank.products` anymore. (Don't forget to `use lib "path/to/lib";` first!)
+
+The calculated tag prices are not displayed anywhere in RevBank, but meant for an upcoming feature which is to generate images for electronic price tags. To exclude addon prices from the price tag (as is customary with statiegeld/pfand/deposits), add the new `#OPAQUE` hashtag to the respective addon lines in `revbank.products`.
+
+## Deprecation announcement
+
+* Support for the old file format for `revbank.products` will be removed in
+  2026. The new format was introduced in 6.0.0 in January 2024, but the old
+  format still works (and it gives a lot of warnings if you use it). See below
+  for how to update your products file.
+
+* The plugin `deprecated_raw` will be removed after February 2025. This plugin
+  warns tells users to use `withdraw` or `unlisted` instead of a raw amount,
+  after support for that was dropped in 3.3 in June 2022.
+
 
 # (2024-10-18) RevBank 7.0.0
 
