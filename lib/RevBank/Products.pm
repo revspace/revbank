@@ -87,9 +87,10 @@ sub read_products($filename = "revbank.products", $default_contra = "+sales/prod
                 warn "Percentage invalid for non-addon at $filename line $linenr.\n";
                 next;
             }
-            $price = 0 + $price;
+            $percent = $sign * (0 + $price);
+            $price = undef;  # calculated later
         } else {
-            $price = eval { parse_amount($price) };
+            $price = $sign * eval { parse_amount($price) };
             if (not defined $price) {
                 warn "Invalid price for '$ids[0]' at $filename line $linenr.\n";
                 next;
@@ -100,18 +101,25 @@ sub read_products($filename = "revbank.products", $default_contra = "+sales/prod
 
             $products{$id} = {
                 id          => $ids[0],
-                price       => $sign * $price,
-                percent     => $percent,
                 description => $desc,
                 contra      => $contra || $default_contra,
                 _addon_ids  => \@addon_ids,
                 line        => $linenr,
                 tags        => \%tags,
                 config      => $canonical,
+
+                percent     => $percent,
+                price       => $price,  # base price
+
+                # The following are calculated below, for top-level products only:
+                # tag_price   => base price + sum of transparent addons
+                # hidden_fees => sum of opaque addons
+                # total_price => tag_price + hidden_fees
             };
         }
     }
 
+    # Resolve addons
     PRODUCT: for my $product (values %products) {
         my %ids_seen = ($product->{id} => 1);
         my @addon_ids = @{ $product->{_addon_ids} };
@@ -124,7 +132,7 @@ sub read_products($filename = "revbank.products", $default_contra = "+sales/prod
                 next PRODUCT;
             }
 
-            my $addon = $products{$addon_id};
+            my $addon = { %{ $products{$addon_id} } };  # shallow copy to overwrite ->{price} later
             if (not $addon) {
                 warn "Addon '$addon_id' does not exist for '$product->{id}' at $filename line $product->{line}.\n";
                 next PRODUCT;
@@ -133,6 +141,39 @@ sub read_products($filename = "revbank.products", $default_contra = "+sales/prod
             push @{ $product->{addons} }, $addon;
             push @addon_ids, @{ $addon->{_addon_ids} };
         }
+    }
+
+    # Calculate tag and total price
+    PRODUCT: for my $product (values %products) {
+        next if $product->{id} =~ /^\+/;
+
+        my $tag_price = $product->{price} || 0;
+        my $hidden = 0;
+
+        my @seen = ($product);
+        for my $addon (@{ $product->{addons} }) {
+            if ($addon->{percent}) {
+                my $sum = List::Util::sum map {
+                    $_->{price}
+                } grep {
+                    $_->{contra} eq $addon->{contra}
+                } @seen;
+
+                $addon->{price} = $addon->{percent} / 100 * $sum;
+            }
+
+            if ($addon->{tags}{OPAQUE}) {
+                $hidden += $addon->{price};
+            } else {
+                $tag_price += $addon->{price};
+            }
+
+            push @seen, $addon;
+        }
+
+        $product->{tag_price} = $tag_price;
+        $product->{hidden_fees} = $hidden;
+        $product->{total_price} = $tag_price + $hidden;
     }
 
     return $cache{$filename} = \%products;

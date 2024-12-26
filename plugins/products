@@ -8,19 +8,12 @@ sub command :Tab(&tab) ($self, $cart, $command, @) {
     $command =~ /^\+/ and return NEXT;
 
     my $products = read_products;
+
     my $product = $products->{ $command } or return NEXT;
     my $price = $product->{price};
 
-    my $contra_desc = "\$you bought $product->{description}";
-
-    my @addons = @{ $product->{addons} // [] };
-
-    my $display = undef;
-    $display = "Product"       if @addons and $price->cents > 0;
-    $display = "Reimbursement" if @addons and $price->cents < 0;
-
     my $entry = $cart->add(
-        -$price,
+        -$product->{total_price},
         $product->{description},
         {
             product_id => $product->{id},
@@ -29,6 +22,13 @@ sub command :Tab(&tab) ($self, $cart, $command, @) {
             deduplicate => join("/", $self->id, $product->{id}),
         }
     );
+
+    my $contra_desc = "\$you bought $product->{description}";
+    my @addons = @{ $product->{addons} // [] };
+    my $display = undef;
+    $display = "Product"       if @addons and $price->cents > 0;
+    $display = "Reimbursement" if @addons and $price->cents < 0;
+
     $entry->add_contra(
         $product->{contra},
         +$price,
@@ -37,22 +37,9 @@ sub command :Tab(&tab) ($self, $cart, $command, @) {
     );
 
     for my $addon (@addons) {
-        my $addon_price = $addon->{price};
-        if ($addon->{percent}) {
-            my $sum = List::Util::sum map {
-                $_->{amount}
-            } grep {
-                $_->{user} eq $addon->{contra}
-            } $entry->contras;
-
-            $addon_price = $addon_price / 100 * $sum;
-        }
-
-        $entry->amount( $entry->amount - $addon_price );
-
         $entry->add_contra(
             $addon->{contra},
-            $addon_price,
+            $addon->{price},
             "$addon->{description} ($contra_desc)",
             $addon->{description}
         );
