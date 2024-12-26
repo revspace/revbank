@@ -8,8 +8,8 @@ RevBank::Products - Product list
 	# Empty lines are ignored.
 
 	8710447032756          0.80        "Festini Peer"
-	4029764001807,clubmate 1.40        "Club-Mate" +half +pf
-	pf                     0.15@+pfand "Pfand NRW-Flasche"
+	4029764001807,clubmate 1.40        "Club-Mate" +pf +half
+	pf                     0.15@+pfand "Pfand NRW-Flasche" #OPAQUE
 	+half                  -50%        "50% discount \\o/"
 	123                    0.42        "Hashtag example" #tag #tag2=42
 
@@ -18,6 +18,14 @@ RevBank::Products - Product list
 This module implements a products database, based on a text file. It supports
 additional fees, discounts, compound products, and optional metadata that can
 be read by plugins.
+
+=head2 read_products
+
+The only function of this module is exported by default. It returns a reference
+to a hash of products (each represented as a hash), keyed by product id.
+
+The available keys per product are currently not documented; refer to the
+C<Products.pm> file after the line that is commented C<# HERE> for a list.
 
 =head1 CONFIGURATION
 
@@ -143,8 +151,29 @@ value part.
 	ht2         0.42           "Two hashtags!" #tag #key=value
 	ht3         0.42           "Surprising syntax" "#x=spaces in value"
 
-Tags can be accessed by custom plugins, but are currently ignored by upstream
-RevBank and its plugins.
+Tags can be accessed by custom plugins.
+
+The following tags are used by RevBank itself:
+
+=over 10
+
+=item C<#OPAQUE>
+
+When used on an addon, the price of the addon will be excluded when calculating
+the tag price. The default is to use transparent pricing, i.e. that all
+additional fees are included in the tag price. In specific cases, such as
+container deposits, the addon price should not be considered part of the
+product price, and C<#OPAQUE> can be used.
+
+The tag price is not displayed in the RevBank user interface, but may be used
+in generated price tags and price listings.
+
+The sum of a product's opaque prices is available via the key C<hidden_fees>.
+
+=back
+
+By convention, tags that affect internal semantics get uppercase names. It is
+suggested that tags used only by plugins get C<lowercase> names.
 
 =head3 Other additional fields
 

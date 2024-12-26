@@ -99,6 +99,7 @@ sub read_products($filename = "revbank.products", $default_contra = "+sales/prod
         for my $id (@ids) {
             warn "Product '$id' redefined at $filename line $linenr (original at line $products{$id}{line}).\n" if exists $products{$id};
 
+            # HERE (see .pod)
             $products{$id} = {
                 id          => $ids[0],
                 description => $desc,
