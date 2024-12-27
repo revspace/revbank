@@ -132,6 +132,7 @@ sub _editor($title, $origdata, $readonly = 0) {
             [ "\cL" => sub { $cui->draw } ],
             [ "\c^" => sub { $editor->pos(0) } ],
             [ "\c_" => sub { $editor->pos(length($editor->get)) } ],
+            [ "\cG" => sub { $editor->pos(length($editor->get)) } ],
             [ "\cI" => sub { $editor->add_string(" " x ($tab - ($editor->{-xpos} % $tab))) } ],
             [ "\cS" => sub { $cui->dialog("Enable flow control :)") } ],
             [ "\cQ" => sub {} ],
