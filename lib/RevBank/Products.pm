@@ -9,19 +9,20 @@ use RevBank::Global;
 use Exporter qw(import);
 our @EXPORT = qw(read_products);
 
+# Note: the parameters are subject to change
 sub read_products($filename = "revbank.products", $default_contra = "+sales/products") {
-    state %cache;   # $filename => \%products
+    state %caches;   # $filename => \%products
     state %mtimes;  # $filename => mtime
 
     my $mtime = \$mtimes{$filename};
-
-    return $cache{$filename} if $$mtime and $$mtime == -M $filename;
+    my $cache = $caches{$filename} ||= {};
+    return $cache if $$mtime and (stat $filename)[9] == $$mtime;
 
     my %products;
     my $linenr = 0;
     my $warnings = 0;
 
-    $$mtime = -M $filename;
+    $$mtime = (stat $filename)[9];
     for my $line (slurp $filename) {
         $linenr++;
 
@@ -102,6 +103,8 @@ sub read_products($filename = "revbank.products", $default_contra = "+sales/prod
             # HERE (see .pod)
             $products{$id} = {
                 id          => $ids[0],
+                aliases     => [ @ids[1 .. $#ids] ],
+                is_alias    => $id ne $ids[0],
                 description => $desc,
                 contra      => $contra || $default_contra,
                 _addon_ids  => \@addon_ids,
@@ -179,7 +182,27 @@ sub read_products($filename = "revbank.products", $default_contra = "+sales/prod
         $product->{total_price} = $tag_price + $hidden;
     }
 
-    return $cache{$filename} = \%products;
+    if (%$cache) {
+        for my $new (values %products) {
+            next if $new->{is_alias};
+
+            my $id = $new->{id};
+            my $old = $cache->{$id};
+
+            call_hooks("product_changed", $old, $new, $$mtime)
+                if not defined $old or $new->{config} ne $old->{config};
+
+            delete $cache->{$id};
+        }
+
+        for my $p (values %$cache) {
+            next if $p->{is_alias};
+            call_hooks("product_deleted", $p, $$mtime);
+        }
+    }
+
+    %$cache = %products;
+    return \%products;
 }
 
 1;
