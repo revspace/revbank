@@ -183,6 +183,8 @@ sub read_products($filename = "revbank.products", $default_contra = "+sales/prod
         $product->{total_price} = $tag_price + $hidden;
     }
 
+    my @changes;
+
     if (%$cache) {
         for my $new (values %products) {
             next if $new->{is_alias};
@@ -190,16 +192,19 @@ sub read_products($filename = "revbank.products", $default_contra = "+sales/prod
             my $id = $new->{id};
             my $old = $cache->{$id};
 
-            call_hooks("product_changed", $old, $new, $$mtime)
-                if not defined $old or $new->{config} ne $old->{config};
+            if (not defined $old or $new->{config} ne $old->{config}) {
+                push @changes, [$old, $new];
+            }
 
             delete $cache->{$id};
         }
 
         for my $p (values %$cache) {
             next if $p->{is_alias};
-            call_hooks("product_deleted", $p, $$mtime);
+            push @changes, [$p, undef];
         }
+
+        call_hooks("products_changed", \@changes, $$mtime);
     }
 
     %$cache = %products;

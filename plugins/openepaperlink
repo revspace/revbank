@@ -61,45 +61,39 @@ sub command :Tab(openepaperlink) ($self, $cart, $command, @) {
 	};
 }
 
-sub hook_product_deleted($class, $product, $mtime, @) {
-	my $product_id = $product->{id};
-
+sub hook_products_changed($class, $changes, $mtime, @) {
 	-f $fn or return;
 
 	return with_lock {
 		$mtime >= (stat $fn)[9] or return;
 
 		my @macs;
-		rewrite $fn, sub($line) {
-			my ($mac, $id, $hwtype) = split " ", $line;
+		my %deleted;
+		my %product2mac = reverse %{ _read_oepl() };
 
-			if ($id eq $product_id) {
-				push @macs, $mac;
-				return "$mac _DELETED_ $hwtype\n" 
-			}
+		for my $pair (@$changes) {
+			my ($old, $new) = @$pair;
 
-			return $line;
-		};
+			my $id = defined($new) ? $new->{id} : $old->{id};
+			$product2mac{$id} or next;
+
+			push @macs, $product2mac{$id};
+			$deleted{$id} = 1 if not defined $new;
+		}
+		
+		if (%deleted) {
+			rewrite $fn, sub($line) {
+				my ($mac, $product_id, $hwtype) = split " ", $line;
+
+				return "$mac _DELETED_ $hwtype\n" if $deleted{$product_id};
+				return $line;
+			};
+		}
+
 		@macs or return;
 		_run @macs;
 
 		sleep 1 if $mtime == time;
-		_touch;  # XXX this is wrong; causes subsequent product changes to be ignored.
-	};
-}
-
-sub hook_product_changed($class, $old, $new, $mtime, @) {
-	-f $fn or return;
-
-	return with_lock {
-		$mtime >= (stat $fn)[9] or return;
-
-		my $product2mac = { reverse %{ _read_oepl() } };
-		$product2mac->{ $new->{id} } or return;
-
-		_run $new->{id};
-
-		sleep 1 if $mtime == time;
-		_touch;  # XXX this is wrong; causes subsequent product changes to be ignored.
+		_touch;
 	};
 }
