@@ -84,7 +84,7 @@ sub hook_product_deleted($class, $product, $mtime, @) {
 		_run @macs;
 
 		sleep 1 if $mtime == time;
-		_touch;
+		_touch;  # XXX this is wrong; causes subsequent product changes to be ignored.
 	};
 }
 
@@ -100,6 +100,6 @@ sub hook_product_changed($class, $old, $new, $mtime, @) {
 		_run $new->{id};
 
 		sleep 1 if $mtime == time;
-		_touch;
+		_touch;  # XXX this is wrong; causes subsequent product changes to be ignored.
 	};
 }
