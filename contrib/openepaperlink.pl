@@ -112,9 +112,13 @@ sub draw_hwtype_3 ($product) {
 
 	# Terminus sizes: 12 14 16 18 20 22 24 28 32
 
+	my $is_promo = $product->{tags}{promo};
+	my $fg = $is_promo ? $white : $black;
+	my $bg = $is_promo ? $red : $white;
+
 	my $image = Imager->new(xsize => $xsize, ysize => $ysize);
 	$image->setcolors(colors => \@colors);
-	$image->box(filled => 1, color => $product->{tags}{promo} ? $red : $white);
+	$image->box(filled => 1, color => $bg);
 
 	my $h = $font->bounding_box(string => "")->font_height + 1;
 
@@ -135,7 +139,7 @@ sub draw_hwtype_3 ($product) {
 		image => $image,
 		font => $font,
 		string => $text,
-		color => $black,
+		color => $fg,
 		justify => "center",
 		x => 0,
 		y => 0,
@@ -149,7 +153,7 @@ sub draw_hwtype_3 ($product) {
 		image => $image,
 		font => $font,
 		string => $addon_text,
-		color => ($addon_highlight ? $red : $black),
+		color => ($addon_highlight ? ($is_promo ? $black : $red) : $fg),
 		justify => "center",
 		x => 0,
 		y => $bottom,
@@ -194,7 +198,7 @@ sub draw_hwtype_3 ($product) {
 			halign => 'right',
 			string => comma("$product->{tags}{$unit} $unit $perX/$X"),
 			utf8 => 1,
-			color => $black,
+			color => $fg,
 			font => $font,
 			aa => 0,
 			size => 12,
@@ -243,7 +247,7 @@ for my $line (@lines) {
 	my $fn = draw($product, $hwtype, !!@ARGV) or next;
 
 	print "Uploading image for $mac ($product->{description}).\n";
-	post "imgupload" => [ mac => $mac, file => $fn, lut => 1, alias => $product->{description} ];
+	post "imgupload" => [ mac => $mac, lut => 1, alias => $product->{description}, file => $fn ];
 
 	if ($new_hwtype{$mac}) {
 		$line =~ s/$/ $new_hwtype{$mac}/;
