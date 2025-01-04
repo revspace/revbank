@@ -1,0 +1,76 @@
+#!perl
+use RevBank::Products qw(read_products);
+use FindBin qw($Bin);
+
+my $fn = "revbank.oepl";
+my $hex = '[0-9A-F]';
+my $mac_regex = qr/^(?:$hex {12}|$hex {14}|$hex {16})$/x;
+
+sub _create() {
+	open my $fh, '>>', $fn;
+}
+
+sub _run(@args) {
+	system perl => "$Bin/contrib/openepaperlink.pl", @args;
+}
+
+sub command :Tab(openepaperlink) ($self, $cart, $command, @) {
+	if ($command =~ $mac_regex) {
+		my %mac2product = map { (split " ")[0, 1] } slurp $fn;
+		return REDO, $mac2product{$command} if exists $mac2product{$command};
+	}
+
+	$command eq 'openepaperlink' or return NEXT;
+
+	return "Product ID (or 'unlink')", sub ($self, $cart, $product_id, @) {
+		my $product;
+
+		if ($product_id ne 'unlink') {
+			$product = read_products->{$product_id} or return REJECT, "No such product.";
+			$product_id = $product->{id};  # don't use alias
+		}
+
+		return "Tag MAC", sub ($self, $cart, $mac, @) {
+			$mac =~ $mac_regex or return REJECT, "Malformed MAC.";
+
+			_create;
+			my $found = 0;
+			rewrite $fn, sub($line) {
+				my ($m) = split " ", $line;
+				return $line if $m ne $mac;
+				$found++;
+				return undef if $product_id eq 'unlink';
+				return "$mac $product_id\n" if $m eq $mac;
+			};
+			if (!$found and $product_id ne 'unlink') {
+				append $fn, "$mac $product_id\n";
+			}
+			_run($mac);
+
+			return ACCEPT;
+		};
+	};
+}
+
+sub hook_product_deleted($class, $product, $mtime, @) {
+	my $product_id = $product->{id};
+
+	-f $fn or return;
+	my @macs;
+
+	rewrite $fn, sub($line) {
+		my ($mac, $id, $hwtype) = split " ", $line;
+
+		if ($id eq $product_id) {
+			push @macs, $mac;
+			return "$mac _DELETED_ $hwtype\n" 
+		}
+
+		return $line;
+	};
+	_run(@macs);
+}
+
+sub hook_product_changed($class, $old, $new, $mtime, @) {
+	_run($new->{id});
+}
