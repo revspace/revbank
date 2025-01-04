@@ -71,12 +71,12 @@ sub read_products($filename = "revbank.products", $default_contra = "+sales/prod
             unshift @addon_ids, $1 while $desc =~ s/\s+ \+ (\S+)$//x;
         }
 
-        my $canonical = join " ", map RevBank::Prompt::reconstruct($_), $ids, $p, $desc, @extra;
-
         my @ids = split /,/, $ids;
 
-        $p ||= "invalid";
+        $p //= 0;
         $desc ||= "(no description)";
+
+        my $canonical = join " ", map RevBank::Prompt::reconstruct($_), $ids, $p, $desc, @extra;
 
         my ($price, $contra) = split /\@/, $p, 2;
 
@@ -91,11 +91,12 @@ sub read_products($filename = "revbank.products", $default_contra = "+sales/prod
             $percent = $sign * (0 + $price);
             $price = undef;  # calculated later
         } else {
-            $price = $sign * eval { parse_amount($price) };
+            $price = eval { parse_amount($price) };
             if (not defined $price) {
                 warn "Invalid price for '$ids[0]' at $filename line $linenr.\n";
                 next;
             }
+            $price *= $sign;
         }
         for my $id (@ids) {
             warn "Product '$id' redefined at $filename line $linenr (original at line $products{$id}{line}).\n" if exists $products{$id};
