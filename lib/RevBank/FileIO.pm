@@ -64,7 +64,8 @@ sub release_all_locks() {
 }
 
 sub with_lock :prototype(&) ($code) {
-	get_lock;
+	my $skip = $ENV{REVBANK_SKIP_LOCK};
+	get_lock unless $skip;
 	my @rv;
 	my $rv;
 	my $list_context = wantarray;
@@ -72,7 +73,7 @@ sub with_lock :prototype(&) ($code) {
 		@rv = $code->() if $list_context;
 		$rv = $code->() if not $list_context;
 	};
-	release_lock;
+	release_lock unless $skip;
 	croak $@ =~ s/\.?\n$/, rethrown/r if $@;
 	return @rv if $list_context;
 	return $rv if not $list_context;

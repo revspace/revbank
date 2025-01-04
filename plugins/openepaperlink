@@ -11,13 +11,22 @@ sub _create() {
 }
 
 sub _run(@args) {
+	local $ENV{REVBANK_SKIP_LOCK} = 1;
 	system perl => "$Bin/contrib/openepaperlink.pl", @args;
+}
+
+sub _read_oepl() {
+	return { map { (split " ")[0, 1] } slurp $fn };
+}
+
+sub _touch() {
+	utime undef, undef, $fn;
 }
 
 sub command :Tab(openepaperlink) ($self, $cart, $command, @) {
 	if ($command =~ $mac_regex) {
-		my %mac2product = map { (split " ")[0, 1] } slurp $fn;
-		return REDO, $mac2product{$command} if exists $mac2product{$command};
+		my $mac2product = _read_oepl;
+		return REDO, $mac2product->{$command} if exists $mac2product->{$command};
 	}
 
 	$command eq 'openepaperlink' or return NEXT;
@@ -45,7 +54,7 @@ sub command :Tab(openepaperlink) ($self, $cart, $command, @) {
 			if (!$found and $product_id ne 'unlink') {
 				append $fn, "$mac $product_id\n";
 			}
-			_run($mac);
+			_run $mac;
 
 			return ACCEPT;
 		};
@@ -56,21 +65,41 @@ sub hook_product_deleted($class, $product, $mtime, @) {
 	my $product_id = $product->{id};
 
 	-f $fn or return;
-	my @macs;
 
-	rewrite $fn, sub($line) {
-		my ($mac, $id, $hwtype) = split " ", $line;
+	return with_lock {
+		$mtime >= (stat $fn)[9] or return;
 
-		if ($id eq $product_id) {
-			push @macs, $mac;
-			return "$mac _DELETED_ $hwtype\n" 
-		}
+		my @macs;
+		rewrite $fn, sub($line) {
+			my ($mac, $id, $hwtype) = split " ", $line;
 
-		return $line;
+			if ($id eq $product_id) {
+				push @macs, $mac;
+				return "$mac _DELETED_ $hwtype\n" 
+			}
+
+			return $line;
+		};
+		@macs or return;
+		_run @macs;
+
+		sleep 1 if $mtime == time;
+		_touch;
 	};
-	_run(@macs);
 }
 
 sub hook_product_changed($class, $old, $new, $mtime, @) {
-	_run($new->{id});
+	-f $fn or return;
+
+	return with_lock {
+		$mtime >= (stat $fn)[9] or return;
+
+		my $product2mac = { reverse %{ _read_oepl() } };
+		$product2mac->{ $new->{id} } or return;
+
+		_run $new->{id};
+
+		sleep 1 if $mtime == time;
+		_touch;
+	};
 }
