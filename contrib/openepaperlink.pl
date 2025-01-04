@@ -13,6 +13,7 @@ use LWP::Simple qw($ua);
 use JSON::XS ();
 
 my $json = JSON::XS->new;
+$ua->timeout(2);
 
 my $resources = "$FindBin::Bin/oepl_resources";
 my $outdir = "./oepl_images";
