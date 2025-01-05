@@ -222,7 +222,7 @@ sub draw_hwtype_3 ($product) {
 	return $image;
 }
 
-my @lines = slurp "revbank.oepl";
+my @lines = slurp ".revbank.oepl";
 my %new_hwtype;
 
 my $products = read_products;
@@ -256,5 +256,5 @@ for my $line (@lines) {
 }
 
 if (%new_hwtype) {
-	spurt "revbank.oepl", @lines;
+	spurt ".revbank.oepl", @lines;
 }

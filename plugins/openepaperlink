@@ -2,7 +2,7 @@
 use RevBank::Products qw(read_products);
 use FindBin qw($Bin);
 
-my $fn = "revbank.oepl";
+my $fn = ".revbank.oepl";
 my $hex = '[0-9A-F]';
 my $mac_regex = qr/^(?:$hex {12}|$hex {14}|$hex {16})$/x;
 
