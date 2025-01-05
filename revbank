@@ -17,7 +17,7 @@ use RevBank::Messages;
 use RevBank::Cart;
 use RevBank::Prompt;
 
-our $VERSION = "8.2.0";
+our $VERSION = "8.2.2";
 
 our %HELP1 = (
     "abort" => "Abort the current transaction",
@@ -54,25 +54,40 @@ call_hooks("startup");
 my $retry;  # reason (text)
 my @retry;  # (@accepted, $rejected, [@trailing])
 
+my $prompt;
+my @plugins;
+my $method;
+
+sub abort {
+    @words = ();
+    @retry = ();
+
+    my $is_interrupt = @_ && $_[0] eq "^C";
+    print "\n" if $is_interrupt;
+
+    if ($is_interrupt and $cart->size and ref $method) {
+        call_hooks "interrupt", $cart, \@_;
+        call_hooks "cart_changed", $cart;  # XXX ugly; refactor redisplay with instructions
+        print "Pressing ^C again will also abort.\n";
+    } else {
+        print @_, " " unless $is_interrupt;
+        call_hooks "abort", $cart, \@_;
+        $cart->empty;
+        RevBank::FileIO::release_all_locks;
+    }
+    no warnings qw(exiting);
+    redo OUTER;
+}
+
 OUTER: for (;;) {
     if (not @words) {
         call_hooks("cart_changed", $cart) if $cart->changed;
         print "\n";
     }
 
-    my $prompt = "";
-    my @plugins = RevBank::Plugins->new;
-    my $method = "command";
-
-    sub abort {
-        print @_, " " if @_;
-        @words = ();
-        @retry = ();
-        call_hooks "abort", $cart, \@_;
-        $cart->empty;
-        RevBank::FileIO::release_all_locks;
-        { no warnings; redo OUTER; }
-    }
+    $prompt = "";
+    @plugins = RevBank::Plugins->new;
+    $method = "command";
 
     PROMPT: {
         if (not @words) {
