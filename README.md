@@ -86,9 +86,9 @@ local laws or external accounting software.)
   attention to changes when upgrading.
 
 After changing `revbank.plugins` or any of the actual plugin files, you'll need
-to restart `revbank`. The easiest way to do that is ctrl+D. No restart is
-required after editing `revbank.products`, `revbank.market`, or
-`revbank.accounts`.
+to restart `revbank`. This is done with the `restart` command, unless the
+corresponding plugin was disabled. No restart is required after editing
+`revbank.products`, `revbank.market`, or `revbank.accounts`.
 
 If your terminal is unable to beep, e.g. if it's Linux console on a Raspberry
 Pi, copy the `beep_terminal` plugin to a new file, and figure out another way
