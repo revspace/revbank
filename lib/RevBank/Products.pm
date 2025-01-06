@@ -154,7 +154,7 @@ sub read_products($filename = "revbank.products", $default_contra = "+sales/prod
         next if $id =~ /^\+/;
         my $product = $products{$id};
 
-        my $tag_price = $product->{price} || 0;
+        my $tag_price = $product->{price} || RevBank::Amount->new(0);
         my $hidden = 0;
 
         my @seen = ($product);
