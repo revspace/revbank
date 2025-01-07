@@ -78,18 +78,8 @@ sub hook_products_changed($class, $changes, $mtime, @) {
 			$product2mac{$id} or next;
 
 			push @macs, $product2mac{$id};
-			$deleted{$id} = 1 if not defined $new;
 		}
 		
-		if (%deleted) {
-			rewrite $fn, sub($line) {
-				my ($mac, $product_id, $hwtype) = split " ", $line;
-
-				return "$mac _DELETED_ $hwtype\n" if $deleted{$product_id};
-				return $line;
-			};
-		}
-
 		@macs or return;
 		_run @macs;
 

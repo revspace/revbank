@@ -348,9 +348,9 @@ my @lines = slurp ".revbank.oepl";
 my %new_hwtype;
 
 my $products = read_products;
-$products->{_DELETED_} = {
-	id => "_DELETED_",
-	description => "(deleted)",
+$products->{_NOTFOUND_} = {
+	id => "_NOTFOUND_",
+	description => "(product unavailable)",
 	price => "999.99",
 	tag_price => "999.99",
 };
@@ -361,10 +361,7 @@ for my $line (@lines) {
 	$product_id or next;
 	(grep { $_ eq $product_id or $_ eq $mac } @ARGV) or next if @ARGV;
 
-	my $product = $products->{$product_id} or do {
-		warn "Product not found ($product_id)\n";
-		next;
-	};
+	my $product = $products->{$product_id} || $products->{_NOTFOUND_};
 
 	$hwtype ||= $new_hwtype{$mac} = get_hwtype($mac) || next;
 	my $fn = draw($product, $hwtype, !!@ARGV) or next;
