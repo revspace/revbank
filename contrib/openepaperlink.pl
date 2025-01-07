@@ -222,6 +222,128 @@ sub draw_hwtype_3 ($product) {
 	return $image;
 }
 
+
+sub draw_hwtype_4 ($product) {
+	my $xsize = 296;
+	my $ysize = 152;
+
+	my @colors = (
+		my $white = Imager::Color->new(255,255,255),
+		my $black = Imager::Color->new(0,0,0),
+		my $red   = Imager::Color->new(255,0,0),
+	);
+
+	my $font = Imager::Font->new(file => "$resources/TerminusTTF-Bold-4.49.3.ttf", aa => 0);
+
+	# Terminus sizes: 12 14 16 18 20 22 24 28 32
+
+	my $is_promo = $product->{tags}{promo};
+	my $fg = $is_promo ? $white : $black;
+	my $bg = $is_promo ? $red : $white;
+
+	my $image = Imager->new(xsize => $xsize, ysize => $ysize);
+	$image->setcolors(colors => \@colors);
+	$image->box(filled => 1, color => $bg);
+
+	my $h = $font->bounding_box(string => "")->font_height + 1;
+
+	my $addon_text;
+	my $addon_highlight = 0;
+
+	for my $addon (@{ $product->{addons} }) {
+		next if $addon->{tags}{OPAQUE};
+		my $d = $addon->{description};
+		$addon_text = ($addon->{price} < 0) ? $d : "+ $d";
+		$addon_highlight = 1 if $addon->{price} < 0;
+		last;
+	}
+
+	my $text = $product->{description};
+
+	my (undef, undef, undef, $bottom) = Imager::Font::Wrap->wrap_text(
+		image => $image,
+		font => $font,
+		string => $text,
+		color => $fg,
+		justify => "center",
+		x => 0,
+		y => 0,
+		size => 28,
+		height => ($addon_text ? (3*30) : (2*30)),
+	);
+
+	$addon_text and Imager::Font::Wrap->wrap_text(
+		image => $image,
+		font => $font,
+		string => $addon_text,
+		color => ($addon_highlight ? ($is_promo ? $black : $red) : $fg),
+		justify => "center",
+		x => 0,
+		y => $bottom,
+		size => 28,
+		height => (3*30) - $bottom,
+	);
+
+	my $xmargin = 6;
+	my $ymargin = 2;
+	my $has_discount = $product->{tag_price} < $product->{price};
+
+	my $price = sub {
+		return $image->align_string(
+			x => $xsize - 1 - $xmargin,
+			y => $ysize - 1 - $ymargin,
+			valign => 'bottom',
+			halign => 'right',
+			string => comma($product->{tag_price}),
+			utf8 => 1,
+			color => ($has_discount ? $white : $white),
+			font => $font,
+			aa => 0,
+			size => 32,
+		);
+	};
+
+	my @bounds = $price->();
+
+
+	my @box = ($bounds[0] - $xmargin, $bounds[1] - $ymargin, $bounds[2] + $xmargin, $bounds[3] + $ymargin);
+	$image->box(box => \@box, fill => { solid => ($has_discount ? $red : $black) });
+	$price->();
+
+	if (my $unit = $product->{tags}{ml} ? "ml" : $product->{tags}{g} ? "g" : undef) {
+		my $X = $unit eq "ml" ? "L" : $unit eq "g" ? "kg" : die;
+		my $perX = sprintf "%.02f", $product->{tag_price}->float * 1000 / $product->{tags}{$unit};
+
+		@bounds = $image->align_string(
+			x => $box[2],
+			y => $box[1],
+			valign => 'bottom',
+			halign => 'right',
+			string => comma("$product->{tags}{$unit} $unit $perX/$X"),
+			utf8 => 1,
+			color => $fg,
+			font => $font,
+			aa => 0,
+			size => 12,
+		);
+	}
+
+	# There's place for only 1 but looping over all is easier :)
+	# Intended purpose is statiegeld logos.
+	for my $addon (@{ $product->{addons} }) {
+		my $fn = "$resources/$addon->{id}.png";
+		-e $fn or next;
+		my $statiegeld = Imager->new->read(file => $fn);
+		$image->compose(src => $statiegeld, tx => 63, ty => $ysize - 48 - 1);
+	}
+
+	if (my $aztec = aztec $product) {
+		$image->compose(src => $aztec, tx => 1, ty => $ysize - 46 - 1);
+	}
+
+	return $image;
+}
+
 my @lines = slurp ".revbank.oepl";
 my %new_hwtype;
 
