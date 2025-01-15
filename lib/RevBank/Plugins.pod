@@ -189,19 +189,13 @@ Called when a new user account was created.
 
 Called when a user account is updated.
 
-=item hook_product_changed($class, $old, $new, $mtime, @)
+=item hook_products_changed($class, $changes, $mtime, @)
 
-Called when a product is changed. For new products, C<$old> will be undef.
-
-Caveats: Only things that change during runtime cause this hook to be called. When multiple revbank instances are running, each process gets this hook. When the products file is modified externally, the new file is loaded only after user interaction. When a product's primary id changes, it is registerd as a deletion and addition, not a change.
+Called after reading a changed products file. C<$changes> is a reference to an array of C<[old, new]> pairs. For new products, C<old> will be undef. For deleted products, C<new> will be undef.
 
 The mtime is the mtime of the products file, not necessarily when the product was changed.
 
-=item hook_product_deleted($class, $product, $mtime, @)
-
-Called when a product is deleted.
-
-The same caveats like for C<hook_product_changed> apply.
+Caveats: Only things that change during runtime cause this hook to be called. When multiple revbank instances are running, each process gets this hook. When the products file is modified externally, the new file is loaded only after user interaction. When a product's primary id changes, it is registered as a deletion and addition, not a change.
 
 =back
 
