@@ -65,16 +65,16 @@ sub draw ($product, $hwtype, $force) {
 	return undef;
 }
 
-sub get_hwtype($mac) {
+sub get_dbitem($mac) {
 	my $response = $ua->get("$ap/get_db?mac=$mac");
 	my $hash = eval { $json->decode($response->content) } || { tags => [] };
 	my $tags = $hash->{tags};
 	if (@$tags != 1) {
 		my $status = $response->status_line;
-		warn "Can't get hwtype for $mac (HTTP $status); new tag not ready yet?\n";
-		return undef;
+		warn "Can't get info for $mac (HTTP $status); new tag not ready yet?\n";
+		return {};
 	}
-	return $tags->[0]->{hwType};
+	return $tags->[0];
 }
 
 sub comma($str) {
@@ -233,6 +233,11 @@ $products->{_DELETED_} = {
 	tag_price => "999.99",
 };
 
+my $fix = @ARGV && $ARGV[0] eq 'fix';
+shift if $fix;
+
+my %fns;
+
 for my $line (@lines) {
 	my ($mac, $product_id, $hwtype) = split " ", $line;
 	$mac and $mac =~ /^[0-F]{12,16}$/ or next;
@@ -244,8 +249,15 @@ for my $line (@lines) {
 		next;
 	};
 
-	$hwtype ||= $new_hwtype{$mac} = get_hwtype($mac) || next;
-	my $fn = draw($product, $hwtype, !!@ARGV) or next;
+	my $needs_fixing = 0;
+	if ($fix or not $hwtype) {
+		my $dbitem = get_dbitem($mac);
+		next if not %$dbitem;
+		$hwtype ||= $new_hwtype{$mac} = $dbitem->{hwType};
+		$needs_fixing = $dbitem->{hash} =~ /^0+$/;
+	}
+
+	my $fn = $fns{$product} ||= draw($product, $hwtype, $needs_fixing || !!@ARGV) or next;
 
 	print "Uploading image for $mac ($product->{description}).\n";
 	post "imgupload" => [ mac => $mac, lut => 1, alias => $product->{description}, file => $fn ];
