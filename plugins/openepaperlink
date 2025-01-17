@@ -42,6 +42,8 @@ sub command :Tab(openepaperlink) ($self, $cart, $command, @) {
 		return "Tag MAC", sub ($self, $cart, $mac, @) {
 			$mac =~ $mac_regex or return REJECT, "Malformed MAC.";
 
+			_run erase => $mac if $product_id eq 'unlink';  # while it's still in the .oepl
+
 			_create;
 			my $found = 0;
 			rewrite $fn, sub($line) {
@@ -54,7 +56,7 @@ sub command :Tab(openepaperlink) ($self, $cart, $command, @) {
 			if (!$found and $product_id ne 'unlink') {
 				append $fn, "$mac $product_id\n";
 			}
-			_run $mac;
+			_run $mac unless $product_id eq 'unlink';
 
 			return ACCEPT;
 		};

@@ -230,8 +230,12 @@ $products->{_NOTFOUND_} = {
 	tag_price => "999.99",
 };
 
-my $fix = @ARGV && $ARGV[0] eq 'fix';
-shift if $fix;
+my $fix_mode = @ARGV && $ARGV[0] eq 'fix';
+shift if $fix_mode;
+
+my $erase_mode = !$fix_mode && @ARGV && $ARGV[0] eq 'erase';
+shift if $erase_mode;
+die "Usage: $0 erase <mac>...\n" if $erase_mode and not @ARGV;
 
 my %fns;
 
@@ -241,10 +245,12 @@ for my $line (@lines) {
 	$product_id or next;
 	(grep { $_ eq $product_id or $_ eq $mac } @ARGV) or next if @ARGV;
 
-	my $product = $products->{$product_id} || $products->{_NOTFOUND_};
+	my $product = $erase_mode
+		? { id => "_ERASE_", description => $mac }
+		: $products->{$product_id} || $products->{_NOTFOUND_};
 
 	my $needs_fixing = 0;
-	if ($fix or not $hwtype) {
+	if ($fix_mode or not $hwtype) {
 		my $dbitem = get_dbitem($mac);
 		next if not %$dbitem;
 		$hwtype ||= $new_hwtype{$mac} = $dbitem->{hwType};
