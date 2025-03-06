@@ -1,6 +1,6 @@
 #!perl
 
-use List::Util qw(none);
+use List::Util qw(none uniqstr);
 
 my @deny_plugins = (
 	"give",
@@ -72,8 +72,9 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 			next if not $plugin;
 			next if none { $plugin eq $_ } @deny_plugins;
 
-			my @contra_users = grep {
+			my @contra_users = uniqstr sort grep {
 				not RevBank::Users::is_special($_)
+				and $_ ne $username
 			} map {
 				$_->{user}
 			} $entry->contras;
