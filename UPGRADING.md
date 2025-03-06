@@ -49,7 +49,11 @@ where appropriate.
   in your own scripts so you don't have to write your own parser for
   `revbank.products` anymore. (Don't forget to `use lib "path/to/lib";` first!)
 
-The calculated tag prices are not displayed anywhere in RevBank, but meant for an upcoming feature which is to generate images for electronic price tags. To exclude addon prices from the price tag (as is customary with statiegeld/pfand/deposits), add the new `#OPAQUE` hashtag to the respective addon lines in `revbank.products`.
+The calculated tag prices are not displayed anywhere in RevBank, but meant for
+an upcoming feature which is to generate images for electronic price tags. To
+exclude addon prices from the price tag (as is customary with
+statiegeld/pfand/deposits), add the new `#OPAQUE` hashtag to the respective
+addon lines in `revbank.products`.
 
 ## Deprecation announcement
 
