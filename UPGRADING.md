@@ -62,6 +62,17 @@ The calculated tag prices are not displayed anywhere in RevBank, but meant for a
   warns tells users to use `withdraw` or `unlisted` instead of a raw amount,
   after support for that was dropped in 3.3 in June 2022.
 
+# (2024-11-17) RevBank 7.1.0
+
+The new plugin `nomoney` is enabled by default. For rationale, see
+https://forum.revspace.nl/t/inkoopacties-via-revbank/469.
+
+Whether this constitutes a breaking change is debatable, and it wasn't added to
+this file until 2025-03-06. It's a new feature, but the feature is to disallow
+some transactions which used to be allowed. (Specifically, it denies
+transactions if the user has insufficient balance; by default only for
+give/take/withdraw, but the list of affected plugins can be customized.)
+
 
 # (2024-10-18) RevBank 7.0.0
 
