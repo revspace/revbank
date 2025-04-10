@@ -75,17 +75,17 @@ sub hook_retry($class, $plugin, $reason, $abort, @) {
     _log({ _ => "RETRY", plugin => $plugin, reason => $reason, abort => $abort });
 }
 
-sub hook_user_created($class, $username, @) {
-    _log({ _ => "NEWUSER", account => $username });
+sub hook_account_created($class, $account, @) {
+    _log({ _ => "NEWUSER", account => $account });
 }
 
 # NB: stringify transaction_id because future ids might not be numeric.
 
-sub hook_user_balance($class, $user, $old, $delta, $new, $transaction_id, @) {
-    _log({ _ => "BALANCE", account => $user, old => $old, delta => $delta, new => $new, transaction_id => "$transaction_id" });
+sub hook_account_balance($class, $account, $old, $delta, $new, $transaction_id, @) {
+    _log({ _ => "BALANCE", account => $account, old => $old, delta => $delta, new => $new, transaction_id => "$transaction_id" });
 }
 
-sub hook_checkout($class, $cart, $username, $transaction_id, @) {
-    _log({ _ => "CHECKOUT", account => $username, transaction_id => "$transaction_id" });
+sub hook_checkout($class, $cart, $account, $transaction_id, @) {
+    _log({ _ => "CHECKOUT", account => $account, transaction_id => "$transaction_id" });
 }
 

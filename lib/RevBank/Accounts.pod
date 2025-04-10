@@ -1,10 +1,10 @@
 =head1 NAME
 
-RevBank::Users - Banking and bookkeeping accounts
+RevBank::Accounts - Banking and bookkeeping accounts
 
 =head1 DESCRIPTION
 
-This package handles all accounts in RevBank. Accounts are called "users" because originally, RevBank only had user accounts. Today, RevBank does doubly-entry bookkeeping and has multiple account types to accommodate that.
+This package handles all accounts in RevBank. RevBank does doubly-entry bookkeeping and has multiple account types to accommodate that.
 
 This package is where manipulation of C<revbank.accounts> happens.
 
@@ -15,6 +15,10 @@ This package is where manipulation of C<revbank.accounts> happens.
 =item * User accounts
 
 User accounts are typically made with the C<adduser> command, and almost all interactions with RevBank will involve only user accounts, from the perspective of the user.
+
+The name of a user account is called a I<username> within RevBank.
+
+Any account that does not begin with one of the characters C<->, C<+>, or C<*>, is a user account.
 
 =item * Hidden accounts
 
@@ -100,9 +104,9 @@ Only the first two columns are mandatory. This makes migrating to RevBank very s
 
 =head2 Functions
 
-Usernames are case preserving, but case insensitive. Account name arguments to functions are case insensitive, but return values use the canonical capitalization.
+Account names are case preserving, but case insensitive. Account name arguments to functions are case insensitive, but return values use the canonical capitalization.
 
-Anything that outputs a username should always run it through C<parse_user> or C<assert_user>.
+Anything that outputs a username should always run it through C<parse_user> or C<assert_account>.
 
 =head3 names
 
@@ -120,13 +124,13 @@ Returns the last used datetime of the account.
 
 Creates an account with that name and a balance of zero. The name must not already exist.
 
-After updating the file, calls the C<user_created> hook with the account name.
+After updating the file, calls the C<account_created> hook with the account name.
 
 =head3 update($name, $delta, $transaction_id)
 
 Given the relative change (C<$delta>), updates the user balance for an account.
 
-After updating the file, calls the C<user_balance> hook with the account name, the old balance, the given delta, the new balance, and the transaction_id.
+After updating the file, calls the C<account_balance> hook with the account name, the old balance, the given delta, the new balance, and the transaction_id.
 
 This function should not be used directly; instead, create a transaction via C<RevBank::Cart> and use C<checkout> to ensure a balanced booking for proper double-entry bookkeeping.
 
@@ -140,17 +144,19 @@ Returns true if the account is hidden (begins with C<+> or C<->), or user-access
 
 =head3 parse_user($username)
 
-Returns the canonical account name if the user account exists, or undef if it does not exist.
+Returns the canonical account name if the account exists and is not a hidden account, or undef otherwise.
 
-=head3 assert_user($name)
+=head3 assert_account($name)
 
 For a hidden account, returns the canonical account name, creating the account if it did not already exist.
 
-For a non-hidden account, works like parse_user.
+For a non-hidden account, returns the canonical account name if the account exists, or throws an exception if it does not exist.
 
-=head1 CAVEATS
+=head1 HISTORY
 
-The identifiers can be confusing and most instances of C<user> should probably be renamed to C<account>.
+Originally, RevBank had only user accounts, and the package was called C<RevBank::Users>. When hidden (internal) accouns were added, account names were still always in variables called C<$user> or C<$username> even if they were hidden accounts and thus not accessible to users. In current RevBank, the term I<account> is used as the generic thing, or I<user> only in places where only user accounts (non-hidden accounts) are supported.
+
+This change took place in 2025, and some backwards compatibility will be kept until at least 2027-05-01. See UPGRADING.md for more information.
 
 =head1 AUTHOR
 

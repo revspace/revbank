@@ -15,8 +15,8 @@ sub hook_cash {
     open_drawer();
 }
 
-sub hook_checkout($class, $cart, $user, $transaction_id, @) {
-    $user eq '-cash' or return;
+sub hook_checkout($class, $cart, $account, $transaction_id, @) {
+    $account eq '-cash' or return;
 
     open_drawer();
 }

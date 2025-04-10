@@ -5,7 +5,7 @@ use warnings;
 use experimental 'signatures';  # stable since v5.36
 
 use Carp qw(carp croak);
-use RevBank::Users;
+use RevBank::Accounts;
 use List::Util ();
 use Scalar::Util ();
 
@@ -24,7 +24,7 @@ sub new($class, $amount, $description, $attributes = {}) {
         amount      => $amount,  # negative = pay, positive = add money
         description => $description,
         attributes  => { %$attributes },
-        user        => undef,
+        account        => undef,
         contras     => [],
         caller      => List::Util::first(sub { !/^RevBank::Cart/ }, map { (caller $_)[3] } 1..10)
                        || (caller 1)[3],
@@ -34,20 +34,21 @@ sub new($class, $amount, $description, $attributes = {}) {
     return bless $self, $class;
 }
 
-sub add_contra($self, $user, $amount, $description, $display = undef) {
+sub add_contra($self, $account, $amount, $description, $display = undef) {
     # $display should be given for either ALL or NONE of the contras,
     # with the exception of contras with $amount == 0.00;
 
     $amount = RevBank::Amount->parse_string($amount) if not ref $amount;
-    $user = RevBank::Users::assert_user($user);
+    $account = RevBank::Accounts::assert_account($account);
 
-    $description =~ s/\$you/$self->{user}/g if defined $self->{user};
+    $description =~ s/\$you/$self->{account}/g if defined $self->{account};
 
     push @{ $self->{contras} }, {
-        user        => $user,
-        amount      => $amount,  # should usually have opposite sign (+/-)
-        description => $description,  # contra user's perspective
-        display     => $display,  # interactive user's perspective
+        account     => $account,
+        user        => $account,      # backwards compatibility until 2027-05-01
+        amount      => $amount,       # should usually have opposite sign (+/-)
+        description => $description,  # contra account's perspective
+        display     => $display,      # interactive user's perspective
         highlight   => 1,
     };
 
@@ -133,9 +134,9 @@ sub as_printable($self) {
     for my $c (@{ $self->{contras} }) {
         my $description;
         my $amount = $self->{amount};
-        my $hidden = RevBank::Users::is_hidden($c->{user});
+        my $hidden = RevBank::Accounts::is_hidden($c->{account});
         my $fromto = $c->{amount}->cents < 0 ? "<-" : "->";
-        $fromto .= " $c->{user}";
+        $fromto .= " $c->{account}";
 
         if ($c->{display}) {
             $description =
@@ -165,7 +166,7 @@ sub as_printable($self) {
 }
 
 sub as_loggable($self) {
-    croak "Loggable called before set_user" if not defined $self->{user};
+    croak "Loggable called before set_account" if not defined $self->{account};
 
     my $quantity = $self->{quantity};
 
@@ -180,7 +181,7 @@ sub as_loggable($self) {
 
         push @s, sprintf(
             "%-12s %4s %3d %6s  # %s",
-            $_->{user},
+            $_->{account},
             ($total->cents > 0 ? 'GAIN' : $total->cents < 0 ? 'LOSE' : '===='),
             $quantity,
             $total->abs,
@@ -191,16 +192,19 @@ sub as_loggable($self) {
     return @s;
 }
 
-sub user($self, $new = undef) {
+sub account($self, $new = undef) {
     if (defined $new) {
-        croak "User can only be set once" if defined $self->{user};
+        croak "User can only be set once" if defined $self->{account};
 
-        $self->{user} = $new;
+        $self->{account} = $new;
+        $self->{user} = $new;  # backwards compatibility until 2027-05-01
         $_->{description} =~ s/\$you/$new/g for $self, @{ $self->{contras} };
     }
 
-    return $self->{user};
+    return $self->{account};
 }
+
+*user = \&account;  # backwards compatibility until 2027-05-01
 
 sub sanity_check($self) {
     my @contras = $self->contras;

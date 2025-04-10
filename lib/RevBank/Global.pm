@@ -16,7 +16,7 @@ use RevBank::FileIO;
 
 sub import {
     require RevBank::Plugins;
-    require RevBank::Users;
+    require RevBank::Accounts;
     no strict 'refs';
     my $caller = caller;
     *{"$caller\::ACCEPT"}       = sub () { \1 };
@@ -30,7 +30,7 @@ sub import {
     *{"$caller\::rewrite"}      = \&RevBank::FileIO::rewrite;
     *{"$caller\::append"}       = \&RevBank::FileIO::append;
     *{"$caller\::with_lock"}    = \&RevBank::FileIO::with_lock;
-    *{"$caller\::parse_user"}   = \&RevBank::Users::parse_user;
+    *{"$caller\::parse_user"}   = \&RevBank::Accounts::parse_user;
     *{"$caller\::parse_amount"} = sub ($amount) {
         defined $amount or return undef;
         length  $amount or return undef;

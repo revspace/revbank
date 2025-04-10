@@ -10,16 +10,16 @@ sub _box(@lines) {
     );
 }
 
-sub hook_checkout_done($class, $cart, $user, $transaction_id, @) {
-    defined $user or return;  # hacks like 'undo' don't have an acting user
-    RevBank::Users::is_hidden($user) and return;
+sub hook_checkout_done($class, $cart, $account, $transaction_id, @) {
+    defined $account or return;  # hacks like 'undo' don't have an acting user
+    RevBank::Accounts::is_hidden($account) and return;
 
-    my $balance = RevBank::Users::balance($user) or return;
-    my $since   = RevBank::Users::since($user);
+    my $balance = RevBank::Accounts::balance($account) or return;
+    my $since   = RevBank::Accounts::since($account);
 
     if ($balance < -22.00) {
         _box(
-            "Hoi $user,",
+            "Hoi $account,",
             "",
             "Je saldo is $balance en dus lager dan toegestaan. Graag meteen aanvullen!",
             "Zodra je een positief saldo hebt, mag je weer producten kopen.",
@@ -33,7 +33,7 @@ sub hook_checkout_done($class, $cart, $user, $transaction_id, @) {
         and $1 lt strftime('%Y-%m-%d_%H:%M:%S', localtime(time() - 14 * 86400))
     ) {
         _box(
-            "Hoi $user,",
+            "Hoi $account,",
             "",
             "Je staat al sinds $1 negatief, dus meer dan 2 weken. Deelnemers",
             "mogen rood staan, maar niet langdurig. Wil je je saldo even aanvullen?",

@@ -33,8 +33,8 @@ sub Tab($self, $method) {
     }
 
     if (delete $completions{USERS}) {
-        for my $name (RevBank::Users::names()) {
-            next if RevBank::Users::is_hidden($name);
+        for my $name (RevBank::Accounts::names()) {
+            next if RevBank::Accounts::is_hidden($name);
 
             $completions{ $name }++;
             $completions{ $1 }++ if $name =~ /^\*(.*)/;

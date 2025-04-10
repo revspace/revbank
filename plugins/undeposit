@@ -12,7 +12,7 @@ sub command :Tab(undeposit) ($self, $cart, $command, @) {
     warn "\n\n\n";
     warn "Enter 'abort' to abort.\n";
 
-    @TAB = grep /^[-+]deposit/, RevBank::Users::names
+    @TAB = grep /^[-+]deposit/, RevBank::Accounts::names
         or return REJECT, "No contras available.";
     print "Available contras:\n", map "  $_\n", sort(@TAB);
 

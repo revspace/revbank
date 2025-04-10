@@ -9,8 +9,8 @@ sub command :Tab(grandtotal) ($self, $cart, $command, @) {
     my $neg = 0;
 
     for my $line (slurp 'revbank.accounts') {
-        my ($username, $balance) = split " ", $line;
-        next if RevBank::Users::is_special($username);
+        my ($account, $balance) = split " ", $line;
+        next if RevBank::Accounts::is_special($account);
 
         my $credit = RevBank::Amount->parse_string($balance) or next;
         $neg += $credit if $credit < 0;

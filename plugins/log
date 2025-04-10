@@ -30,18 +30,18 @@ sub hook_retry($class, $plugin, $reason, $abort, @) {
     _log(RETRY => "[$plugin] $reason");
 }
 
-sub hook_user_created($class, $username, @) {
-    _log(NEWUSER => "$username");
+sub hook_account_created($class, $account, @) {
+    _log(NEWUSER => "$account");
 }
 
-sub hook_user_balance($class, $user, $old, $delta, $new, $transaction_id, @) {
+sub hook_account_balance($class, $account, $old, $delta, $new, $transaction_id, @) {
     my $lost = $delta < 0 ? "lost" : "got";
     $delta = $delta->abs;
     $_ = $_->string("+") for $old, $new;
-    _log(BALANCE => "$transaction_id $user had $old, $lost $delta, now has $new");
+    _log(BALANCE => "$transaction_id $account had $old, $lost $delta, now has $new");
 }
 
-sub hook_checkout($class, $cart, $username, $transaction_id, @) {
+sub hook_checkout($class, $cart, $account, $transaction_id, @) {
     _log(CHECKOUT => "$transaction_id $_") for map $_->as_loggable, $cart->entries;
 }
 

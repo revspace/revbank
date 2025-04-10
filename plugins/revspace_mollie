@@ -57,7 +57,7 @@ sub hook_abort($class, $cart, $reason, @) {
         for @ids;
 }
 
-sub hook_checkout($class, $cart, $user, $transaction_id, @) {
+sub hook_checkout($class, $cart, $account, $transaction_id, @) {
     # Opportunistic; ignore failures. Can't do anything about it anyway.
 
     my @ids = map $_->attribute('mollie_id'), $cart->entries('mollie_id');

@@ -32,9 +32,9 @@ Commas are changed to periods so C<3,50> and C<3.50> both result in C<3.5>.
 
 =head2 parse_user($username)
 
-See C<parse_user> in L<RevBank::Users>.
-
 Returns the canonical username, or undef if the account does not exist.
+
+See C<parse_user> in L<RevBank::Accounts> for the gory details.
 
 =head1 AUTHOR
 

@@ -35,7 +35,7 @@ sub data($self, $cart, $input, @) {
     return ACCEPT;
 }
 
-sub hook_checkout($class, $cart, $username, $transaction_id, @) {
+sub hook_checkout($class, $cart, $account, $transaction_id, @) {
     my @barcodes;
     for my $entry ($cart->entries('is_barcode')) {
         push @barcodes, ($entry->attribute('barcode_data')) x $entry->quantity;

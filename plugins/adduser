@@ -34,7 +34,7 @@ sub username($self, $cart, $name, @) {
             if any sub { $_ eq $name }, $plugin->Tab('command');
     }
 
-    RevBank::Users::create( $name );
+    RevBank::Accounts::create( $name );
 
     return ACCEPT;
 }

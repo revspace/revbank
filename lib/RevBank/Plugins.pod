@@ -145,10 +145,10 @@ Called when user input was given. C<$split_input> is a boolean that is true
 if the input will be split on whitespace, rather than treated as a whole.
 The input MAY be altered by the plugin.
 
-=item hook_add($class, $cart, $user, $item, @)
+=item hook_add($class, $cart, $account, $item, @)
 
 Called when something is added to the cart. Of course, like in C<< $cart->add
->>, C<$user> will be undef if the product is added for the current user.
+>>, C<$account> will be undef if the product is added for the current user.
 
 C<$item> is a reference to a hash with the keys C<amount>, C<description> and
 the metadata given in the C<add> call. Changing the values changes the actual
@@ -156,15 +156,15 @@ item going into the cart!
 
 Be careful to avoid infinite loops if you add new stuff.
 
-=item hook_checkout_prepare($class, $cart, $user, $transaction_id, @)
+=item hook_checkout_prepare($class, $cart, $account, $transaction_id, @)
 
 Called when the transaction is about to be processed. In this phase, the cart and its entries can still be manipulated. If the hook throws an exception, the transaction is aborted.
 
-=item hook_checkout($class, $cart, $user, $transaction_id, @)
+=item hook_checkout($class, $cart, $account, $transaction_id, @)
 
 Called when the transaction is finalized, before accounts are updated. The cart and cart entries must not be changed.
 
-=item hook_checkout_done($class, $cart, $user, $transaction_id, @)
+=item hook_checkout_done($class, $cart, $account, $transaction_id, @)
 
 Called when the transaction is finalized, after accounts were updated.
 
@@ -181,13 +181,13 @@ Called when input was not recognised by any of the plugins.
 
 Called when a plugin fails.
 
-=item hook_user_created($class, $username, @)
+=item hook_account_created($class, $account, @)
 
-Called when a new user account was created.
+Called when a new account was created.
 
-=item hook_user_balance($class, $username, $old, $delta, $new, $transaction_id, @)
+=item hook_account_balance($class, $account, $old, $delta, $new, $transaction_id, @)
 
-Called when a user account is updated.
+Called when an account is updated.
 
 =item hook_products_changed($class, $changes, $mtime, @)
 

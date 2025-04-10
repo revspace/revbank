@@ -21,7 +21,7 @@
     }
 }
 
-sub hook_checkout($class, $cart, $user, $transaction_id, @) {
+sub hook_checkout($class, $cart, $account, $transaction_id, @) {
     # Hack42 for some reason used the dutch word in their revbank1 hack.
     my $filename = -e("revbank.voorraad")
         ? "revbank.voorraad"

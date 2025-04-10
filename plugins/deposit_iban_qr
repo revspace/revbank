@@ -23,7 +23,7 @@ use List::Util qw(sum);
 my $iban = "NL99ABCD1234567890";
 my $beneficiary = "Account Name";
 
-sub hook_checkout($class, $cart, $user, $transaction_id, @) {
+sub hook_checkout($class, $cart, $account, $transaction_id, @) {
     my @entries = $cart->entries("is_deposit");
 
     my $amount = sum map $_->{amount}, grep $_->attribute('method') eq 'iban', @entries;
@@ -41,7 +41,7 @@ sub hook_checkout($class, $cart, $user, $transaction_id, @) {
             "EUR" . $amount,      # Amount
             "",
             "",
-            "rb $user",
+            "rb $account",
             "",
         );
         close $in;

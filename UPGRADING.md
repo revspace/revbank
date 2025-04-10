@@ -19,6 +19,57 @@ supports Perl versions down to 5.32 (2020), which is in Debian 11 "bullseye"
 and 12 "bookworm" becomes the new oldstable, RevBank will begin to require Perl
 5.36 (2022).
 
+# (2025-04-10) RevBank 9.0.0
+
+In many places, the term 'user' has been replaced with the term 'account', to
+more accurately describe the current state of RevBank, which has non-user
+accounts in addition to user accounts.
+
+The term 'account' is now the generic term (visible and hidden accounts), but
+'user' or 'username' is still used where only user accounts (visible accounts)
+are valid.
+
+## Renamed hooks
+
+| Old name            | New name               |
+|---------------------|------------------------|
+| `hook_user_created` | `hook_account_created` |
+| `hook_user_balance` | `hook_account_balance` |
+
+The new hooks are added in addition to the old ones.
+
+The old hooks will be removed in a future version, after 2027-05-01.
+
+## Renamed global identifiers
+
+| Old name                      | New name                            |
+|-------------------------------|-------------------------------------|
+| `RevBank::Users::assert_user` | `RevBank::Accounts::assert_account` |
+| `RevBank::Users`              | `RevBank::Accounts`                 |
+| `$contra->{user}`             | `$contra->{account}`                |
+| `$entry->user`                | `$entry->account`                   |
+
+Custom plugins might be affected by this change, but most won't.
+
+`->{user}` was kept for read-only use, and will be removed after 2027-05-01.
+
+The old functions/method names are aliases for the new ones, and will be
+removed after 2027-05-01.
+
+## Not renamed
+
+The following remain unchanged, as they only or mostly pertain to visible
+accounts, which are primarily intended as user accounts:
+
+- `parse_user()` function
+- `hook_user_info`
+- `adduser` command
+- `users` plugin
+
+The following remain unchanged (for now) because external scripts might break
+if these were changed:
+- `NEWUSER` in the log file
+
 # (2024-12-26) RevBank 8.0.0
 
 Another breaking change, another major version upgrade due to semantic versioning!

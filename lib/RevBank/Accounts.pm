@@ -1,4 +1,4 @@
-package RevBank::Users;
+package RevBank::Accounts;
 
 use v5.32;
 use warnings;
@@ -12,7 +12,7 @@ use List::Util ();
 my $filename = "revbank.accounts";
 
 sub _read() {
-    my @users;
+    my @accounts;
     for my $line (slurp $filename) {
         $line =~ /\S/ or next;
         # Not using RevBank::Prompt::split_input to keep parsing by external
@@ -25,23 +25,23 @@ sub _read() {
             @split = split " ", $line, 2;
         }
 
-        push @users, \@split;
+        push @accounts, \@split;
     }
 
-    my %users;
-    for (@users) {
+    my %accounts;
+    for (@accounts) {
         my $name = lc $_->[0];
 
-        exists $users{$name} and die "$filename: duplicate entry '$name'\n";
-        $users{$name} = $_;
+        exists $accounts{$name} and die "$filename: duplicate entry '$name'\n";
+        $accounts{$name} = $_;
 
         if ($name =~ s/^\*//) {
             # user-accessible special account: support without * prefix
-            exists $users{$name} and die "$filename: duplicate entry '$name'\n";
-            $users{$name} = $_;
+            exists $accounts{$name} and die "$filename: duplicate entry '$name'\n";
+            $accounts{$name} = $_;
         }
     }
-    return \%users;
+    return \%accounts;
 }
 
 sub names() {
@@ -50,25 +50,26 @@ sub names() {
     return List::Util::uniqstr map $_->[0], values %{ _read() };
 }
 
-sub balance($username) {
-    return RevBank::Amount->parse_string( _read()->{ lc $username }->[1] );
+sub balance($account) {
+    return RevBank::Amount->parse_string( _read()->{ lc $account }->[1] );
 }
 
-sub since($username) {
-    return _read()->{ lc $username }->[3];
+sub since($account) {
+    return _read()->{ lc $account }->[3];
 }
 
-sub create($username) {
-    die "Account already exists" if exists _read()->{ lc $username };
+sub create($account) {
+    die "Account already exists" if exists _read()->{ lc $account };
 
     my $now = now();
-    append $filename, "$username 0.00 $now\n";
-    RevBank::Plugins::call_hooks("user_created", $username);
-    return $username;
+    append $filename, "$account 0.00 $now\n";
+    RevBank::Plugins::call_hooks("user_created", $account);  # until 2027-05-01
+    RevBank::Plugins::call_hooks("account_created", $account);
+    return $account;
 }
 
-sub update($username, $delta, $transaction_id) {
-    my $account = assert_user($username) or die "No such user ($username)";
+sub update($account, $delta, $transaction_id) {
+    $account = assert_account($account);
 
     my $old = RevBank::Amount->new(0);
     my $new = RevBank::Amount->new(0);
@@ -99,24 +100,28 @@ sub update($username, $delta, $transaction_id) {
     };
 
     RevBank::Plugins::call_hooks(
+        # Backwards compatibility until 2027-05-01
         "user_balance", $account, $old, $delta, $new, $transaction_id
+    );
+    RevBank::Plugins::call_hooks(
+        "account_balance", $account, $old, $delta, $new, $transaction_id
     );
 }
 
-sub is_hidden($username) {
-    return $username =~ /^[-+]/;
+sub is_hidden($account) {
+    return $account =~ /^[-+]/;
 }
 
-sub is_special($username) {
-    return $username =~ /^[-+*]/;
+sub is_special($account) {
+    return $account =~ /^[-+*]/;
 }
 
 sub parse_user($username, $allow_invalid = 0) {
     return undef if is_hidden($username);
 
-    my $users = _read();
+    my $accounts = _read();
 
-    my $user = $users->{ lc $username } or return undef;
+    my $user = $accounts->{ lc $username } or return undef;
 
     if ($user->[1] =~ /^!(.*)/) {
         warn "$username: Invalid account ($1).\n";
@@ -128,20 +133,31 @@ sub parse_user($username, $allow_invalid = 0) {
     return $user->[0];
 }
 
-sub assert_user($username) {
-    my $users = _read();
+sub assert_account($account) {
+    my $accounts = _read();
 
-    my $user = $users->{ lc $username };
+    my $account_info = $accounts->{ lc $account };
 
-    if ($user) {
-        Carp::croak("Account $username can't be used") if not defined balance $username;
-        return $user->[0];
+    if ($account) {
+        Carp::croak("Account $account can't be used") if not defined balance $account;
+        return $account_info->[0];
     }
 
-    return create $username if is_hidden $username;
+    return create $account if is_hidden $account;
 
-    Carp::croak("No such user ($username)")
+    Carp::croak("No such user ($account)");
 }
+
+# Backwards compatibility until 2027-05-01
+*RevBank::Users::names        = \&RevBank::Accounts::names;
+*RevBank::Users::balance      = \&RevBank::Accounts::balance;
+*RevBank::Users::since        = \&RevBank::Accounts::since;
+*RevBank::Users::create       = \&RevBank::Accounts::create;
+*RevBank::Users::update       = \&RevBank::Accounts::update;
+*RevBank::Users::is_hidden    = \&RevBank::Accounts::is_hidden;
+*RevBank::Users::is_special   = \&RevBank::Accounts::is_special;
+*RevBank::Users::parse_user   = \&RevBank::Accounts::parse_user;
+*RevBank::Users::assert_user  = \&RevBank::Accounts::assert_account;
 
 1;
 

@@ -35,7 +35,7 @@ sub _inform($unresolved, $username, $skip_print = 0) {
 		my $broke_users = $entry->attribute('nomoney_users');
 
 		for my $account (sort keys %$broke_users) {
-			my $balance = RevBank::Users::balance($account);
+			my $balance = RevBank::Accounts::balance($account);
 			
 			my $m = sprintf(
 				"%s have %s",
@@ -60,9 +60,9 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 
 	for my $account (keys %$deltas) {
 		next if $deltas->{$account} > 0;
-		next if RevBank::Users::is_special($account);
+		next if RevBank::Accounts::is_special($account);
 
-		my $old = $balances{$account} = RevBank::Users::balance($account);
+		my $old = $balances{$account} = RevBank::Accounts::balance($account);
 		my $new = $old + $deltas->{$account};
 
 		next if $new >= 0 or $new > $old;
@@ -73,14 +73,14 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 			next if none { $plugin eq $_ } @deny_plugins;
 
 			my @contra_users = uniqstr sort grep {
-				not RevBank::Users::is_special($_)
+				not RevBank::Accounts::is_special($_)
 				and $_ ne $username
 			} map {
-				$_->{user}
+				$_->{account}
 			} $entry->contras;
 
 			next if $allow_multi_user and @contra_users > 1;
-			next if none { $account eq $_ } $entry->user // $username, @contra_users;
+			next if none { $account eq $_ } $entry->account // $username, @contra_users;
 
 			$unresolved->add_entry($entry);
 		}
@@ -112,7 +112,7 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 			$entry->attribute('nomoney_users', \%broke_users);
 
 			for my $account (keys %$trial_deltas) {
-				next if RevBank::Users::is_special($account);
+				next if RevBank::Accounts::is_special($account);
 				next if $trial_deltas->{$account} > 0;
 
 				my $trial_balance = $resolved_balances{$account} + $trial_deltas->{$account};
@@ -144,11 +144,11 @@ sub hook_abort($class, $cart, @) {
 	return;
 }
 
-sub hook_checkout_done($class, $cart, $username, $transaction_id, @) {
+sub hook_checkout_done($class, $cart, $account, $transaction_id, @) {
 	my $n = $unresolved{$cart}->size or return;
 	print "\n";
 
-	_inform($unresolved{$cart}, $username);
+	_inform($unresolved{$cart}, $account);
 	delete $unresolved{$cart};
 
 	my $message = $n == 1 ? "THIS ENTRY WAS IGNORED" : "THESE ENTRIES WERE IGNORED";

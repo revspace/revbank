@@ -15,7 +15,7 @@ sub command :Tab(tail) ($self, $cart, $command, @) {
 
         my ($dt, $c, $t_id, $u, $dir, $qty, $amount, undef, $desc) = split " ", $_, 9;
         $c eq 'CHECKOUT' or next;  # real check after expensive split
-        RevBank::Users::is_hidden($u) and next;
+        RevBank::Accounts::is_hidden($u) and next;
 
         shift @lines if @lines == $n;
 

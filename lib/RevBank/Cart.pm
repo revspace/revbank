@@ -7,7 +7,7 @@ use experimental 'signatures';  # stable since v5.36
 use Carp ();
 use List::Util ();
 use RevBank::Global;
-use RevBank::Users;
+use RevBank::Accounts;
 use RevBank::FileIO;
 use RevBank::Cart::Entry;
 
@@ -84,11 +84,11 @@ sub prohibit_checkout($self, $bool, $reason) {
     }
 }
 
-sub deltas($self, $user) {
-    my %deltas = ($user => RevBank::Amount->new(0));
+sub deltas($self, $account) {
+    my %deltas = ($account => RevBank::Amount->new(0));
 
     for my $entry (@{ $self->{entries} }) {
-        $deltas{$_->{user}} += $_->{amount} * $entry->quantity
+        $deltas{$_->{account}} += $_->{amount} * $entry->quantity
             for $entry, $entry->contras;
     }
 
@@ -96,7 +96,7 @@ sub deltas($self, $user) {
 }
 
 
-sub checkout($self, $user) {
+sub checkout($self, $account) {
     if ($self->{prohibited}) {
         die RevBank::Cart::CheckoutProhibited->new(
             "Cannot complete transaction: $self->{prohibited}"
@@ -108,13 +108,13 @@ sub checkout($self, $user) {
         die "Refusing to finalize deficient transaction";
     }
 
-    $user = RevBank::Users::assert_user($user);
+    $account = RevBank::Accounts::assert_account($account);
 
     my $entries = $self->{entries};
 
     for my $entry (@$entries) {
         $entry->sanity_check;
-        $entry->user($user);
+        $entry->account($account);
     }
 
     RevBank::FileIO::with_lock {
@@ -133,28 +133,28 @@ sub checkout($self, $user) {
             $transaction_id = time() - 1300000000;
         }
 
-        RevBank::Plugins::call_hooks("checkout_prepare", $self, $user, $transaction_id)
+        RevBank::Plugins::call_hooks("checkout_prepare", $self, $account, $transaction_id)
             or die "Refusing to finalize after failed checkout_prepare";
 
         for my $entry (@$entries) {
             $entry->sanity_check;
-            $entry->user($user) if not $entry->user;
+            $entry->account($account) if not $entry->account;
         }
 
         RevBank::FileIO::spurt($fn, ++(my $next_id = $transaction_id)) unless $legacy_id;
 
-        RevBank::Plugins::call_hooks("checkout", $self, $user, $transaction_id);
+        RevBank::Plugins::call_hooks("checkout", $self, $account, $transaction_id);
 
-        my $deltas = $self->deltas($user);
+        my $deltas = $self->deltas($account);
 
         for my $account (reverse sort keys %$deltas) {
             # The reverse sort is a lazy way to make the "-" accounts come last,
             # which looks nicer with the "cash" plugin.
-            RevBank::Users::update($account, $deltas->{$account}, $transaction_id)
+            RevBank::Accounts::update($account, $deltas->{$account}, $transaction_id)
                 if $deltas->{$account} != 0;
         }
 
-        RevBank::Plugins::call_hooks("checkout_done", $self, $user, $transaction_id);
+        RevBank::Plugins::call_hooks("checkout_done", $self, $account, $transaction_id);
 
         sleep 1;  # look busy
 

@@ -10,7 +10,7 @@ Since version 2, RevBank is loosely modeled after C<qpsmtpd>, which is an SMTP s
 
 RevBank is interactive and stateful. Global state is provided in the form of a "shopping cart", a L<RevBank::Cart> object, which represents the ongoing, unfinished, transaction. The terms "cart", "unfinished transaction", and "current transaction" generally all refer to the same thing in the context of RevBank.
 
-In addition, RevBank provides the concept of accounts through L<RevBank::Users>. There are user accounts and internal accounts; internal accounts are used as contra accounts for I<double-entry bookkeeping>, and are hidden from the user interface. Accounts only have a name, a balance, and some timestamps; things like transaction histories are provided by plugins.
+In addition, RevBank provides the concept of accounts through L<RevBank::Accounts>. There are user accounts and hidden accounts; hidden accounts are used as contra accounts for I<double-entry bookkeeping>, and are hidden from the user interface. Accounts only have a name, a balance, and some timestamps; things like transaction histories are provided by plugins.
 
 Notably, the RevBank core does B<not> have any notion of "products". Support for buying products through RevBank is provided by plugins, like the included C<products> and C<market> plugins. It is easy to add another source of products by writing another plugin. A plugin contains arbitrary code and can do anything, including querying external resources.
 

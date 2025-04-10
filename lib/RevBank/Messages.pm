@@ -12,7 +12,7 @@ use base 'RevBank::Plugin';
 
 BEGIN {
     RevBank::Plugins::register("RevBank::Messages");
-    *hidden = \&RevBank::Users::is_hidden;
+    *hidden = \&RevBank::Accounts::is_hidden;
 }
 
 
@@ -41,7 +41,7 @@ sub hook_cart_changed($class, $cart, @) {
     }
 }
 
-sub hook_checkout($class, $cart, $user, $transaction_id, @) {
+sub hook_checkout($class, $cart, $account, $transaction_id, @) {
     if ($cart->changed) {
         say "Done:";
         $cart->display;
@@ -66,8 +66,8 @@ sub hook_reject($class, $plugin, $reason, $abort, @) {
     say $abort ? $reason : "$reason Enter 'abort' to abort.";
 }
 
-sub hook_user_balance($class, $username, $old, $delta, $new, @) {
-    return if hidden $username and not $ENV{REVBANK_DEBUG};
+sub hook_account_balance($class, $account, $old, $delta, $new, @) {
+    return if hidden $account and not $ENV{REVBANK_DEBUG};
 
     my $sign = $delta->cents >= 0 ? '+' : '-';
     my $rood = $new->cents < 0 ? '31;' : '';
@@ -75,13 +75,13 @@ sub hook_user_balance($class, $username, $old, $delta, $new, @) {
     my $warn = $new->cents < -2300 ? " \e[5;1m(!!)\e[0m" : "";
 
     $_ = $_->string("+") for $old, $new;
-    printf "New balance for $username: $old $sign $abs = \e[${rood}1m$new\e[0m$warn\n",
+    printf "New balance for $account: $old $sign $abs = \e[${rood}1m$new\e[0m$warn\n",
 }
 
-sub hook_user_created($class, $username, @) {
-    return if hidden $username and not $ENV{REVBANK_DEBUG};
+sub hook_account_created($class, $account, @) {
+    return if hidden $account and not $ENV{REVBANK_DEBUG};
 
-    say "New account '$username' created.";
+    say "New account '$account' created.";
 }
 
 1;

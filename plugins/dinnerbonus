@@ -5,7 +5,7 @@ HELP "dinnerbonus" => "Add fee for cooking supplies";
 my $bonus = 1.00;
 
 sub command :Tab(kookbonus,dinnerbonus) ($self, $cart, $command, @) {
-    my @users = map $_->{user}, map $_->contras, $cart->entries('is_take');
+    my @users = map $_->{account}, map $_->contras, $cart->entries('is_take');
 
     (@users and $command eq 'kookpotje')  # common mistake promoted to feature
         or $command eq 'kookbonus'

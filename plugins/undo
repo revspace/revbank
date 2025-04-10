@@ -13,11 +13,11 @@ sub command :Tab(undo) ($self, $cart, $command, @) {
 
     my @log;
     for my $line (slurp $filename) {
-        my ($tid, $user, $delta, $dt) = split " ", $line;
+        my ($tid, $account, $delta, $dt) = split " ", $line;
         if (@log and $log[-1]{tid} eq $tid) {
-            push @{ $log[-1]{deltas} }, [ $user, $delta ];
+            push @{ $log[-1]{deltas} }, [ $account, $delta ];
         } else {
-            push @log, { tid => $tid, dt => $dt, deltas => [ [ $user, $delta ] ] };
+            push @log, { tid => $tid, dt => $dt, deltas => [ [ $account, $delta ] ] };
         }
     }
 
@@ -49,11 +49,11 @@ sub undo :Tab(&tab) ($self, $cart, $tid, @) {
     return with_lock {
         for my $line (slurp $filename) {
             if ($line =~ /^\Q$tid\E\s/) {
-                my (undef, $user, $delta) = split " ", $line;
+                my (undef, $account, $delta) = split " ", $line;
 
                 $entry ||= $cart->add(0, $description, { undo_transaction_id => $tid });
 
-                $entry->add_contra($user, $delta, "Undo $tid");
+                $entry->add_contra($account, $delta, "Undo $tid");
             }
         }
 
@@ -68,8 +68,8 @@ sub undo :Tab(&tab) ($self, $cart, $tid, @) {
     };
 }
 
-sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
-    $username eq '-undo' or return;
+sub hook_checkout_prepare($class, $cart, $account, $transaction_id, @) {
+    $account eq '-undo' or return;
 
     for my $entry ($cart->entries) {
         my $undo_tid = $entry->attribute('undo_transaction_id')
@@ -85,8 +85,8 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
     }
 }
 
-sub hook_user_balance($class, $username, $old, $delta, $new, $transaction_id, @) {
+sub hook_account_balance($class, $account, $old, $delta, $new, $transaction_id, @) {
     return if $doing_undo;  # don't allow undoing undos
 
-    append $filename, join(" ", $transaction_id, $username, -$delta, now()), "\n";
+    append $filename, join(" ", $transaction_id, $account, -$delta, now()), "\n";
 }

@@ -125,7 +125,7 @@ sub hook_undo($class, $cart) {
 		# Undo deposit refund: prohibit
 		for my $contra ($entry->contras) {
 			next if $contra->{amount} < 0;
-			next if List::Util::none { $contra->{user} eq $_ } _addon_accounts;
+			next if List::Util::none { $contra->{account} eq $_ } _addon_accounts;
 
 			return ABORT, "Sorry, deposit refunds cannot be undone.";
 		}
@@ -151,14 +151,14 @@ sub _handle_undo($cart) {
 	}
 }
 
-sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
-	if ($username eq '-undo') {
+sub hook_checkout_prepare($class, $cart, $account, $transaction_id, @) {
+	if ($account eq '-undo') {
 		_handle_undo($cart);
 		return;
 	}
 
 	# Read data
-	my $tokens_by_type = _read->{lc $username};
+	my $tokens_by_type = _read->{lc $account};
 	my $is_new = !defined $tokens_by_type;
 	$tokens_by_type = {} if $is_new;
 	my $time_is_reliable = _time_is_reliable;
@@ -235,15 +235,15 @@ sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
 	# Store data
 	call_hooks(
 		"log_info",
-		"statiegeld_tokens: ${\scalar @created } created for $username: @created"
+		"statiegeld_tokens: ${\scalar @created } created for $account: @created"
 	) if @created;
 
 	call_hooks(
 		"log_info",
-		"statiegeld_tokens: ${\scalar @used } used by $username: @used"
+		"statiegeld_tokens: ${\scalar @used } used by $account: @used"
 	) if @used;
 
-	_write $username, $tokens_by_type, $is_new if $tokens_changed;
+	_write $account, $tokens_by_type, $is_new if $tokens_changed;
 
 	return ABORT if %warnings_by_type and not $cart->size;
 
