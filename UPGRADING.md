@@ -21,6 +21,10 @@ and 12 "bookworm" becomes the new oldstable, RevBank will begin to require Perl
 
 # (2025-04-10) RevBank 9.0.0
 
+There are no breaking changes in this release, but the old names mentioned
+below are now deprecated. All custom plugins that use these identifiers need to
+be updated eventually.
+
 In many places, the term 'user' has been replaced with the term 'account', to
 more accurately describe the current state of RevBank, which has non-user
 accounts in addition to user accounts.
@@ -52,6 +56,8 @@ The old hooks will be removed in a future version, after 2027-05-01.
 Custom plugins might be affected by this change, but most won't.
 
 `->{user}` was kept for read-only use, and will be removed after 2027-05-01.
+(This is technically a breaking change, but changing that value from a plugin
+would probably break things anyway.)
 
 The old functions/method names are aliases for the new ones, and will be
 removed after 2027-05-01.
