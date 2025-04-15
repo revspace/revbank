@@ -1,4 +1,6 @@
+.revbank.global-lock
 .revbank.log
+.revbank.nextid
 .revbank.undo
 revbank.voorraad
 revbank.stock
