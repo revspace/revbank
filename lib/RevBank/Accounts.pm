@@ -9,7 +9,7 @@ use RevBank::Plugins;
 use Carp ();
 use List::Util ();
 
-my $filename = "revbank.accounts";
+my $filename = "accounts";
 
 sub _read() {
     my @accounts;

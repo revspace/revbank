@@ -2,7 +2,7 @@
 
 HELP1 "undo <transactionID>" => "Undo a transaction";
 
-my $filename = ".revbank.undo";
+my $filename = "undo";
 
 my @TAB;
 

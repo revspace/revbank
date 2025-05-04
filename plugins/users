@@ -29,7 +29,7 @@ sub list($self) {
         lc($a) cmp lc($b)
     } grep {
         !/^[-+]/
-    } slurp("revbank.accounts");
+    } slurp("accounts");
 
     RevBank::TextEditor::pager("RevBank account list", $list);
     return ACCEPT;
@@ -40,7 +40,7 @@ sub shame($self) {
         (split " ", $a)[1] <=> (split " ", $b)[1]
     } grep {
         / -/ && !/^[-+]/
-    } slurp("revbank.accounts");
+    } slurp("accounts");
 
     $list =~ s/( -[\d.]+)/\e[31;1m$1\e[0m/g;
     print $list;
@@ -50,7 +50,7 @@ sub shame($self) {
 sub _grep($user) {
     $user = lc $user;
     my @lines;
-    open my $fh, "<", ".revbank.log" or die $!;
+    open my $fh, "<", "$ENV{REVBANK_DATADIR}/log" or die $!;
 
     while (defined($_ = readline $fh)) {
         length($_) > 28 or next;

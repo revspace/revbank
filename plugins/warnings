@@ -1,6 +1,6 @@
 #!perl
 
-# The file format for 'revbank.warnings' is simply two whitespace separated
+# The file format for the 'warnings' file is simply two whitespace separated
 # columns: product id (or /regex/ for descriptions) and the warning text.
 
 use Time::HiRes qw(sleep);
@@ -25,7 +25,7 @@ sub _read_warnings() {
             my ($id, $desc) = @_;
             (grep { $_ eq $id } split /,/, $products) ? $text : ();
         }
-    } grep /\S/, grep !/^\s*#/, slurp 'revbank.warnings';
+    } grep /\S/, grep !/^\s*#/, slurp 'warnings';
 }
 
 sub hook_add_entry($class, $cart, $entry, @) {

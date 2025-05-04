@@ -2,7 +2,7 @@
 
 HELP "market" => "Edit market list";
 
-my $filename = 'revbank.market';
+my $filename = 'market';
 
 sub _read_market() {
     my %market;

@@ -1,0 +1,6 @@
+#                              Price =
+# Seller   Barcode         Seller + Space  Description
+
+demo       market_example  6.00    2.00    Turbo Encabulator Pico
+# The demo line won't work until a user with the name `demo` exists.
+

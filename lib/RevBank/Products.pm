@@ -10,19 +10,19 @@ use Exporter qw(import);
 our @EXPORT = qw(read_products);
 
 # Note: the parameters are subject to change
-sub read_products($filename = "revbank.products", $default_contra = "+sales/products") {
+sub read_products($filename = "products", $default_contra = "+sales/products") {
     state %caches;   # $filename => \%products
     state %mtimes;  # $filename => mtime
 
     my $mtime = \$mtimes{$filename};
     my $cache = $caches{$filename} ||= {};
-    return $cache if $$mtime and (stat $filename)[9] == $$mtime;
+    return $cache if $$mtime and mtime($filename) == $$mtime;
 
     my %products;
     my $linenr = 0;
     my $warnings = 0;
 
-    $$mtime = (stat $filename)[9];
+    $$mtime = mtime $filename;
     for my $line (slurp $filename) {
         $linenr++;
 
@@ -184,7 +184,6 @@ sub read_products($filename = "revbank.products", $default_contra = "+sales/prod
     }
 
     my @changes;
-
     if (%$cache) {
         for my $new (values %products) {
             next if $new->{is_alias};

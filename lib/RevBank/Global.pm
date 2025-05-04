@@ -30,6 +30,7 @@ sub import {
     *{"$caller\::rewrite"}      = \&RevBank::FileIO::rewrite;
     *{"$caller\::append"}       = \&RevBank::FileIO::append;
     *{"$caller\::with_lock"}    = \&RevBank::FileIO::with_lock;
+    *{"$caller\::mtime"}        = \&RevBank::FileIO::mtime;
     *{"$caller\::parse_user"}   = \&RevBank::Accounts::parse_user;
     *{"$caller\::parse_amount"} = sub ($amount) {
         defined $amount or return undef;

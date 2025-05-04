@@ -1,0 +1,38 @@
+#!perl
+
+my @git = ("git", -C => $ENV{REVBANK_DATADIR});
+
+if (not -e "$ENV{REVBANK_DATADIR}/.git") {
+    open my $fh, ">", "$ENV{REVBANK_DATADIR}/.gitignore";
+    print $fh "log\n";
+    print $fh "undo\n";
+    print $fh ".global-lock\n";
+    print $fh ".write.*\n";
+    print $fh ".*.sw?\n";
+    print $fh "*~\n";
+    close $fh;
+
+    system @git, "init";
+    system @git, "add", ".";
+    system @git, "commit", "--message", "Initial commit";
+}
+
+sub hook_products_changed($class, $changes, $mtime, @) {
+    system(@git, "commit", "--quiet", "--message", "Products changed", "products") == 0
+        or warn "(Please tell the sysadmin that git is failing in revbank.)\n";
+    system @git, "gc", "--quiet";
+}
+
+sub hook_checkout_prepare($class, $cart, $account, $transaction_id, @) {
+    return if system(@git, "diff", "--quiet") == 0;
+    system @git, "commit", "--quiet", "--all", "--message", "Other changes";
+}
+
+sub hook_checkout_done($class, $cart, $account, $transaction_id, @) {
+    my $msg = "Transaction $transaction_id ($account)";
+    $msg =~ s/[^\x20-\x7E]//g;
+    $msg =~ s/'//g;
+
+    system(@git, "commit", "--quiet", "--all", "--message", $msg) == 0
+        or warn "(Please tell the sysadmin that git is failing in revbank.)\n";
+}

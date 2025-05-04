@@ -12,7 +12,7 @@ the empty container, you spend the token when getting your deposit back.
 Tokens expire and are (currently) spent in FIFO order per type. The token type
 corresponds to the product_id of the matched addon.
 
-The tokens are stored in a file called C<revbank.statiegeld> which is not
+The tokens are stored in a file called C<statiegeld> which is not
 intended to be edited externally.
 
 =head2 User interaction

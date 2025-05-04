@@ -6,7 +6,7 @@ sub command :Tab(tail) ($self, $cart, $command, @) {
     my $n = (`tput lines 2>/dev/null` || 13) - 3;
     my $c = (`tput cols 2>/dev/null` || 80) + 0;
 
-    open my $fh, "<", ".revbank.log" or die $!;
+    open my $fh, "<", "log" or die $!;
     my @lines;
 
     while (defined($_ = readline $fh)) {

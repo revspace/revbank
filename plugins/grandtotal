@@ -8,7 +8,7 @@ sub command :Tab(grandtotal) ($self, $cart, $command, @) {
     my $pos = 0;
     my $neg = 0;
 
-    for my $line (slurp 'revbank.accounts') {
+    for my $line (slurp 'accounts') {
         my ($account, $balance) = split " ", $line;
         next if RevBank::Accounts::is_special($account);
 

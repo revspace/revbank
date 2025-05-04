@@ -9,8 +9,10 @@ use Fcntl qw(:flock);
 use Carp qw(croak);
 use Time::HiRes qw(sleep);
 
-my $tempfn = ".revbank.$$";
-my $lockfn = ".revbank.global-lock";
+my $DATADIR = \($ENV{REVBANK_DATADIR} ||= "$ENV{HOME}/.revbank");
+
+my $tempfn = ".write.$$";
+my $lockfn = ".global-lock";
 my $lockfh;
 my $lockcount = 0;
 
@@ -21,7 +23,7 @@ sub get_lock() {
 	}
 	die "Fatal inconsistency" if $lockcount;
 
-	open $lockfh, ">", $lockfn;
+	open $lockfh, ">", "$$DATADIR/$lockfn";
 	my $attempt = 1;
 
 	my $debug = !!$ENV{REVBANK_DEBUG};
@@ -41,7 +43,7 @@ sub get_lock() {
 	}
 
 
-	croak "Could not acquire lock on $lockfn; file access failed";
+	croak "Could not acquire lock on $$DATADIR/$lockfn; file access failed";
 }
 
 sub release_lock() {
@@ -81,24 +83,28 @@ sub with_lock :prototype(&) ($code) {
 
 sub slurp($fn) {
 	return with_lock {
-		local $/ = wantarray ? "\n" : undef;
-		open my $fh, "<", $fn;
-		return readline $fh;
+		return _slurp("$$DATADIR/$fn");
 	}
+}
+
+sub _slurp($fn) {
+	local $/ = wantarray ? "\n" : undef;
+	open my $fh, "<", $fn;
+	return readline $fh;
 }
 
 sub spurt($fn, @data) {
 	return with_lock {
-		open my $out, ">", $tempfn;
+		open my $out, ">", "$$DATADIR/$tempfn";
 		print $out @data;
 		close $out;
-		rename $tempfn, $fn;
+		rename "$$DATADIR/$tempfn", "$$DATADIR/$fn";
 	};
 }
 
 sub append($fn, @data) {
 	return with_lock {
-		open my $out, ">>", $fn;
+		open my $out, ">>", "$$DATADIR/$fn";
 		print $out @data;
 		close $out;
 	};
@@ -106,8 +112,8 @@ sub append($fn, @data) {
 
 sub rewrite($fn, $sub) {
 	return with_lock {
-		open my $in, "<", $fn;
-		open my $out, ">", $tempfn;
+		open my $in, "<", "$$DATADIR/$fn";
+		open my $out, ">", "$$DATADIR/$tempfn";
 		while (defined(my $line = readline $in)) {
 			local $_ = $line;
 			my $new = $sub->($line);
@@ -115,8 +121,12 @@ sub rewrite($fn, $sub) {
 		}
 		close $out;
 		close $in;
-		rename $tempfn, $fn;
+		rename "$$DATADIR/$tempfn", "$$DATADIR/$fn";
 	};
+}
+
+sub mtime($fn) {
+	return +(stat "$$DATADIR/$fn")[9];
 }
 
 1;

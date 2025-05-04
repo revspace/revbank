@@ -4,25 +4,25 @@ vat - RevBank plugin for keeping a VAT administration
 
 =head1 SYNOPSIS
 
-C<revbank.vat>
+C<$DATADIR/vat>
 
 	+sales/products         +btw/laag 9
 	+sales/products/hoogbtw +btw/hoog 21
 	+sales/market           +btw/hoog 21
 	lasercutter             +btw/hoog 21
 
-C<revbank.products>
+C<$DATADIR/products>
 
 	123123123   1.00      "Example product that gets the default contra"
 	42424242    1.00@+sales/products/hoogbtw  "Example with high VAT rate"
 
 =head1 DESCRIPTION
 
-With this plugin, and a properly configured C<revbank.vat> file, RevBank will
+With this plugin, and a properly configured C<vat> file, RevBank will
 subtract the appropriate VAT amount from the revenue account and collect that
 in the indicated VAT accounts.
 
-C<revbank.vat> is a whitespace separated file with three columns. The first
+C<vat> is a whitespace separated file with three columns. The first
 column is the account to match, the second column is the account to collect VAT
 in, the third is the VAT rate (percentage).
 

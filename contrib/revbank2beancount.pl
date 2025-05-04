@@ -79,7 +79,8 @@ sub rb2bc {
 	return "Liabilities:$_";
 }
 
-open my $fh, $fn || ".revbank.log";
+my $datadir = $ENV{REVBANK_DATADIR} || "$ENV{HOME}/.revbank";
+open my $fh, $fn || "$datadir/log";
 
 while (defined(my $line = readline $fh)) {
 	if ($line =~ /CHECKOUT/) {

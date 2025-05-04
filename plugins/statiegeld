@@ -100,7 +100,7 @@ sub hook_added_entry ($class, $cart, $entry, @) {
 	}
 	if ($entry->attribute('plugin') eq 'products') {
 		my $id = $class->id;
-		die "Configuration error: the '$id' plugin must be *before* the 'products' plugin in revbank.plugins.\n";
+		die "Configuration error: the '$id' plugin must be *before* the 'products' plugin in $ENV{REVBANK_DATADIR}/plugins.\n";
 	}
 }
 

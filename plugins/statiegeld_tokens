@@ -5,7 +5,7 @@ use RevBank::Products;
 HELP void => "Destroy deposit tokens";
 
 my $ttl = 100 * 86400;  # expiry time in seconds
-my $filename = "revbank.statiegeld";
+my $filename = "statiegeld";
 
 # Token format: token_type,time,expiry_time,product_id,transaction_id,seq
 # - token_type (also just "type") is the id of the product addon.

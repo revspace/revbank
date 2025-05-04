@@ -1,6 +1,6 @@
 #!perl
 
-my $filename = ".revbank.log";
+my $filename = "log";
 
 sub _log($tag, @message) {
     @message = ("") if not @message;

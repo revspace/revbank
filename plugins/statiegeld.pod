@@ -4,7 +4,7 @@ statiegeld - RevBank plugin for return deposits
 
 =head1 SYNOPISIS
 
-revbank.products:
+$REVBANK_DATADIR/products:
 
 	clubmate     1.40                   "Club-Mate bottle" +sb
 	cola         0.90                   "Cola can" +sc
@@ -36,7 +36,7 @@ used.
 
 =head2 Configuration
 
-The statiegeld plugin recognises products from C<revbank.products> by matching
+The statiegeld plugin recognises products from the file C<products> by matching
 the contra accounts (the C<+statiegeld> in C<0.15@+statiegeld>) of the
 product's addons against a list of known accounts.
 

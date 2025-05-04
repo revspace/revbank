@@ -118,7 +118,7 @@ sub checkout($self, $account) {
     }
 
     RevBank::FileIO::with_lock {
-        my $fn = ".revbank.nextid";
+        my $fn = "nextid";
         my $transaction_id = eval { RevBank::FileIO::slurp($fn) };
         my $legacy_id = 0;
 

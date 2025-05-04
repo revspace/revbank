@@ -19,6 +19,107 @@ supports Perl versions down to 5.32 (2020), which is in Debian 11 "bullseye"
 and 12 "bookworm" becomes the new oldstable, RevBank will begin to require Perl
 5.36 (2022).
 
+# (2025-05-TBD) RevBank 10.0.0
+
+Major breaking change!
+
+Instead of dumping many files in the working directory, RevBank now uses a
+(configurable) data directory. This is `~/.revbank` by default but it can be
+overridden with the environment variable `REVBANK_DATADIR` or `--datadir` on
+the command line. (If both are specified, the latter overrules the former.)
+
+This change makes it easier to make backups of just the data files, and allows
+running `revbank` from any working directory.
+
+## Create a data directory
+
+Create a directory named `.revbank` in the home directory of the user account
+that runs `revbank`:
+
+```sh
+mkdir ~/.revbank
+```
+
+If this already exists, you've probably executed `revbank` before reading these
+instructions. Check that the files are just the example files that RevBank put
+there, and just delete them.
+
+## Rename data files
+
+To migrate your existing files, execute from the directory that has them:
+
+```sh
+mv revbank.accounts   ~/.revbank/accounts
+mv revbank.market     ~/.revbank/market
+mv revbank.plugins    ~/.revbank/plugins
+mv revbank.products   ~/.revbank/products
+mv revbank.sales      ~/.revbank/revspace_mqtt
+mv revbank.statiegeld ~/.revbank/statiegeld
+mv revbank.stock      ~/.revbank/stock
+mv revbank.vat        ~/.revbank/vat
+mv revbank.voorraad   ~/.revbank/stock  # overwrites .stock if both exist
+mv revbank.warnings   ~/.revbank/warnings
+mv .revbank.nextid    ~/.revbank/nextid
+mv .revbank.oepl      ~/.revbank/oepl
+mv .revbank.undo      ~/.revbank/undo
+mv .revbank.log       ~/.revbank/log
+rm .revbank.global-lock
+```
+Some of these only exist if you use certain plugins, so don't worry about error
+messages saying the files don't exist.
+
+Note, if you've customized/forked the `revspace_mqtt` plugin, that its filename
+has changed to match the name of the plugin.
+
+## If the log file was append-only
+
+If you get *Operation not permitted* on `.revbank.log` and/or `.revbank.undo`,
+you probably have protected them with `chattr +a` to only allow appending. Use
+`chattr -a` (as root!) to remove the protection, then move the file, then `+a`
+it again.
+
+## If you used git before
+
+Many RevBank installations had the data files in git, and this change is there
+to make that easier and to disentangle the data files from the code repository.
+
+Unfortunately, moving the existing git repo can be tough and takes some real
+git experience to do correctly, because everyone's repo probably looks a bit
+different. But in general: `git mv revbank.foo foo` instead of `mv revbank.foo
+~/.revbank/foo`, then move both `.git` and the actual revbank files to the new
+directory.
+
+It may be easier to start over, using the new git plugin:
+
+## Use git
+
+Many spaces had their own plugin for committing changes to git. RevBank now
+comes with a standard plugin, `git`, that does this in a more generic way. You
+may want to enable it by adding it to `~/.revbank/plugins`.
+
+Note: this plugin does not `git push` to a remote repository. You could do that
+with a cron job or a systemd timer, which also spares the RevBank end user from
+long delays if the network is borked.
+
+Note: this plugin creates a `.gitignore` file to ignore the log files because
+it is generally not advised to keep log files in a revision control system. If
+you do want to keep the log files in git, edit `~/.revbank/.gitignore` after it
+has been created. It's probably better to use a real backup solution, not
+(just) git.
+
+## Update external things that use the RevBank data files
+
+Don't forget to update any backup configuration, scripts, and other things that
+use the RevBank data files.
+
+## Update custom plugins
+
+The functions `slurp` and `spurt` will now prefix the path of the datadir to
+the given filename. Previously they worked from the current working directory.
+
+If you're reading or writing any of the files listed above, those needs to be
+changed.
+
 # (2025-04-10) RevBank 9.0.0
 
 There are no breaking changes in this release, but the old names mentioned

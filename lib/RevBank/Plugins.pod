@@ -8,15 +8,16 @@ RevBank itself consists of a simple command line interface and a really brain
 dead shopping cart. All transactions, even deposits and withdrawals, are
 handled by plugins.
 
-Plugins are defined in the C<revbank.plugins> file. Each plugin is a Perl
-source file in the C<plugins> directory. Plugins are always iterated over in
-the order they were defined in.
+Plugins are defined in the C<plugins> file in the C<DATADIR>. Each plugin is a
+Perl source file in the C<PLUGINDIR> (typically, the `plugins` directory in the
+revbank code git repository). Plugins are always iterated over in the order
+they were defined in.
 
 =head2 Methods
 
 =head3 RevBank::Plugins::load
 
-Reads the C<revbank.plugins> file and load the plugins.
+Reads the C<plugins> file and load the plugins.
 
 =head3 RevBank::Plugins->new
 

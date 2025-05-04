@@ -2,7 +2,7 @@
 use RevBank::Products qw(read_products);
 use FindBin qw($Bin);
 
-my $fn = ".revbank.oepl";
+my $fn = "oepl";
 my $hex = '[0-9A-F]';
 my $mac_regex = qr/^(?:$hex {12}|$hex {14}|$hex {16})$/x;
 
@@ -67,7 +67,7 @@ sub hook_products_changed($class, $changes, $mtime, @) {
 	-f $fn or return;
 
 	return with_lock {
-		$mtime >= (stat $fn)[9] or return;
+		$mtime >= mtime($fn) or return;
 
 		my @macs;
 		my %deleted;

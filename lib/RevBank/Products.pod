@@ -30,7 +30,7 @@ C<Products.pm> file after the line that is commented C<# HERE> for a list.
 =head1 CONFIGURATION
 
 The configuration for this plugin lives in a text file called
-C<revbank.products>.
+C<products>.
 
 Whitespace at the beginning or end of a line are ignored. Blank lines are
 ignored. Comments are lines that start with C<#> and are also ignored. Note
@@ -49,8 +49,8 @@ The first product id on the line is considered canonical, the rest are aliases.
 
 Note: if a product id is the same as another RevBank command (e.g. a username),
 the first plugin that accepts the command will "win"; the precedence order is
-defined by the C<revbank.plugins> configuration file. However, when a product
-id appears multiple times within C<revbank.products>, the I<last> one is used.
+defined by the C<plugins> configuration file. However, when a product
+id appears multiple times within C<products>, the I<last> one is used.
 
 Product ids that begin with C<+> can only be used as addons. When entered as
 user input, it will be ignored by the C<products> plugin.
@@ -72,7 +72,7 @@ used.
 and revenue accounts begin with C<+>, asset and expense accounts begin with
 C<->. The C<+> accounts typically grow larger over time, while C<-> accounts
 typically go negative. In general, you would use a C<+> account in
-C<revbank.products>. User accounts are liability accounts.)
+C<products>. User accounts are liability accounts.)
 
 =head2 Description
 
@@ -103,7 +103,7 @@ In this example, the final price of the example product will be 4.20. It is not
 possible to buy the first thing separate, but it is possible to buy the second
 thing separate.
 
-The addon product must be specified in C<revbank.products>; market products
+The addon product must be specified in C<products>; market products
 cannot be used as addons.
 
 When a product has addons, it becomes a compound product. This can be used to

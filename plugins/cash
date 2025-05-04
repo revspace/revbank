@@ -5,7 +5,7 @@
 # between cash deposits and other deposit methods.
 
 # This plugin should be loaded *before* the 'stock' plugin in
-# the 'revbank.plugins' configuration file.
+# the 'plugins' configuration file.
 
 HELP1 "cash" => "Checkout without a user account";
 

@@ -1,6 +1,6 @@
 sub _read_vat {
 	my %vat;
-	for my $line (slurp "revbank.vat") {
+	for my $line (slurp "vat") {
 		my ($match, $vataccount, $pct) = split " ", $line;
 		$vat{lc $match} = { account => $vataccount, pct => $pct };
 	}

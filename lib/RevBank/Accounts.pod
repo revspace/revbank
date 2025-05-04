@@ -6,7 +6,7 @@ RevBank::Accounts - Banking and bookkeeping accounts
 
 This package handles all accounts in RevBank. RevBank does doubly-entry bookkeeping and has multiple account types to accommodate that.
 
-This package is where manipulation of C<revbank.accounts> happens.
+This package is where manipulation of the file C<accounts> happens.
 
 =head2 Account types
 
@@ -34,7 +34,7 @@ Some plugins will use C</> to establish hierarchical account names in hidden acc
 
 =item * User-accessible special accounts
 
-The name of a user-accessible special account begins with a C<*> sign. A special account can only be created by editing the C<revbank.accounts> file manually. They can be used like user accounts, with or without the C<*> sign, but they do not count towards the grand total of user accounts.
+The name of a user-accessible special account begins with a C<*> sign. A special account can only be created by editing the C<accounts> file manually. They can be used like user accounts, with or without the C<*> sign, but they do not count towards the grand total of user accounts.
 
 The suggested use for user-accessible special accounts is for creating accounts that are virtual jars. For example, if users pay towards a virtual jar for kitchen equipment when they use the kitchen (like in the C<dinnerbonus> plugin), but are also allowed to use those funds for buying kitchen equipment, a user-accessible special account might be more convenient than having separate revenue and expense accounts, especially because those would typically be hidden accounts.
 
@@ -68,7 +68,7 @@ This one is slightly more complicated, because this depends on your view on acco
 
 =head2 Data format
 
-The file C<revbank.accounts> is a text file with one record per line, and whitespace separated fields. The columns are:
+The file C<accounts> is a text file with one record per line, and whitespace separated fields. The columns are:
 
 =over 4
 

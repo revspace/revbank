@@ -2,7 +2,7 @@
 
 HELP "edit" => "Edit product list";
 
-my $filename = 'revbank.products';
+my $filename = 'products';
 
 sub command :Tab(edit) ($self, $cart, $command, @) {
     $command eq 'edit' or return NEXT;

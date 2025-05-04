@@ -8,6 +8,8 @@ use experimental 'signatures';  # stable since v5.36
 use List::Util qw(uniq);
 use Sub::Util qw(subname);
 use POSIX qw(ttyname);
+use Getopt::Long qw(GetOptions);
+use File::Path qw(make_path);
 
 use FindBin qw($RealBin);
 use lib "$RealBin/lib";
@@ -17,7 +19,7 @@ use RevBank::Messages;
 use RevBank::Cart;
 use RevBank::Prompt;
 
-our $VERSION = "9.0.1";
+our $VERSION = "10.0.0";
 
 our %HELP1 = (
     "abort" => "Abort the current transaction",
@@ -27,16 +29,31 @@ my @words;  # input
 
 my $one_off = 0;
 
-if (@ARGV) {
-    # Non-interactive like in sh: -c command_string
-    @ARGV >= 1 and $ARGV[0] eq '-c' or die "$0 has no switches, except -c.";
+GetOptions(
+    "datadir=s"   => \($ENV{REVBANK_DATADIR}   ||= "$ENV{HOME}/.revbank"),
+    "plugindir=s" => \($ENV{REVBANK_PLUGINDIR} ||= "$FindBin::RealBin/plugins"),
+    "c|command"   => \my $command,
+);
 
+if (not -e $ENV{REVBANK_DATADIR}) {
+    make_path $ENV{REVBANK_DATADIR}
+        or die "$0: $ENV{REVBANK_DATADIR}: Can't create directory.\n";
+    spurt "accounts", "";
+    spurt "nextid", "1";
+    spurt $_, RevBank::FileIO::_slurp("$FindBin::RealBin/data/$_")
+        for qw(plugins products market);
+}
+
+-d $ENV{REVBANK_DATADIR}
+    or die "$0: $ENV{REVBANK_DATADIR}: No such directory.\n";
+
+-d $ENV{REVBANK_PLUGINDIR}
+    or die "$0: $ENV{REVBANK_PLUGINDIR}: No such directory.\n";
+
+if ($command) {
     $one_off = 1;
-
-    @words = RevBank::Prompt::split_input($ARGV[1]);
-    @words and not ref $words[0] or die "Syntax error.\n";
-    push @words, @ARGV[3 .. $#ARGV] if @ARGV > 3;
-    push @words, "help" if not @words;
+    @words = RevBank::Prompt::split_input($ARGV[0]);
+    @words and not ref $words[0] or die "$0: -c: Syntax error.\n";
 } elsif (not ttyname fileno STDIN) {
     warn "\e[31;1mNo controlling terminal, things will be borken!\n";
     warn "Use ssh -t (or RequestTTY in .ssh/config) for interactive sessions.\e[m\n";
@@ -320,5 +337,3 @@ Juerd Waalboer <#####@juerd.nl>
 =head1 LICENSE
 
 Pick your favorite OSI license.
-
-

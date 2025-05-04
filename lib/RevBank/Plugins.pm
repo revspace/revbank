@@ -47,13 +47,13 @@ sub register(@new_plugins) {
 }
 
 sub load($class) {
-    my @config = _read_file('revbank.plugins');
+    my @config = _read_file("$ENV{REVBANK_DATADIR}/plugins");
     chomp @config;
     s/#.*//g for @config;
     @config = map /(\S+)/, grep /\S/, @config;
 
     for my $name (@config) {
-        my $fn = "plugins/$name";
+        my $fn = "$ENV{REVBANK_PLUGINDIR}/$name";
         my $package = "RevBank::Plugin::$name";
         if (not -e $fn) {
             warn "$fn does not exist; skipping plugin.\n";

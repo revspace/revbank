@@ -16,7 +16,8 @@ my $json = JSON::XS->new;
 $ua->timeout(2);
 
 my $resources = "$FindBin::Bin/oepl_resources";
-my $outdir = "./oepl_images";
+my $datadir = $ENV{REVBANK_DATADIR} ||= "$ENV{HOME}/.revbank";
+my $outdir = "$datadir/oepl_images";
 my $ap = 'http://10.42.42.123';
 
 eval { mkdir $outdir };
@@ -219,7 +220,7 @@ sub draw_hwtype_4 ($product) {
 	_draw_hwtype_3_4($product, 296, 152, 28, 30);
 }
 
-my @lines = slurp ".revbank.oepl";
+my @lines = slurp "$datadir/oepl";
 my %new_hwtype;
 
 my $products = read_products;
@@ -268,5 +269,5 @@ for my $line (@lines) {
 }
 
 if (%new_hwtype) {
-	spurt ".revbank.oepl", @lines;
+	spurt "$datadir/oepl", @lines;
 }
