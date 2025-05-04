@@ -138,7 +138,7 @@ sub assert_account($account) {
 
     my $account_info = $accounts->{ lc $account };
 
-    if ($account) {
+    if ($account_info) {
         Carp::croak("Account $account can't be used") if not defined balance $account;
         return $account_info->[0];
     }
