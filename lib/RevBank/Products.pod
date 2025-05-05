@@ -165,6 +165,10 @@ additional fees are included in the tag price. In specific cases, such as
 container deposits, the addon price should not be considered part of the
 product price, and C<#OPAQUE> can be used.
 
+Percentage addons (like discounts) on opaque products are not supported and
+result in a wrong list price. In general, opaque addons need a dedicated contra
+account.
+
 The tag price is not displayed in the RevBank user interface, but may be used
 in generated price tags and price listings.
 
