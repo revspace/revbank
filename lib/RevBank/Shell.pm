@@ -31,6 +31,8 @@ my $prompt;
 my @plugins;
 my $method;
 
+$::HELP1{abort} = "Abort the current transaction";
+
 sub abort {
     @words = ();
     @retry = ();

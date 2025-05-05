@@ -16,10 +16,6 @@ use RevBank::Shell qw(abort);
 
 our $VERSION = "10.0.2";
 
-our %HELP1 = (
-    "abort" => "Abort the current transaction",
-);
-
 GetOptions(
     "datadir=s"   => \$ENV{REVBANK_DATADIR},
     "plugindir=s" => \$ENV{REVBANK_PLUGINDIR},
