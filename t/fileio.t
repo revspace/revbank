@@ -2,15 +2,19 @@
 # first try.
 
 use Test::More;
-use File::Temp;
+use File::Temp ();
+use File::Basename qw(basename);
 
 use RevBank::FileIO;
 
 # ChatGPT didn't realise that ::FileIO doesn't export its functions
 use RevBank::Global;
 
+my $tmpdir = File::Temp->newdir;
+$ENV{REVBANK_DATADIR} = $tmpdir->dirname;
+
 sub _newtmp {
-    File::Temp->new(DIR => ".");  # Not /tmp because RevBank::FileIO only does cwd
+    File::Temp->new(DIR => $ENV{REVBANK_DATADIR});
 }
 
 subtest "slurp" => sub {
@@ -18,13 +22,13 @@ subtest "slurp" => sub {
     my $data = "foo\nbar\nbaz\n";
     print $tmp $data;
     close $tmp;
-    my @lines = slurp($tmp->filename);
+    my @lines = slurp(basename($tmp->filename));
     is_deeply \@lines, ["foo\n", "bar\n", "baz\n"], "slurp works";
 };
 
 subtest "spurt" => sub {
     my $tmp = _newtmp;
-    spurt($tmp->filename, "foo\nbar\nbaz\n");
+    spurt(basename($tmp->filename), "foo\nbar\nbaz\n");
     open my $fh, "<", $tmp->filename;
     local $/;
     my $contents = <$fh>;
@@ -34,8 +38,8 @@ subtest "spurt" => sub {
 
 subtest "append" => sub {
     my $tmp = _newtmp;
-    spurt($tmp->filename, "foo\n");
-    append($tmp->filename, "bar\n", "baz\n");
+    spurt(basename($tmp->filename), "foo\n");
+    append(basename($tmp->filename), "bar\n", "baz\n");
     open my $fh, "<", $tmp->filename;
     local $/;
     my $contents = <$fh>;
@@ -45,8 +49,8 @@ subtest "append" => sub {
 
 subtest "rewrite" => sub {
     my $tmp = _newtmp;
-    spurt($tmp->filename, "foo\nbar\nbaz\n");
-    rewrite($tmp->filename, sub {
+    spurt(basename($tmp->filename), "foo\nbar\nbaz\n");
+    rewrite(basename($tmp->filename), sub {
         my ($line) = @_;
         if ($line =~ /^bar/) {
             return "quux\n";
