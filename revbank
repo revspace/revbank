@@ -22,7 +22,7 @@ GetOptions(
     "c|command"   => \my $command,
 );
 
-if (not -e $ENV{REVBANK_DATADIR}) {
+if (not -d $ENV{REVBANK_DATADIR}) {
     make_path $ENV{REVBANK_DATADIR}
         or die "$0: $ENV{REVBANK_DATADIR}: Can't create directory.\n";
     spurt "accounts", "";
@@ -30,9 +30,6 @@ if (not -e $ENV{REVBANK_DATADIR}) {
     spurt $_, RevBank::FileIO::_slurp("$RealBin/data/$_")
         for qw(plugins products market);
 }
-
--d $ENV{REVBANK_DATADIR}
-    or die "$0: $ENV{REVBANK_DATADIR}: No such directory.\n";
 
 -d $ENV{REVBANK_PLUGINDIR}
     or die "$0: $ENV{REVBANK_PLUGINDIR}: No such directory.\n";
