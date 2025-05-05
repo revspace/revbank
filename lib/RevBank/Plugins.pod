@@ -59,8 +59,8 @@ define one C<command> input method, and can have any number of hooks.
 =head2 Input methods
 
 Whenever a command is given in the 'outer' loop of revbank, the C<command>
-method of the plugins is called until one of the plugins returns either
-C<ACCEPT> or C<DONE>. An input method receives three arguments: the plugin
+method of the plugins is called until one of the plugins does not return
+C<NEXT>. An input method receives three arguments: the plugin
 object, the shopping cart, and the given input string. The plugin object
 (please call it C<$self>) is temporary but persists as long as your plugin
 keeps control. It can be used as a scratchpad for carrying over values from

@@ -23,7 +23,6 @@ sub import {
     *{"$caller\::ABORT"}        = sub () { \2 };
     *{"$caller\::REJECT"}       = sub () { \3 };
     *{"$caller\::NEXT"}         = sub () { \4 };
-    *{"$caller\::DONE"}         = sub () { \5 };
     *{"$caller\::REDO"}         = sub () { \6 };
     *{"$caller\::slurp"}        = \&RevBank::FileIO::slurp;
     *{"$caller\::spurt"}        = \&RevBank::FileIO::spurt;
