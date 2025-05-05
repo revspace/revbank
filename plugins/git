@@ -18,6 +18,7 @@ if (not -e "$ENV{REVBANK_DATADIR}/.git") {
 }
 
 sub hook_products_changed($class, $changes, $mtime, @) {
+    return if system(@git, "diff", "--quiet", "products") == 0;  # other terminal won race
     system(@git, "commit", "--quiet", "--message", "Products changed", "products") == 0
         or warn "(Please tell the sysadmin that git is failing in revbank.)\n";
     system @git, "gc", "--quiet";
@@ -33,6 +34,7 @@ sub hook_checkout_done($class, $cart, $account, $transaction_id, @) {
     $msg =~ s/[^\x20-\x7E]//g;
     $msg =~ s/'//g;
 
+    return if system(@git, "diff", "--quiet") == 0;  # no changes, e.g. 0.00 sum0
     system(@git, "commit", "--quiet", "--all", "--message", $msg) == 0
         or warn "(Please tell the sysadmin that git is failing in revbank.)\n";
 }
