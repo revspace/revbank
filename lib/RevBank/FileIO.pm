@@ -131,15 +131,19 @@ sub mtime($fn) {
 	return +(stat "$$DATADIR/$fn")[9];
 }
 
+sub populate_datadir() {
+	spurt "accounts", "";
+	spurt "nextid", "1";
+	spurt $_, RevBank::FileIO::_slurp("$RealBin/data/$_")
+		for qw(plugins products market);
+}
+
 sub create_datadir() {
 	return if -d $ENV{REVBANK_DATADIR};
 
 	make_path $ENV{REVBANK_DATADIR}
 		or die "$0: $ENV{REVBANK_DATADIR}: Can't create directory.\n";
-	spurt "accounts", "";
-	spurt "nextid", "1";
-	spurt $_, RevBank::FileIO::_slurp("$RealBin/data/$_")
-		for qw(plugins products market);
+	populate_datadir;
 }
 
 1;
