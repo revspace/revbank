@@ -5,7 +5,7 @@ use warnings;
 use experimental 'signatures';  # stable since v5.36
 
 use POSIX qw(ttyname);
-use Getopt::Long qw(GetOptions);
+use Getopt::Long qw(GetOptions :config posix_default no_ignore_case);
 
 use FindBin qw($RealBin);
 use lib "$RealBin/lib";
@@ -19,15 +19,15 @@ $| = 1;
 GetOptions(
     "datadir=s"   => \$ENV{REVBANK_DATADIR},
     "plugindir=s" => \$ENV{REVBANK_PLUGINDIR},
-    "c|command"   => \my $command,
-);
+    "c|command=s" => \my $command,
+) or die "Usage: $0 [--datadir <dir>] [--plugindir <dir>] [-c|--command <command>]\n";
 
 RevBank::FileIO::create_datadir;
 RevBank::Plugins::load;
 RevBank::Plugins::call_hooks "startup";
 
-if ($command) {
-    my @words = RevBank::Prompt::split_input $ARGV[0];
+if (defined $command) {
+    my @words = RevBank::Prompt::split_input $command;
     @words and not ref $words[0] or die "$0: -c: Syntax error.\n";
 
     RevBank::Shell::exec @words;
