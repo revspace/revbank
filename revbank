@@ -5,7 +5,8 @@ use warnings;
 use experimental 'signatures';  # stable since v5.36
 
 use POSIX qw(ttyname);
-use Getopt::Long qw(GetOptions :config posix_default no_ignore_case);
+use Getopt::Long qw(GetOptions :config posix_default no_ignore_case auto_help);
+use Pod::Usage qw(pod2usage);
 
 use FindBin qw($RealBin);
 use lib "$RealBin/lib";
@@ -20,7 +21,8 @@ GetOptions(
     "datadir=s"   => \$ENV{REVBANK_DATADIR},
     "plugindir=s" => \$ENV{REVBANK_PLUGINDIR},
     "c|command=s" => \my $command,
-) or die "Usage: $0 [--datadir <dir>] [--plugindir <dir>] [-c|--command <command>]\n";
+) or pod2usage;
+@ARGV and pod2usage;
 
 RevBank::FileIO::create_datadir;
 RevBank::Plugins::load;
@@ -40,3 +42,21 @@ if (not ttyname fileno STDIN) {
 }
 
 RevBank::Shell::shell;
+
+__END__
+
+=head1 NAME
+
+revbank - Prepaid bar tab payment system for hackerspaces 
+
+=head1 SYNOPSIS
+
+    revbank [--datadir <dir>] [--plugindir <dir>] [--command <cmd>]
+
+=head1 DESCRIPTION
+
+The main documentation is in C<README.md>.
+
+=head1 AUTHOR
+
+Juerd Waalboer <#####@juerd.nl>
