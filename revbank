@@ -59,35 +59,3 @@ if (not ttyname fileno STDIN) {
 }
 
 RevBank::Shell::shell();
-
-__END__
-
-=head1 NAME
-
-revbank - Banking for hackerspace visitors
-
-=head1 DESCRIPTION
-
-Maybe I'll write some documentation, but not now.
-
-Shell-like invocation with C<-c> is supported, sort of, but it has to be a
-complete command. Currently, multiple commands are supported on the command
-line (space separated), but that's an unintended feature...
-
-=head1 PLUGINS
-
-Refer to L<RevBank::Plugins> for documentation about writing plugins.
-
-Plugins themselves may have some documentation in the respective plugin files.
-
-Note that plugins that begin with C<revspace_> are revspace specific hacks, and
-were not written with reusability in mind. They will probably not work for your
-setup.
-
-=head1 AUTHOR
-
-Juerd Waalboer <#####@juerd.nl>
-
-=head1 LICENSE
-
-Pick your favorite OSI license.
