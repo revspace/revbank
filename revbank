@@ -6,15 +6,15 @@ use experimental 'signatures';  # stable since v5.36
 
 use POSIX qw(ttyname);
 use Getopt::Long qw(GetOptions);
-use File::Path qw(make_path);
 
 use FindBin qw($RealBin);
 use lib "$RealBin/lib";
-
+use RevBank::FileIO;
 use RevBank::Global;
 use RevBank::Shell qw(abort);
 
 our $VERSION = "10.0.2";
+$| = 1;
 
 GetOptions(
     "datadir=s"   => \$ENV{REVBANK_DATADIR},
@@ -22,16 +22,7 @@ GetOptions(
     "c|command"   => \my $command,
 );
 
-if (not -d $ENV{REVBANK_DATADIR}) {
-    make_path $ENV{REVBANK_DATADIR}
-        or die "$0: $ENV{REVBANK_DATADIR}: Can't create directory.\n";
-    spurt "accounts", "";
-    spurt "nextid", "1";
-    spurt $_, RevBank::FileIO::_slurp("$RealBin/data/$_")
-        for qw(plugins products market);
-}
-
-$| = 1;
+RevBank::FileIO::create_datadir();
 RevBank::Plugins->load;
 call_hooks("startup");
 

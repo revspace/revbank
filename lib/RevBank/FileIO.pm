@@ -8,6 +8,8 @@ use autodie;
 use Fcntl qw(:flock);
 use Carp qw(croak);
 use Time::HiRes qw(sleep);
+use File::Path qw(make_path);
+use FindBin qw($RealBin);
 
 my $DATADIR = \($ENV{REVBANK_DATADIR} ||= "$ENV{HOME}/.revbank");
 
@@ -127,6 +129,17 @@ sub rewrite($fn, $sub) {
 
 sub mtime($fn) {
 	return +(stat "$$DATADIR/$fn")[9];
+}
+
+sub create_datadir() {
+	return if -d $ENV{REVBANK_DATADIR};
+
+	make_path $ENV{REVBANK_DATADIR}
+		or die "$0: $ENV{REVBANK_DATADIR}: Can't create directory.\n";
+	spurt "accounts", "";
+	spurt "nextid", "1";
+	spurt $_, RevBank::FileIO::_slurp("$RealBin/data/$_")
+		for qw(plugins products market);
 }
 
 1;
