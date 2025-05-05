@@ -1,3 +1,4 @@
+use v5.32;
 use Test::More;
 use File::Temp ();
 use File::Basename qw(basename);
@@ -14,24 +15,27 @@ $ENV{REVBANK_PLUGINDIR} = "./plugins";
 RevBank::Plugins::load;
 open STDOUT, ">", "/dev/null";
 
-is(RevBank::Accounts::balance("aap"), undef);
-is(RevBank::Accounts::balance("noot"), undef);
-RevBank::Shell::exec("adduser aap");
-RevBank::Shell::exec("adduser noot");
-RevBank::Shell::exec("deposit 10; aap");
-RevBank::Shell::exec("deposit 20; noot");
-is(RevBank::Accounts::balance("aap")->cents, 1000);
-is(RevBank::Accounts::balance("noot")->cents, 2000);
-RevBank::Shell::exec("give aap 1 test; noot");
-is(RevBank::Accounts::balance("aap")->cents, 1100);
-is(RevBank::Accounts::balance("noot")->cents, 1900);
-RevBank::Shell::exec("take aap 2 test; noot");
-is(RevBank::Accounts::balance("aap")->cents, 900);
-is(RevBank::Accounts::balance("noot")->cents, 2100);
-RevBank::Shell::exec("adduser mies");
-RevBank::Shell::exec("take aap noot mies 9.03 test; mies");
-is(RevBank::Accounts::balance("aap")->cents, 599);
-is(RevBank::Accounts::balance("noot")->cents, 1799);
-is(RevBank::Accounts::balance("mies")->cents, 602);
+*balance = \&RevBank::Accounts::balance;
+*ex = \&RevBank::Shell::exec;
+
+is balance("aap"), undef;
+is balance("noot"), undef;
+ex "adduser aap";
+ex "adduser noot";
+ex "deposit 10; aap";
+ex "deposit 20; noot"
+is balance("aap")->cents, 1000;
+is balance("noot")->cents, 2000;
+ex "give aap 1 test; noot";
+is balance("aap")->cents, 1100;
+is balance("noot")->cents, 1900;
+ex "take aap 2 test; noot";
+is balance("aap")->cents, 900;
+is balance("noot")->cents, 2100;
+ex "adduser mies";
+ex "take aap noot mies 9.03 test; mies";
+is balance("aap")->cents, 599;
+is balance("noot")->cents, 1799;
+is balance("mies")->cents, 602;
 
 done_testing;
