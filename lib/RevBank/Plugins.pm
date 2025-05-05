@@ -51,7 +51,7 @@ sub register(@new_plugins) {
     push @plugins, @new_plugins;
 }
 
-sub load($class) {
+sub load() {
     my @config = _read_file("$ENV{REVBANK_DATADIR}/plugins");
     chomp @config;
     s/#.*//g for @config;

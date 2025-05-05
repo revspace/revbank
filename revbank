@@ -22,15 +22,15 @@ GetOptions(
     "c|command"   => \my $command,
 );
 
-RevBank::FileIO::create_datadir();
-RevBank::Plugins->load;
+RevBank::FileIO::create_datadir;
+RevBank::Plugins::load;
 call_hooks("startup");
 
 if ($command) {
-    my @words = RevBank::Prompt::split_input($ARGV[0]);
+    my @words = RevBank::Prompt::split_input $ARGV[0];
     @words and not ref $words[0] or die "$0: -c: Syntax error.\n";
 
-    RevBank::Shell::exec(@words);
+    RevBank::Shell::exec @words;
     exit;
 }
 
@@ -39,4 +39,4 @@ if (not ttyname fileno STDIN) {
     warn "Use ssh -t (or RequestTTY in .ssh/config) for interactive sessions.\e[m\n";
 }
 
-RevBank::Shell::shell();
+RevBank::Shell::shell;
