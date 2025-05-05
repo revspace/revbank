@@ -19,6 +19,8 @@ use RevBank::Prompt;
 use Exporter qw(import);
 our @EXPORT_OK = qw(abort);
 
+our $interactive;
+
 my $cart = RevBank::Cart->new;
 
 my @words;
@@ -274,10 +276,12 @@ sub _shell(@args) {
 }
 
 sub shell() {
+    $interactive = 1;
     _shell();
 }
 
 sub exec(@args) {
+    $interactive = 0;
     _shell(@args);
 }
 
