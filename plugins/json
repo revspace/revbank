@@ -63,8 +63,8 @@ BEGIN {
 }
 
 
-sub hook_abort(@) {
-    _log({ _ => "ABORT" });
+sub hook_abort($class, $cart, $reason) {
+    _log({ _ => "ABORT", reason => "@$reason" });
 }
 
 sub hook_reject($class, $plugin, $reason, $abort, @) {
