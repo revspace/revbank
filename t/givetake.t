@@ -16,15 +16,17 @@ $ENV{REVBANK_PLUGINDIR} = "./plugins";
 RevBank::Plugins::load;
 open STDOUT, ">", "/dev/null";
 
-*balance = \&RevBank::Accounts::balance;
-*ex = \&RevBank::Shell::exec;
+BEGIN {
+	*balance = \&RevBank::Accounts::balance;
+	*ex = \&RevBank::Shell::exec;
+}
 
 is balance("aap"), undef;
 is balance("noot"), undef;
 ex "adduser aap";
 ex "adduser noot";
 ex "deposit 10; aap";
-ex "deposit 20; noot"
+ex "deposit 20; noot";
 is balance("aap")->cents, 1000;
 is balance("noot")->cents, 2000;
 ex "give aap 1 test; noot";
