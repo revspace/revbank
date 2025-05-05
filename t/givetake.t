@@ -11,6 +11,7 @@ my $tmpdir = File::Temp->newdir;
 $ENV{REVBANK_DATADIR} = $tmpdir->dirname;
 RevBank::FileIO::populate_datadir;
 
+$ENV{REVBANK_PLUGINS} = "adduser deposit give take users";
 $ENV{REVBANK_PLUGINDIR} = "./plugins";
 RevBank::Plugins::load;
 open STDOUT, ">", "/dev/null";

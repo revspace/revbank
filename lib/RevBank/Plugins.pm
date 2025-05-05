@@ -52,10 +52,10 @@ sub register(@new_plugins) {
 }
 
 sub load() {
-    my @config = _read_file("$ENV{REVBANK_DATADIR}/plugins");
+    my @config = $ENV{REVBANK_PLUGINS} || _read_file("$ENV{REVBANK_DATADIR}/plugins");
     chomp @config;
     s/#.*//g for @config;
-    @config = map /(\S+)/, grep /\S/, @config;
+    @config = map /(\S+)/g, grep /\S/, @config;
 
     for my $name (@config) {
         my $fn = "$ENV{REVBANK_PLUGINDIR}/$name";
