@@ -11,7 +11,7 @@ use RevBank::Plugin;
 use RevBank::Global;
 
 use Exporter;
-our @EXPORT = qw(call_hooks load_plugins);
+our @EXPORT = qw(call_hooks);
 
 $ENV{REVBANK_PLUGINDIR} ||= "$RealBin/plugins";
 
