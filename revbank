@@ -255,7 +255,7 @@ OUTER: for (;;) {
 
                     next WORD;
                 }
-                if ($rv == ABORT) {
+                if ($rv == ABORT or $one_off and $rv == REJECT) {
                     abort(@rvargs);
                 }
                 if ($rv == REDO) {
