@@ -145,7 +145,7 @@ sub read_products($filename = "products", $default_contra = "+sales/products") {
             $addon = { %$addon }; # shallow copy to overwrite ->{price} later
 
             push @{ $product->{addons} }, $addon;
-            push @addon_ids, @{ $addon->{_addon_ids} };
+            unshift @addon_ids, @{ $addon->{_addon_ids} };
         }
     }
 
