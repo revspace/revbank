@@ -14,13 +14,13 @@ use RevBank::FileIO ();
 use RevBank::Plugins ();
 use RevBank::Shell qw(abort);
 
-our $VERSION = "10.1.1";
+our $VERSION = "10.1.2";
 $| = 1;
 
 GetOptions(
-    "datadir=s"   => \$ENV{REVBANK_DATADIR},
-    "plugindir=s" => \$ENV{REVBANK_PLUGINDIR},
-    "c|command=s" => \my $command,
+    "datadir=s"       => \$ENV{REVBANK_DATADIR},
+    "plugindir=s"     => \$ENV{REVBANK_PLUGINDIR},
+    "c|command=s{1,}" => \my @command,
 ) or pod2usage;
 @ARGV and pod2usage;
 
@@ -28,11 +28,8 @@ RevBank::FileIO::create_datadir;
 RevBank::Plugins::load;
 RevBank::Plugins::call_hooks "startup";
 
-if (defined $command) {
-    my @words = RevBank::Prompt::split_input $command;
-    @words and not ref $words[0] or die "$0: -c: Syntax error.\n";
-
-    RevBank::Shell::exec @words;
+if (@command) {
+    RevBank::Shell::exec @command;
     exit;
 }
 

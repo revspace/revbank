@@ -283,6 +283,13 @@ sub shell() {
 }
 
 sub exec(@args) {
+    my $first = shift @args;
+    if (defined $first and length $first) {
+        my @split = RevBank::Prompt::split_input $first;
+        ref $words[0] and croak "$0: -c: Syntax error.\n";
+        unshift @args, @split;
+    }
+
     $interactive = 0;
     _shell(@args);
 }
