@@ -21,8 +21,8 @@ our %HELP1 = (
 );
 
 GetOptions(
-    "datadir=s"   => \($ENV{REVBANK_DATADIR}   ||= "$ENV{HOME}/.revbank"),
-    "plugindir=s" => \($ENV{REVBANK_PLUGINDIR} ||= "$FindBin::RealBin/plugins"),
+    "datadir=s"   => \$ENV{REVBANK_DATADIR},
+    "plugindir=s" => \$ENV{REVBANK_PLUGINDIR},
     "c|command"   => \my $command,
 );
 

@@ -4,11 +4,16 @@ use v5.32;
 use warnings;
 use experimental 'signatures';  # stable since v5.36
 
+use FindBin qw($RealBin);
+
 use RevBank::Eval;
 use RevBank::Plugin;
 use RevBank::Global;
+
 use Exporter;
 our @EXPORT = qw(call_hooks load_plugins);
+
+$ENV{REVBANK_PLUGINDIR} ||= "$RealBin/plugins";
 
 my @plugins;
 
