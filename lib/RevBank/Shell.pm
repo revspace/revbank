@@ -279,7 +279,8 @@ sub _shell(@args) {
 
 sub shell() {
     $interactive = 1;
-    _shell();
+    call_hooks 'shell';
+    _shell;
 }
 
 sub exec(@args) {
@@ -291,7 +292,7 @@ sub exec(@args) {
     }
 
     $interactive = 0;
-    _shell(@args);
+    _shell @args;
 }
 
 1;

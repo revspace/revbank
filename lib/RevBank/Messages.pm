@@ -19,9 +19,8 @@ BEGIN {
 sub command { return NEXT; }
 sub id { 'built in messages' }
 
-sub hook_startup {
-    say "\e[0m\n\n\nWelcome to the RevBank Shell, version $::VERSION\n"
-        if $RevBank::Shell::interactive;
+sub hook_shell {
+    say "\e[0m\n\n\nWelcome to the RevBank Shell, version $::VERSION\n";
 }
 
 sub hook_plugin_fail($class, $plugin, $error, @) {
