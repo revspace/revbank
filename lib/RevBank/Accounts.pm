@@ -13,7 +13,18 @@ my $filename = "accounts";
 
 sub _read() {
     my @accounts;
-    for my $line (slurp $filename) {
+
+    my @lines = with_lock sub {
+        my $file = slurp $filename;
+
+        # Fix broken format: append newline if absent
+        if (length($file) and $file !~ /\n\z/) {
+            append $filename, "\n";
+        }
+        return split /\n+/, $file;
+    };
+
+    for my $line (@lines) {
         $line =~ /\S/ or next;
         # Not using RevBank::Prompt::split_input to keep parsing by external
         # scripts simple, since so many such scripts exist.
@@ -41,6 +52,7 @@ sub _read() {
             $accounts{$name} = $_;
         }
     }
+
     return \%accounts;
 }
 
