@@ -10,6 +10,7 @@ use RevBank::Eval;
 use RevBank::Plugin;
 use RevBank::Global;
 
+use Carp qw(croak);
 use Exporter;
 our @EXPORT = qw(call_hooks);
 
@@ -18,8 +19,18 @@ $ENV{REVBANK_PLUGINDIR} ||= "$RealBin/plugins";
 my @plugins;
 
 sub _read_file($fn) {
-    local @ARGV = ($fn);
-    readline *ARGV;
+    $fn =~ s[^~/][$ENV{HOME}/];
+    if ($fn =~ m[/]) {
+        $fn =~ s[^][$ENV{REVBANK_DATADIR}/] if $fn !~ m[^/];
+    } else {
+        $fn =~ s[^][$ENV{REVBANK_PLUGINDIR}/];
+    }
+
+    open my $fh, '<', $fn or die "Can't read $fn: $!\n";
+    local $/;
+    my $code = readline $fh;
+    close $fh;
+    return $code;
 }
 
 sub call_hooks {
@@ -52,18 +63,25 @@ sub register(@new_plugins) {
 }
 
 sub load() {
-    my @config = $ENV{REVBANK_PLUGINS} || _read_file("$ENV{REVBANK_DATADIR}/plugins");
+    my @config = $ENV{REVBANK_PLUGINS} || slurp("plugins");
     chomp @config;
     s/#.*//g for @config;
     @config = map /(\S+)/g, grep /\S/, @config;
 
-    for my $name (@config) {
-        my $fn = "$ENV{REVBANK_PLUGINDIR}/$name";
+    for my $fn (@config) {
+        my $name = $fn =~ s[.*/][]r;
         my $package = "RevBank::Plugin::$name";
-        if (not -e $fn) {
-            warn "$fn does not exist; skipping plugin.\n";
+
+        if (grep $_ eq $package, @plugins) {
+            warn "Plugin '$name' is defined more than once; only the first is used.\n";
             next;
         }
+
+        my $code = eval { _read_file $fn } or do {
+            warn $@ || "$fn contains no code.\n", "Skipping plugin $fn.\n";
+            next;
+        };
+
         RevBank::Eval::clean_eval(qq[
             use strict;
             use warnings;
@@ -88,7 +106,7 @@ sub load() {
                 \$::HELP{ +shift } = +pop;
             }
             sub id { '$name' }
-        ] . "\n#line 1 $fn\n" . join "", _read_file($fn));
+        ] . "\n#line 1 $fn\n$code");
 
         if ($@) {
             call_hooks("plugin_fail", $name, "Compile error: $@");

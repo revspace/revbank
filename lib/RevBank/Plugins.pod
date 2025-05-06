@@ -8,10 +8,39 @@ RevBank itself consists of a simple command line interface and a really brain
 dead shopping cart. All transactions, even deposits and withdrawals, are
 handled by plugins.
 
-Plugins are defined in the C<plugins> file in the C<DATADIR>. Each plugin is a
-Perl source file in the C<PLUGINDIR> (typically, the `plugins` directory in the
-revbank code git repository). Plugins are always iterated over in the order
-they were defined in.
+Plugins are defined in the C<plugins> file in the C<REVBANK_DATADIR>. Each
+plugin is a Perl source file.
+
+In the C<plugins> file, paths can either:
+
+=over 20
+
+=item not contain C</>
+
+for files in C<REVBANK_PLUGINDIR> (which by defaults to C<plugins/> in the
+directory that has the C<revbank> executable).
+
+This is typically used for the "core" plugins that ship with RevBank.
+
+=item begin with C<~/>
+
+for paths relative to the C<HOME> directory.
+
+=item begin with C</>
+
+for absolute paths.
+
+=item contain but not begin with C</>
+
+for paths relative to C<REVBANK_DATADIR> (which defaults to C<~/.revbank>).
+
+=back
+
+Plugins are always iterated over in the order they were defined in. The
+filename, regardless of which directory it's in, has to be unique.
+
+The Perl namespace for each plugin is C<RevBank::Plugin::x>, where C<x> is the
+filename without the directory name.
 
 =head2 Methods
 

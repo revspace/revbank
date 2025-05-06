@@ -19,7 +19,16 @@ supports Perl versions down to 5.32 (2020), which is in Debian 11 "bullseye"
 and 12 "bookworm" becomes the new oldstable, RevBank will begin to require Perl
 5.36 (2022).
 
-# (2025-05-TBD) RevBank 10.0.0
+# (2025-05-06) RevBank 10.2.0
+
+No breaking change, but a change that several RevBank sysadmins have requested
+over the years.
+
+It is now possible to load plugins from other directories. It is suggested that
+you put your custom plugins in a separate directory (hint: git init :)), and
+refer to them *by path* in `~/revbank/plugins`.
+
+# (2025-05-05) RevBank 10.0.0
 
 Major breaking change!
 

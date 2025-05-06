@@ -1,4 +1,4 @@
-# Order matters. Read RevBank::Plugins for documentation.
+# Order matters. Read lib/RevBank/Products.pod for documentation.
 
 log        # first, so that the registrations of other plugins are logged
 
@@ -27,7 +27,6 @@ adduser_note
 adduser
 #cash             # cash tracking also requires deposit_methods to make sense
 deposit
-#deposit_methods  # Extra options for 'deposit'. Edit/configure first!
 #deposit_iban_qr  # QR code display, edit/configure first! (needs qrencode(1))
 dinnerbonus
 edit
@@ -54,3 +53,10 @@ users              # matches usernames
 regex_gtin         # matches GTINs in URLs and element strings
 url                # matches other URLs
 #deprecated_raw     # matches amounts
+
+# Then, plugins that don't do anything by themselves, but configure or extend
+# other plugins. Create new files, put them somewhere, and refer to them by
+# path (not just the filename).
+
+#~/revbank-plugins/deposit_methods
+#~/revbank-plugins/config
