@@ -1,0 +1,20 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - run: sudo apt install -y libterm-readline-gnu-perl libcurses-ui-perl libtest-warnings-perl libtest-exception-perl
+
+    - run: prove -Ilib t
