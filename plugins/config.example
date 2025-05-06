@@ -1,0 +1,26 @@
+# Copy this plugin and add its path at the BOTTOM of ~/.revbank/plugins
+# For example, if its name is ~/.revbank/config, add `./config` to the plugins
+# file.
+
+# Configuration is done with Perl package variables (namespaced global
+# variables). Note that the pluginname is usually all lowercase:
+#$RevBank::Plugin::pluginname::variablename = 42;
+
+#$RevBank::balance_warning_cents = -1337;
+
+#$RevBank::Plugin::deposit_iban_qr::iban = "NL99ABCD1234567890";
+#$RevBank::Plugin::deposit_iban_qr::account_name = "Account Name";
+
+#$RevBank::Plugin::deposit_methods::iban = "NL 99 ABCD 1234 5678 90";
+
+#$RevBank::Plugin::dinnerbonus::bonus = 1.50;
+
+#$RevBank::Plugin::idle::timeout_seconds = 5;
+
+#$RevBank::Plugin::lasercutter::price_15min = 2.50;
+
+#$RevBank::Plugin::mollie::backend_url = "https://deposit.example.org/mollie.php";
+
+#$RevBank::Plugin::nomoney::deny_plugins = qw(give market products take unlisted withdraw);
+
+#$RevBank::Plugin::statiegeld_tokens::ttl_days = 30;

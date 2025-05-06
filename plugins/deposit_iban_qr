@@ -20,8 +20,8 @@
 use IPC::Open2 qw(open2);
 use List::Util qw(sum);
 
-my $iban = "NL99ABCD1234567890";
-my $beneficiary = "Account Name";
+our $iban = "NL99ABCD1234567890";
+our $beneficiary = "Account Name";
 
 sub hook_checkout($class, $cart, $account, $transaction_id, @) {
     my @entries = $cart->entries("is_deposit");

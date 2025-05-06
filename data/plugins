@@ -59,4 +59,4 @@ url                # matches other URLs
 # path (not just the filename).
 
 #~/revbank-plugins/deposit_methods
-#~/revbank-plugins/config
+#./config

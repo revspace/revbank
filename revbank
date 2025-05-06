@@ -14,7 +14,7 @@ use RevBank::FileIO ();
 use RevBank::Plugins ();
 use RevBank::Shell qw(abort);
 
-our $VERSION = "10.2.0";
+our $VERSION = "10.3.0";
 $| = 1;
 
 GetOptions(

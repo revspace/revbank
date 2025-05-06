@@ -1,6 +1,6 @@
 #!perl
 
-my $cost = 2.50;
+our $price_15min = 2.50;
 
 sub command :Tab(lasercutter) ($self, $cart, $command, @) {
     $command eq 'lasercutter' or return NEXT;
@@ -23,8 +23,8 @@ sub time ($self, $cart, $time, @) {
     $time = int($q / 4) . ":" . sprintf("%02d", ($q % 4) * 15);
 
     $cart
-        ->add(-$q * $cost, "Lasercutter usage ($time)")
-        ->add_contra("+sales/lasercutter", $q * $cost, "\$you used lasercutter ($time)");
+        ->add(-$q * $price_15min, "Lasercutter usage ($time)")
+        ->add_contra("+sales/lasercutter", $q * $price_15min, "\$you used lasercutter ($time)");
 
     return ACCEPT;
 }

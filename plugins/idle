@@ -1,6 +1,6 @@
 #!perl
 
-my $timeout = 10;
+our $timeout_seconds = 10;
 my $text_displayed = 0;
 
 sub hook_prompt($class, $cart, $prompt, @) {
@@ -8,7 +8,7 @@ sub hook_prompt($class, $cart, $prompt, @) {
 }
 
 sub hook_prompt_idle($class, $cart, $plugin, $seconds, $readline, @) {
-    return unless $seconds >= $timeout and $cart->size and not $plugin;
+    return unless $seconds >= $timeout_seconds and $cart->size and not $plugin;
 
     call_hooks("beep");
 

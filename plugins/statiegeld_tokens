@@ -4,7 +4,7 @@ use RevBank::Products;
 
 HELP void => "Destroy deposit tokens";
 
-my $ttl = 100 * 86400;  # expiry time in seconds
+our $ttl_days = 100;
 my $filename = "statiegeld";
 
 # Token format: token_type,time,expiry_time,product_id,transaction_id,seq
@@ -181,7 +181,7 @@ sub hook_checkout_prepare($class, $cart, $account, $transaction_id, @) {
 				my $token = join(",",
 					$addon->{id},  # token_type
 					time(),
-					($time_is_reliable ? time() + $ttl : -1),
+					($time_is_reliable ? time() + ($ttl_days * 86400) : -1),
 					$entry->attribute('product_id'),
 					$transaction_id,
 					$seq++,

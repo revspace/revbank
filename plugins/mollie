@@ -3,10 +3,13 @@ use LWP::UserAgent;
 use JSON;
 
 my $ua = LWP::UserAgent->new(agent => "revbank");
-my $backend_url = "https://deposit.revspace.nl/mollie.php";
+our $backend_url = "";  # see plugins/config
 
 sub backend_call($hash) {
     #$hash->{test} = 1;  # use mollie test environment
+
+    $backend_url
+        or die "The backend_url for the mollie plugin is not configured yet.\n";
 
     my $response = $ua->post($backend_url, $hash);
     $response->is_success

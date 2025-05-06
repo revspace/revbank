@@ -1,11 +1,13 @@
 #!perl
 
+our $iban = "NL 69 ABNA 0431 1582 07";
+
 sub hook_deposit_methods($class, $message, $hash, @) {
     $$message =  <<"END";
 
 Please type one of the following:
 
-'iban':      IBAN transfer (NL 69 ABNA 0431 1582 07)
+'iban':      IBAN transfer ($iban)
 'cash':      Cash in the cash box
 'reimburse': Reimbursement of expenses agreed upon in advance
              Note: we require an invoice or receipt with this exact amount!

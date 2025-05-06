@@ -2,7 +2,7 @@
 
 HELP "dinnerbonus" => "Add fee for cooking supplies";
 
-my $bonus = 1.00;
+our $bonus = 1.00;
 
 sub command :Tab(kookbonus,dinnerbonus) ($self, $cart, $command, @) {
     my @users = map $_->{account}, map $_->contras, $cart->entries('is_take');

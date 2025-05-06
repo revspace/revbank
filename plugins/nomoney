@@ -2,7 +2,8 @@
 
 use List::Util qw(none uniqstr);
 
-my @deny_plugins = (
+# See plugins/config.example
+our @deny_plugins = (
 	"give",
 	#"market",
 	#"products",
