@@ -22,8 +22,10 @@ GetOptions(
     "plugindir=s" => \$ENV{REVBANK_PLUGINDIR},
     "c|command=s" => \my $command,
     "with-lock"   => \my $with_lock,
-) or pod2usage;
-@ARGV and not $with_lock and pod2usage;
+    "man"         => \my $man,
+) or pod2usage -verbose => 1;
+pod2usage -verbose => 2 if $man;
+@ARGV and not $with_lock and pod2usage -verbose => 1;
 
 RevBank::FileIO::create_datadir;
 
@@ -59,22 +61,23 @@ __END__
 
 revbank - Prepaid bar tab payment system for hackerspaces 
 
-=head1 SYNOPSIS
+=head1 USAGE
 
     revbank [--datadir <dir>] [--plugindir <dir>] [--command <cmd>]
-
     revbank [--datadir <dir>] --with-lock cmd arg...
+    revbank --help
+    revbank --man  # Like --help, but more information (requires perldoc)
 
 =head1 DESCRIPTION
 
 This document only describes how to run revbank. The main documentation is in
 C<README.md>.
 
-=head1 FLAGS
+=head1 OPTIONS
 
-=over 20
+=over 18
 
-=item --command -c
+=item -c, --command
 
 Takes a single command line and executes it without entering the RevBank shell.
 The command line is parsed as input on the top-level RevBank prompt. Example:
@@ -99,6 +102,11 @@ Overrides C<REVBANK_DATADIR>
 =item --plugindir
 
 Overrides C<REVBANK_PLUGINDIR>
+
+=item --help, --man
+
+View documentation: either just the options (C<--help>) or the entire man page
+(C<--man>).
 
 =back
 
