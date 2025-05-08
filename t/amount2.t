@@ -3,6 +3,7 @@
 
 use strict;
 use warnings;
+use Test2::Require::Perl 'v5.34';  # Test2::Compare runs into the isa/->isa bug
 use Test2::V0;
 
 use RevBank::Amount;
