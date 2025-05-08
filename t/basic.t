@@ -1,7 +1,10 @@
 use v5.32;
+use warnings;
 use experimental qw(signatures);
 
 use Test2::V0;
+no warnings qw(experimental);
+
 use File::Temp ();
 use File::Basename qw(basename);
 
