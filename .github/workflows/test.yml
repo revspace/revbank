@@ -12,7 +12,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: Standard Perl packages on ubuntu-latest
+    name: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: awalsh128/cache-apt-pkgs-action@latest
@@ -23,9 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: ["ubuntu-latest"]
         perl: ["5.40", "5.36", "5.34", "5.32"]
-    name: Perl ${{ matrix.perl }} on ${{ matrix.os }}
+    name: Perl ${{ matrix.perl }}
     steps:
       - uses: actions/checkout@v4
       - uses: awalsh128/cache-apt-pkgs-action@latest
