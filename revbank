@@ -67,7 +67,92 @@ revbank - Prepaid bar tab payment system for hackerspaces
 
 =head1 DESCRIPTION
 
-The main documentation is in C<README.md>.
+This document only describes how to run revbank. The main documentation is in
+C<README.md>.
+
+=head1 FLAGS
+
+=over 20
+
+=item --command -c
+
+Takes a single command line and executes it without entering the RevBank shell.
+The command line is parsed as input on the top-level RevBank prompt. Example:
+C<--command 'give quux 0.42 "description here"; xyzzy'>.
+
+=item --with-lock
+
+Takes the remaining command line arguments (use C<--> to stop processing) and
+executes them as a system command, which may involve executing a shell; see
+"system" in L<perlfunc> for details.
+
+Useful for running external programs (e.g. backup scripts) which need a
+consistent/atomic view of the data directory, but will block all RevBank usage
+until the program is over.
+
+Example: C<--with-lock -- tar -czf revbank-data.tgz ~/.datadir>
+
+=item --datadir
+
+Overrides C<REVBANK_DATADIR>
+
+=item --plugindir
+
+Overrides C<REVBANK_PLUGINDIR>
+
+=back
+
+=head1 ENVIRONMENT
+
+Some environment variables are boolean. Non-existent variables, empty
+variables, and variables equal to C<0> are considered false. All other values
+are considered true, but it is customary to just use C<1> (something like
+C<yes> could lead someone to believe that C<no> would be false).
+
+=over 20
+
+=item REVBANK_DATADIR
+
+Specifies the data directory, defaults to C<~/.revbank>. Will be created and
+populated if it does not already exist.
+
+=item REVBANK_PLUGINDIR
+
+Specifies the directory for plugins that are listed without paths in
+C<$REVBANK_DATADIR/plugins>. Defaults to C<plugins> in the directory of the
+C<revbank> executable.
+
+=item REVBANK_DEBUG
+
+When true, makes RevBank print more details, like what happens with hidden
+accounts. Don't use in production, because those accouns are hidden for a
+reason.
+
+=item REVBANK_SKIP_LOCK
+
+When true, disables file locking. Necessary when calling RevBank from a program
+that already holds the lock, but otherwise just a bad idea. Use with caution.
+
+=item REVBANK_JSON
+
+Requires the C<json> plugin. Set to C<lines> or C<array> for JSONL or
+single-array JSON output, for integrating RevBank in external software. Note
+that although the normal output is suppressed, not everything is available as
+JSON information, so it's only usable for specific use cases that are deemed
+possible.
+
+=item REVBANK_STATIEGELD
+
+Requires the C<statiegeld> plugin. When true, starts RevBank in deposit return
+mode, which means that scanned products will be container returns instead of
+purchases. See L<< plugins/statiegeld.pod >> for details.
+
+=back
+
+=head1 SEE ALSO
+
+Further documentation is available in L<README.md>, L<INSTALLING.md>,
+L<UPGRADING.md>, and all the C<.pod> files in the RevBank repository.
 
 =head1 AUTHOR
 
