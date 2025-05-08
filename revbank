@@ -14,22 +14,35 @@ use RevBank::FileIO ();
 use RevBank::Plugins ();
 use RevBank::Shell qw(abort);
 
-our $VERSION = "10.3.0";
+our $VERSION = "10.4.0";
 $| = 1;
 
 GetOptions(
-    "datadir=s"       => \$ENV{REVBANK_DATADIR},
-    "plugindir=s"     => \$ENV{REVBANK_PLUGINDIR},
-    "c|command=s{1,}" => \my @command,
+    "datadir=s"   => \$ENV{REVBANK_DATADIR},
+    "plugindir=s" => \$ENV{REVBANK_PLUGINDIR},
+    "c|command=s" => \my $command,
+    "with-lock"   => \my $with_lock,
 ) or pod2usage;
-@ARGV and pod2usage;
+@ARGV and not $with_lock and pod2usage;
 
 RevBank::FileIO::create_datadir;
+
+if ($with_lock) {
+    $command and die "--with-lock and --command can't be combined";
+    @ARGV or die "No command line specified";
+
+    RevBank::FileIO::with_lock {
+        system @ARGV;
+    };
+    exit;
+}
+
 RevBank::Plugins::load;
 RevBank::Plugins::call_hooks "startup";
 
-if (@command) {
-    RevBank::Shell::exec @command;
+
+if ($command) {
+    RevBank::Shell::exec $command;
     exit;
 }
 
@@ -49,6 +62,8 @@ revbank - Prepaid bar tab payment system for hackerspaces
 =head1 SYNOPSIS
 
     revbank [--datadir <dir>] [--plugindir <dir>] [--command <cmd>]
+
+    revbank [--datadir <dir>] --with-lock cmd arg...
 
 =head1 DESCRIPTION
 
