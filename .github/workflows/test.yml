@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - matrixtesttest
   pull_request:
     branches:
       - master
@@ -11,10 +12,25 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-
+    name: Standard Perl packages on ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-
-    - run: sudo apt install -y libterm-readline-gnu-perl libcurses-ui-perl libtest2-suite-perl
-
-    - run: prove -Ilib t
+      - uses: actions/checkout@v4
+      - run: sudo apt install -y libterm-readline-gnu-perl libcurses-ui-perl libtest2-suite-perl
+      - run: prove -lv t
+  test-perl-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: ["ubuntu-latest"]
+        perl: ["5.40", "5.36", "5.34", "5.32"]
+    name: Perl ${{ matrix.perl }} on ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up perl
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: ${{ matrix.perl }}
+      - run: sudo apt install -y libreadline-dev
+      - run: perl -V
+      - run: cpanm --notest Term::ReadLine::Gnu Curses::UI Test2::Suite
+      - run: prove -lv t
