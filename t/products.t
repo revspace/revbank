@@ -1,5 +1,5 @@
 use v5.32;
-use Test::More;
+use Test2::V0;
 use File::Temp ();
 use File::Basename qw(basename);
 
@@ -90,7 +90,7 @@ is balance("mies")->cents, 25;
 
 my $p = RevBank::Products::read_products;
 
-is_deeply
+is
 	$p->{"tagstest"}{tags},
 	{ tag1 => 1, tag2 => "b", tag3 => "c", tag4 => "has spaces" };
 

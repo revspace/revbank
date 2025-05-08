@@ -1,11 +1,9 @@
 use v5.32;
 use warnings;
 
-use Test::More;
-use Test::Exception;
-use Test::Warnings ":all";
+use Test2::V0;
 
-require_ok('RevBank::Amount');
+use RevBank::Amount;
 
 my $a = RevBank::Amount->new(123);
 
@@ -154,14 +152,14 @@ is(RevBank::Amount->parse_string("++2"), undef);
 is(RevBank::Amount->parse_string("+ 2"), undef);
 is(RevBank::Amount->parse_string("- 2"), undef);
 is(RevBank::Amount->parse_string("2 .00"), undef);
-dies_ok(sub { $a == 1.231 });
-dies_ok(sub { $a > 1.231 });
-dies_ok(sub { $a < 1.231 });
-dies_ok(sub { $a - 1.231 });
-dies_ok(sub { $a + 1.231 });
-dies_ok(sub { $a eq "1.231" });
-dies_ok(sub { $a gt "1.231" });
-dies_ok(sub { $a lt "1.231" });
+ok dies { $a == 1.231 };
+ok dies { $a > 1.231 };
+ok dies { $a < 1.231 };
+ok dies { $a - 1.231 };
+ok dies { $a + 1.231 };
+ok dies { $a eq "1.231" };
+ok dies { $a gt "1.231" };
+ok dies { $a lt "1.231" };
 
 # Round tripping stringification
 for (-5e99, -5e12, -1, -.99, 0, .99, 1, 5e12) {

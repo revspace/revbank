@@ -1,7 +1,7 @@
-# These tests were written by ChatGPT. All four were actually correct the
-# first try.
+# These tests were originally written by ChatGPT. All four were actually
+# correct the first try.
 
-use Test::More;
+use Test2::V0;
 use File::Temp ();
 use File::Basename qw(basename);
 
@@ -23,7 +23,7 @@ subtest "slurp" => sub {
     print $tmp $data;
     close $tmp;
     my @lines = slurp(basename($tmp->filename));
-    is_deeply \@lines, ["foo\n", "bar\n", "baz\n"], "slurp works";
+    is \@lines, ["foo\n", "bar\n", "baz\n"], "slurp works";
 };
 
 subtest "spurt" => sub {

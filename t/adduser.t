@@ -1,7 +1,7 @@
 use v5.32;
 use experimental qw(signatures);
 
-use Test::More;
+use Test2::V0;
 use File::Temp ();
 use File::Basename qw(basename);
 
@@ -53,7 +53,7 @@ sub aborts_ok($cmd) {
 
 is balance("aap"), undef;
 exec_ok "adduser aap";
-is balance("aap"), 0;
+ok balance("aap") == 0;
 
 aborts_ok "adduser aap";      # exists
 aborts_ok "adduser 42";       # numeric
@@ -66,6 +66,6 @@ aborts_ok "adduser adduser";  # known command
 
 is balance("noot"), undef;
 exec_ok "adduser noot";
-is balance("noot"), 0;
+ok balance("noot") == 0;
 
 done_testing;

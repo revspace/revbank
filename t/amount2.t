@@ -3,9 +3,9 @@
 
 use strict;
 use warnings;
-use Test::More;
+use Test2::V0;
 
-use_ok 'RevBank::Amount';
+use RevBank::Amount;
 
 my $a = RevBank::Amount->new(500);
 my $b = RevBank::Amount->new(200);

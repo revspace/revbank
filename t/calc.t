@@ -1,10 +1,8 @@
 use v5.32;
 
-use Test::More;
-use Test::Exception;
-use Test::Warnings ":all";
+use Test2::V0;
 
-BEGIN { use_ok('RevBank::Global'); }
+use RevBank::Global;
 
 # Invalid syntax
 is parse_amount(undef), undef;
@@ -24,9 +22,9 @@ is parse_amount("1-"), undef;
 is parse_amount("1 1"), undef;
 
 # Out of range
-dies_ok sub { parse_amount("-1") };
-dies_ok sub { parse_amount("0-42") };
-dies_ok sub { parse_amount("999999") };
+ok dies { parse_amount("-1") };
+ok dies { parse_amount("0-42") };
+ok dies { parse_amount("999999") };
 
 # Bare number
 is parse_amount("42")->cents, 4200;

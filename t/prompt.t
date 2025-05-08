@@ -1,25 +1,23 @@
 use v5.32;
 
-use Test::More;
-use Test::Exception;
-use Test::Warnings ":all";
+use Test2::V0;
 
 use experimental 'signatures';
 
-BEGIN { use_ok('RevBank::Prompt'); }
+use RevBank::Prompt;
 
 sub are($input, $expected) {
 	if (ref($expected) eq 'ARRAY') {
 		my @got = RevBank::Prompt::split_input($input);
-		is_deeply(\@got, $expected, ">$input<");
+		is(\@got, $expected, ">$input<");
 
 		my $reconstructed = join " ", map RevBank::Prompt::reconstruct($_), @got;
 		my @got2 = RevBank::Prompt::split_input($reconstructed);
-		is_deeply(\@got, \@got2, ">$input< round-trips once");
+		is(\@got, \@got2, ">$input< round-trips once");
 
 		my $reconstructed2 = join " ", map RevBank::Prompt::reconstruct($_), @got2;
 		my @got3 = RevBank::Prompt::split_input($reconstructed2);
-		is_deeply(\@got, \@got3, ">$input< round-trips twice");
+		is(\@got, \@got3, ">$input< round-trips twice");
 	} else {
 		my @got = RevBank::Prompt::split_input($input);
 		is(scalar @got, 1, "Invalid input >$input< returns 1 element");

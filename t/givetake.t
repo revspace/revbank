@@ -1,5 +1,5 @@
 use v5.32;
-use Test::More;
+use Test2::V0;
 use File::Temp ();
 use File::Basename qw(basename);
 

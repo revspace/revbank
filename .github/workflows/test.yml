@@ -15,6 +15,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - run: sudo apt install -y libterm-readline-gnu-perl libcurses-ui-perl libtest-warnings-perl libtest-exception-perl
+    - run: sudo apt install -y libterm-readline-gnu-perl libcurses-ui-perl libtest2-suite-perl
 
     - run: prove -Ilib t
