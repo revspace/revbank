@@ -15,7 +15,9 @@ jobs:
     name: Standard Perl packages on ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt install -y libterm-readline-gnu-perl libcurses-ui-perl libtest2-suite-perl
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libterm-readline-gnu-perl libcurses-ui-perl libtest2-suite-perl
       - run: prove -lv t
   test-perl-matrix:
     runs-on: ubuntu-latest
@@ -26,11 +28,14 @@ jobs:
     name: Perl ${{ matrix.perl }} on ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libreadline-dev
       - name: Set up perl
         uses: shogo82148/actions-setup-perl@v1
         with:
           perl-version: ${{ matrix.perl }}
-      - run: sudo apt install -y libreadline-dev
+          install-modules-with: cpanm
+          install-modules-args: --with-develop --with-configure --notest
       - run: perl -V
-      - run: cpanm --notest Term::ReadLine::Gnu Curses::UI Test2::Suite
       - run: prove -lv t
