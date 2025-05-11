@@ -21,8 +21,9 @@ sub command($self, $cart, $command, @) {
 
     return NEXT if $lhs and $rhs;  # 123x123 -> invalid, likely user or product
 
-    if ($lhs) {
+    if (defined $lhs) {
         return REJECT, $err_postfix if $op eq '+' or $op eq '-';
+        return REJECT, "Invalid value." if $lhs == 0;
 
         $lhs = abs $lhs;  # withdrawal is negative
 
@@ -36,7 +37,7 @@ sub command($self, $cart, $command, @) {
     return ABORT, "Can't modify an empty transaction." if not $cart->size;
     return REJECT, $err_nope if $last->attribute('no_repeat');
 
-    if ($rhs) {
+    if (defined $rhs) {
         return REJECT, $err_limit if $rhs > $limit;
 
         if ($op eq '+') {
@@ -59,7 +60,12 @@ sub command($self, $cart, $command, @) {
 
         # $op is not + or -, so it must be * (or x).
         return REJECT, $err_stacked if $last->multiplied;
-        $last->quantity($rhs);
+        if ($rhs > 0) {
+            $last->quantity($rhs);
+        } else {
+            $cart->delete($last);
+            print "Deleted.\n";
+        }
         return ACCEPT;
     }
 
@@ -74,17 +80,22 @@ sub command($self, $cart, $command, @) {
 }
 
 sub repeat($self, $cart, $arg, @) {
-    $arg =~ /^\d+$/ and $arg > 0
+    $arg =~ /^\d+$/ and $arg >= 0
         or return REJECT, "Invalid value.";
 
     return REJECT, $err_limit if $arg > $limit;
 
-    $cart->selected->quantity($arg);
+    if ($arg > 0) {
+        $cart->selected->quantity($arg);
+    } else {
+        $cart->delete($cart->selected);
+        print "Deleted.\n";
+    }
     return ACCEPT;
 }
 
 sub plusminus($self, $cart, $arg, @) {
-    $arg =~ /^\d+$/ and $arg > 0
+    $arg =~ /^\d+$/ and $arg >= 0
         or return REJECT, "Invalid value.";
 
     my $last = $cart->selected;
@@ -93,11 +104,11 @@ sub plusminus($self, $cart, $arg, @) {
     $new -= $arg if $self->{op} eq '-';
 
     return REJECT, $err_limit if $new > $limit;
-    if ($new < 0) {
+    if ($new > 0) {
+        $cart->selected->quantity($new);
+    } else {
         $cart->delete($last);
         print "Deleted.\n";
-    } else {
-        $cart->selected->quantity($new);
     }
     return ACCEPT;
 }
