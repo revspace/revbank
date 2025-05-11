@@ -25,8 +25,6 @@ sub command($self, $cart, $command, @) {
         return REJECT, $err_postfix if $op eq '+' or $op eq '-';
         return REJECT, "Invalid value." if $lhs == 0;
 
-        $lhs = abs $lhs;  # withdrawal is negative
-
         return REJECT, $err_limit if $lhs > $limit;
         $cart
             ->add(0, "?  (The next thing you add will be multiplied.)", { _repeat => 1, refuse_checkout => 1 })
