@@ -13,7 +13,7 @@ sub amount($self, $cart, $arg, @) {
     defined $amount or return REJECT, "Invalid amount";
 
     $cart
-        ->add(-$amount, "Withdrawal", { is_withdrawal => 1 })
+        ->add(-$amount, "Cash withdrawal", { is_withdrawal => 1 })
         ->add_contra("-cash", +$amount, "Withdrawn by \$you");
 
     return ACCEPT;
