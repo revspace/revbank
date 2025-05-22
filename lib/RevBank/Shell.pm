@@ -248,6 +248,7 @@ sub _shell(@args) {
                         }
                     }
                     if ($rv == ACCEPT) {
+                        call_hooks "accept", $cart, $plugin->id, @words ? 1 : 0;
                         if ($method ne 'command' and @words and $words[0] ne "\0SEPARATOR") {
                             @retry = ();  # remove what's already done
                             push @retry, shift @words;  # reject first

@@ -88,7 +88,7 @@ sub deltas($self, $account) {
     my %deltas = ($account => RevBank::Amount->new(0));
 
     for my $entry (@{ $self->{entries} }) {
-        $deltas{$_->{account}} += $_->{amount} * $entry->quantity
+        $deltas{$_->{account} // $account} += $_->{amount} * $entry->quantity
             for $entry, $entry->contras;
     }
 

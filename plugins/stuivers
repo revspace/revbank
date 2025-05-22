@@ -1,0 +1,114 @@
+#!perl
+use POSIX qw(ceil);
+
+# This plugin implements 5 cent routing:
+#   https://en.wikipedia.org/wiki/Euro_coins#Price_rounding
+# This plugin is named after the historic name of Dutch 5 cent coins:
+#   https://en.wikipedia.org/wiki/Stuiver
+
+our $coin = RevBank::Amount->new(5);
+
+sub fix($amount) {
+    my $posneg = $amount > 0 ? 1 : -1;
+    my $abs = abs $amount;
+    my $cents = $coin->cents;
+
+    my $remainder = $abs->cents % $cents or return 0;
+
+    my $fix = $remainder < ceil($cents / 2)
+        ? RevBank::Amount->new($posneg * -$remainder)
+        : RevBank::Amount->new($posneg * ($cents - $remainder));
+
+    return $fix;
+}
+
+sub note {
+    print "\n\e[3m* ", @_, "\e[23m";
+}
+
+sub hook_accept($class, $cart, $plugin, @) {
+    ENTRY: for my $entry ($cart->entries) {
+        my @contras = $entry->contras;
+        @contras == 1 or next ENTRY;  # Cash entries are simple
+
+        my $contra = $contras[0];
+
+        if ($entry->attribute('is_deposit') and $contra->{account} eq '-cash') {
+            my $remainder = $entry->amount->cents % 5 or next ENTRY;
+            my $fix = RevBank::Amount->new(-$remainder);
+
+            my $note = "Sorry, we don't take coins under $coin";
+
+            my $new_amount = $entry->amount + $fix;
+            if ($new_amount->cents <= 0) {
+                note "$note!";
+                $cart->delete($entry);
+                next ENTRY;
+            }
+            note "$note; adjusting amount by $fix to round down.\n";
+            # NOTE current string is just under 80 characters
+            print "\e[31;1mPlease type 'abort' to abort the transaction if you intended to use such coins.\e[m\n";
+
+            $entry->amount($entry->amount + $fix);
+            $entry->delete_contras;
+            $entry->add_contra(
+                $contra->{account},
+                -$new_amount,
+                $contra->{description},
+                $contra->{display}
+            );
+            next ENTRY;
+        }
+
+        if ($entry->attribute('is_withdrawal') and $contra->{account} eq '-cash') {
+            my $fix = -fix($entry->amount) or next ENTRY;
+
+            note "Sorry, we don't use coins under $coin!\n";
+            print "If we do happen to have smaller coins, just take them.\n";
+
+            my $new_amount = $entry->amount - $fix;
+            if ($new_amount->cents >= 0) {
+                $cart->delete($entry);
+                next ENTRY;
+            }
+            note "Adjusting amount by $fix.\n";
+
+            $entry->amount($new_amount);
+            $entry->delete_contras;
+            $entry->add_contra(
+                $contra->{account},
+                -$new_amount,
+                $contra->{description},
+                $contra->{display}
+            );
+            next ENTRY;
+        }
+    }
+}
+
+sub hook_checkout_prepare($class, $cart, $username, $transaction_id, @) {
+    return if $username eq '-expenses/discrepancies';
+
+    my $deltas = $cart->deltas($username);
+    my $cash = $deltas->{'-cash'} or return;
+    my $fix = -fix($cash) or return;
+
+    my $desc = "Cash rounding";
+
+    $cart->display if $cart->changed;
+
+    if ($username eq '-cash') {
+        $cart
+        ->add(-$fix, $desc)
+        ->add_contra('-cash/rounding', $fix, $desc);
+
+        my $new_amount = -$cart->deltas($username)->{'-cash'};
+
+        note("Rounding cash amount to nearest $coin; the new amount is $new_amount.\n");
+    } else {
+        warn;  # shouldn't happen
+    }
+
+    $cart->changed(0);
+    return;
+}
