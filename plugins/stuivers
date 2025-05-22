@@ -41,7 +41,7 @@ sub hook_accept($class, $cart, $plugin, @) {
 
             my $new_amount = $entry->amount + $fix;
             if ($new_amount->cents <= 0) {
-                note "$note!";
+                note "$note!\n";
                 $cart->delete($entry);
                 next ENTRY;
             }
