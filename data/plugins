@@ -17,6 +17,7 @@ restart
 sighup
 sigint
 #stock
+#stuivers    # cash rounding to nearest 0.05
 #vat         # configure before using
 #warnings
 window_title
