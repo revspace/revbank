@@ -1,3 +1,7 @@
 To run all tests, run from the parent directory:
 
-	prove -Ilib t
+	prove -l
+
+or:
+
+	yath
