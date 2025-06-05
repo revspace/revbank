@@ -24,7 +24,7 @@ sub backend_call($hash) {
 
 sub command($self, $cart, $command, @) {
     # currently 10 characters after the underscore, but it's not documented.
-    my ($id) = $command =~ /^(tr_[A-Za-z0-9]{10,12})$/ or return NEXT;
+    my ($id) = $command =~ /^(tr_[A-Za-z0-9]{10,32})$/ or return NEXT;
 
     my $result = eval { backend_call { id => $id } };
     $@ and return REJECT, "API call failed: $@";
