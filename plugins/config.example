@@ -21,6 +21,6 @@
 
 #$RevBank::Plugin::mollie::backend_url = "https://deposit.example.org/mollie.php";
 
-#$RevBank::Plugin::nomoney::deny_plugins = qw(give market products take unlisted withdraw);
+#@RevBank::Plugin::nomoney::deny_plugins = qw(give market products take unlisted withdraw);
 
 #$RevBank::Plugin::statiegeld_tokens::ttl_days = 30;
