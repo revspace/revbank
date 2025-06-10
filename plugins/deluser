@@ -1,0 +1,51 @@
+#!perl
+
+use List::Util qw(any);
+
+HELP1 "deluser <name>" => "Delete an account";
+
+our $contra = "+donations";
+
+sub command :Tab(deluser) ($self, $cart, $command, @) {
+    $command eq 'deluser' or return NEXT;
+
+    return "Name of the account to be deleted", \&confirm_delete;
+}
+
+sub confirm_delete($self, $cart, $name, @) {
+    my $amount = RevBank::Accounts::balance($name);
+
+    return ABORT, "No such account."
+        if (not defined $amount);
+
+    return ABORT, "Can not delete an account with a negative balance."
+        if ($amount < 0);
+
+    $self->{name} = $name;
+
+    print "This will delete account $name and donate the remaining $amount.\n";
+
+    return "Are you sure? Type DONATE_AND_DELETE to proceed", \&delete_account;
+}
+
+sub delete_account($self, $cart, $confirmation, @) {
+    return REJECT, "Type DONATE_AND_DELETE to proceed"
+        if ($confirmation ne "DONATE_AND_DELETE");
+
+    my $amount = RevBank::Accounts::balance($self->{name});
+
+    RevBank::FileIO::with_lock {
+        if ($amount > 0) {
+            my $contra_account = RevBank::Accounts::assert_account($contra);
+            my $transaction_id = "";
+            RevBank::Accounts::update($self->{name}, -$amount, $transaction_id);
+            RevBank::Accounts::update($contra_account, $amount, $transaction_id);
+        }
+
+        RevBank::Accounts::delete($self->{name});
+    };
+
+    print "Account $self->{name} deleted.";
+
+    return ACCEPT;
+}
