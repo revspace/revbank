@@ -80,6 +80,25 @@ sub create($account) {
     return $account;
 }
 
+sub delete($account) {
+    die "No such account" if RevBank::Accounts::is_special $account;
+
+    my $user_found = 0;
+    rewrite $filename, sub($line) {
+        my @a = split " ", $line;
+        if (lc $a[0] ne lc $account) {
+            return $line;
+        }
+        if ($a[1] != 0) {
+            die "Account $account still has balance";
+        }
+        $user_found = 1;
+        return "";
+    };
+
+    die "No such account" if not $user_found;
+}
+
 sub update($account, $delta, $transaction_id) {
     $account = assert_account($account);
 
