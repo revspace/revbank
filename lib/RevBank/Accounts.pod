@@ -126,6 +126,12 @@ Creates an account with that name and a balance of zero. The name must not alrea
 
 After updating the file, calls the C<account_created> hook with the account name.
 
+=head3 delete($name)
+
+Deletes an account.
+
+Special accounts may not be deleted via this method. The account must have a balance of 0.00.
+
 =head3 update($name, $delta, $transaction_id)
 
 Given the relative change (C<$delta>), updates the user balance for an account.
