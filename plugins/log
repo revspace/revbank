@@ -34,6 +34,10 @@ sub hook_account_created($class, $account, @) {
     _log(NEWUSER => "$account");
 }
 
+sub hook_account_deleted($class, $account, @) {
+    _log(DELUSER => "$account");
+}
+
 sub hook_account_balance($class, $account, $old, $delta, $new, $transaction_id, @) {
     my $lost = $delta < 0 ? "lost" : "got";
     $delta = $delta->abs;

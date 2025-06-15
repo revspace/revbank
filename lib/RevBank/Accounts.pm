@@ -81,22 +81,21 @@ sub create($account) {
 }
 
 sub delete($account) {
-    die "No such account" if RevBank::Accounts::is_special $account;
+    croak "Deleting special account not supported" if RevBank::Accounts::is_special $account;
+    $account = assert_account($account);
 
-    my $user_found = 0;
-    rewrite $filename, sub($line) {
-        my @a = split " ", $line;
-        if (lc $a[0] ne lc $account) {
+    with_lock {
+        balance($account)->cents == 0 or die "Account still has balance";
+
+        rewrite $filename, sub($line) {
+            my @a = split " ", $line;
+            return "" if $a[0] eq $account;
             return $line;
-        }
-        if ($a[1] != 0) {
-            die "Account $account still has balance";
-        }
-        $user_found = 1;
-        return "";
+        };
     };
 
-    die "No such account" if not $user_found;
+    call_hooks("account_deleted", $account);
+    return $account;
 }
 
 sub update($account, $delta, $transaction_id) {
