@@ -71,4 +71,15 @@ is balance("noot"), undef;
 exec_ok "adduser noot";
 ok balance("noot") == 0;
 
+like dies { RevBank::Accounts::delete("*bla") }, qr/not supported/;
+like dies { RevBank::Accounts::delete("+bla") }, qr/not supported/;
+like dies { RevBank::Accounts::delete("-bla") }, qr/not supported/;
+like dies { RevBank::Accounts::delete("bla") },  qr/No such/;
+is RevBank::Accounts::delete("AAP"), "aap";
+is balance("aap"), undef;
+RevBank::Accounts::update("noot", RevBank::Amount->new(4200), -999);
+ok balance("noot") == 42;
+like dies { RevBank::Accounts::delete("noot") },  qr/balance/;
+ok balance("noot") == 42;
+
 done_testing;
