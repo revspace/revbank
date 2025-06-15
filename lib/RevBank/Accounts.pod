@@ -132,6 +132,8 @@ Deletes an account.
 
 Special accounts may not be deleted via this method. The account must have a balance of 0.00.
 
+Note that deleting an account only removes it from the C<accounts> file. Other associated data, like log lines, are not deleted. After creating the account again with C<create> (e.g. via the C<adduser> plugin), the account can be used again as if it was never deleted, because the old and the new account, only identified by the account name, are indistinguishable.
+
 =head3 update($name, $delta, $transaction_id)
 
 Given the relative change (C<$delta>), updates the user balance for an account.
