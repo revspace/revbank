@@ -6,7 +6,7 @@ use experimental 'signatures';  # stable since v5.36
 
 use RevBank::Global;
 use RevBank::Plugins;
-use Carp ();
+use Carp qw(croak);
 use List::Util ();
 
 my $filename = "accounts";
@@ -71,7 +71,7 @@ sub since($account) {
 }
 
 sub create($account) {
-    die "Account already exists" if exists _read()->{ lc $account };
+    croak "Account already exists" if exists _read()->{ lc $account };
 
     my $now = now();
     append $filename, "$account 0.00 $now\n";
@@ -85,7 +85,7 @@ sub delete($account) {
     $account = assert_account($account);
 
     with_lock {
-        balance($account)->cents == 0 or die "Account still has balance";
+        balance($account)->cents == 0 or croak "Account still has balance";
 
         rewrite $filename, sub($line) {
             my @a = split " ", $line;
@@ -169,13 +169,13 @@ sub assert_account($account) {
     my $account_info = $accounts->{ lc $account };
 
     if ($account_info) {
-        Carp::croak("Account $account can't be used") if not defined balance $account;
+        croak "Account $account can't be used" if not defined balance $account;
         return $account_info->[0];
     }
 
     return create $account if is_hidden $account;
 
-    Carp::croak("No such user ($account)");
+    croak "No such user ($account)";
 }
 
 # Backwards compatibility until 2027-05-01
