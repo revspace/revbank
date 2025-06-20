@@ -2,21 +2,46 @@
 
 our $timeout_seconds = 10;
 my $text_displayed = 0;
+our $default;
+my $do_default;
+
+sub command($class, $cart, $input, @) {
+    $input eq '_idle_default' or return NEXT;
+    return "Default action or 'off' to disable", sub($class, $cart, $input, @) {
+        $default = $input eq "off" ? "" : $input;
+        return ACCEPT;
+    };
+}
+
 
 sub hook_prompt($class, $cart, $prompt, @) {
     $text_displayed = 0;
+    $do_default = 0;
+
+    if ($default and not $prompt) {
+        chomp $default;
+        print "\e[7mJust scan products; the account '$default' is used automatically after $timeout_seconds seconds.\e[m\n";
+        $do_default = 1;
+    }
 }
 
 sub hook_prompt_idle($class, $cart, $plugin, $seconds, $readline, @) {
     return unless $seconds >= $timeout_seconds and $cart->size and not $plugin;
+
+    my $text = $readline->copy_text;
+    my $point = $readline->{point};
 
     call_hooks("beep");
 
     return if $text_displayed;
     $text_displayed = 1;
 
-    my $text = $readline->copy_text;
-    my $point = $readline->{point};
+    if ($do_default and $text !~ /\S/ and not $cart->entries('refuse_checkout')) {
+        $readline->replace_line($default);
+        $readline->redisplay;
+        $readline->stuff_char(ord "\n");
+        return;
+    }
 
     $readline->save_prompt;
     $readline->replace_line("");
