@@ -17,6 +17,14 @@ Debian:  apt install libterm-readline-gnu-perl libcurses-ui-perl
 Generic: cpan Term::ReadLine::Gnu Curses::UI
 ```
 
+Some optional plugins, like `mollie`, require these modules:
+
+```
+Debian:  apt install libwww-perl libjson-perl
+
+Generic: cpan LWP::UserAgent JSON
+```
+
 2. Clone the repository, run `./revbank` :)
 
 ## Configuring RevBank
