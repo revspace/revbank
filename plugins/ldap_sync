@@ -1,0 +1,151 @@
+#!perl
+use strict;
+use warnings;
+use Net::LDAP;
+use POSIX qw(strftime);
+use File::HomeDir;
+use File::Spec;
+use Getopt::Long;
+
+# --- CONFIGURATION ---
+my $ldap_host = 'ldap://localhost';
+my $ldap_bind_dn = 'cn=admin,dc=example,dc=com';
+my $ldap_bind_pw = 'secret';
+my $ldap_base = 'ou=People,dc=example,dc=com';
+
+my $revbank_file = File::Spec->catfile(File::HomeDir->my_home, '.revbank', 'accounts');
+my $log_file = '/var/log/revbank_ldap_sync.log';
+
+# --- OPTIONS ---
+my $dry_run = 0;
+GetOptions('dry-run' => \$dry_run) or die "Usage: $0 [--dry-run]\n";
+
+# --- Logging sub ---
+sub logmsg {
+    my ($msg) = @_;
+    my $ts = strftime("%Y-%m-%d %H:%M:%S", localtime);
+    my $line = "[$ts] $msg\n";
+    print $line;
+    open my $logfh, '>>', $log_file or die "Can't open log file $log_file: $!";
+    print $logfh $line;
+    close $logfh;
+}
+
+# --- Main ---
+logmsg("Starting sync" . ($dry_run ? " [DRY RUN]" : ""));
+
+my @ldap_users = get_ldap_users();
+my @revbank_users = get_revbank_users($revbank_file);
+
+# Remove duplicates
+my %seen;
+@ldap_users = grep { !$seen{$_}++ } @ldap_users;
+%seen = ();
+@revbank_users = grep { !$seen{$_}++ } @revbank_users;
+
+my %ldap_hash = map { $_ => 1 } @ldap_users;
+my %revbank_hash = map { $_ => 1 } @revbank_users;
+
+my @only_in_ldap = grep { !$revbank_hash{$_} } @ldap_users;
+my @only_in_revbank = grep { !$ldap_hash{$_} } @revbank_users;
+
+foreach my $user (@only_in_ldap) {
+    if ($dry_run) {
+        logmsg("Would add user '$user' to Revbank");
+    } else {
+        add_to_revbank($user, $revbank_file);
+    }
+}
+
+foreach my $user (@only_in_revbank) {
+    if ($dry_run) {
+        logmsg("Would add user '$user' to LDAP");
+    } else {
+        add_to_ldap($user);
+    }
+}
+
+logmsg("Sync finished");
+
+# --- Functions ---
+
+sub get_ldap_users {
+    my $ldap = Net::LDAP->new($ldap_host) or die "LDAP connect failed: $@";
+    my $mesg = $ldap->bind($ldap_bind_dn, password => $ldap_bind_pw);
+    die "LDAP bind failed: ", $mesg->error if $mesg->code;
+
+    $mesg = $ldap->search(
+        base   => $ldap_base,
+        scope  => 'sub',
+        filter => '(objectClass=posixAccount)',
+        attrs  => ['uid'],
+    );
+    die "LDAP search failed: ", $mesg->error if $mesg->code;
+
+    my @uids;
+    for my $entry ($mesg->entries) {
+        my $uid = $entry->get_value('uid');
+        push @uids, $uid if $uid;
+    }
+
+    $ldap->unbind;
+    return @uids;
+}
+
+sub get_revbank_users {
+    my ($file) = @_;
+    open my $fh, '<', $file or die "Could not open revbank file: $file: $!";
+    my @users;
+    while (<$fh>) {
+        next if /^\s*-/; # skip system transactions
+        if (/^(\w+)\s+/) {
+            push @users, $1;
+        }
+    }
+    close $fh;
+    return @users;
+}
+
+sub add_to_revbank {
+    my ($user, $file) = @_;
+    my $ts = strftime("%Y-%m-%d_%H:%M:%S", localtime);
+    my $line = sprintf "%-20s +0.00 %s +@%s\n", $user, $ts, $ts;
+
+    open my $fh, '>>', $file or die "Could not write to $file: $!";
+    print $fh $line;
+    close $fh;
+
+    logmsg("Added $user to Revbank");
+}
+
+sub add_to_ldap {
+    my ($user) = @_;
+    my $ldap = Net::LDAP->new($ldap_host) or die "LDAP connect failed: $@";
+    my $mesg = $ldap->bind($ldap_bind_dn, password => $ldap_bind_pw);
+    die "LDAP bind failed: ", $mesg->error if $mesg->code;
+
+    my $uidNumber = 20000 + int(rand(10000));
+    my $gidNumber = 100;
+    my $dn = "uid=$user,$ldap_base";
+
+    $mesg = $ldap->add($dn,
+        attrs => [
+            objectClass => ['top', 'person', 'organizationalPerson', 'inetOrgPerson', 'posixAccount'],
+            cn          => $user,
+            sn          => $user,
+            uid         => $user,
+            uidNumber   => $uidNumber,
+            gidNumber   => $gidNumber,
+            homeDirectory => "/home/$user",
+            loginShell  => '/bin/bash',
+        ]
+    );
+
+    if ($mesg->code) {
+        logmsg("Failed to add $user to LDAP: " . $mesg->error);
+    } else {
+        logmsg("Added $user to LDAP");
+    }
+
+    $ldap->unbind;
+}
