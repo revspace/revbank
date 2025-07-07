@@ -25,7 +25,16 @@ Debian:  apt install libwww-perl libjson-perl
 Generic: cpan LWP::UserAgent JSON
 ```
 
-2. Clone the repository, run `./revbank` :)
+2. Clone the repository
+
+```sh
+git clone https://github.com/revspace/revbank.git
+cd revbank
+```
+
+RevBank can be executed without installing it (`./revbank`) or it can be
+installed using `perl Makefile.PL && make install`. The latter also gives you
+man pages.
 
 ## Configuring RevBank
 

@@ -1,4 +1,12 @@
-use v5.10;
+use v5.32;
+
+# NOTE: While it is possible to install RevBank with `make install` after
+# running this file, as is customary with Perl software, THIS IS NOT NECESSARY.
+#
+# RevBank also just runs from a cloned git repo: just run `./revbank`
+#
+# Makefile.PL was added because there are package builders that can use it.
+
 use ExtUtils::MakeMaker;
 WriteMakefile(
     NAME          => 'RevBank',
